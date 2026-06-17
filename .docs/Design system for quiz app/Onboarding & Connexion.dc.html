@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Lexend:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; }
+  @keyframes oc-rise { from { transform: translateY(10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  input:focus { outline: none; }
+  ::-webkit-scrollbar { width: 0; }
+</style>
+</helmet>
+
+<div style="font-family:'Lexend',sans-serif; background:#EEF1F6; color:#0F172A; min-height:100vh; padding:52px 40px 80px;">
+
+  <div style="max-width:1180px; margin:0 auto 44px;">
+    <div style="display:inline-flex; align-items:center; gap:10px; padding:7px 14px; background:#fff; border:1px solid #E2E8F0; border-radius:999px; font-size:13px; font-weight:600; color:#4F46E5;">
+      <span style="width:22px; height:22px; border-radius:7px; background:linear-gradient(135deg,#4F46E5,#7C3AED); color:#fff; font-family:'Outfit'; font-weight:800; font-size:13px; display:grid; place-items:center;">A</span>
+      academy.mathslaclasse.com
+    </div>
+    <h1 style="font-family:'Outfit'; font-weight:800; font-size:44px; line-height:1.05; letter-spacing:-.02em; margin:22px 0 14px; max-width:760px;">Onboarding & connexion</h1>
+    <p style="font-size:18px; line-height:1.55; color:#475569; max-width:680px; margin:0; text-wrap:pretty;">Inscription sans friction, sans donnée personnelle : pseudo + avatar illustré. Les deux écrans sont <strong>interactifs</strong> — clique, tape, choisis ton avatar et ton niveau.</p>
+  </div>
+
+  <div style="display:flex; gap:48px; justify-content:center; flex-wrap:wrap; align-items:flex-start; max-width:1180px; margin:0 auto;">
+
+    <!-- ============ ONBOARDING ============ -->
+    <div>
+      <div style="text-align:center; font-family:'Outfit'; font-weight:700; font-size:14px; color:#475569; margin-bottom:16px;">Inscription élève</div>
+      <div style="width:412px; background:#0E1124; border-radius:46px; padding:11px; box-shadow:0 30px 60px -20px rgba(15,23,42,.45);">
+        <div style="width:390px; height:788px; background:#F4F5FB; border-radius:35px; overflow:hidden; display:flex; flex-direction:column;">
+
+          <!-- status bar -->
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:14px 24px 4px; font-family:'Outfit'; font-weight:700; font-size:14px; flex-shrink:0;"><span>9:41</span><span style="font-size:12px; letter-spacing:1px;">●●● ⌖ ▮</span></div>
+
+          <!-- top: back + progress -->
+          <div style="display:flex; align-items:center; gap:12px; padding:8px 20px 14px; flex-shrink:0;">
+            <button onClick="{{ onBack }}" style="width:34px; height:34px; border-radius:11px; border:1px solid #E5E7EF; background:#fff; color:#475569; cursor:pointer; display:grid; place-items:center; flex-shrink:0;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg></button>
+            <div style="flex:1; display:flex; gap:6px;">
+              <sc-for list="{{ segments }}" as="seg" hint-placeholder-count="5">
+                <div style="{{ seg.style }}"></div>
+              </sc-for>
+            </div>
+            <span style="font-size:12px; font-weight:700; color:#94A3B8; white-space:nowrap;">{{ stepLabel }}</span>
+          </div>
+
+          <!-- step body -->
+          <div style="flex:1; overflow-y:auto; padding:6px 24px 0; min-height:0;">
+
+            <!-- step 0: pseudo -->
+            <sc-if value="{{ isStep0 }}" hint-placeholder-val="{{ true }}">
+              <div>
+                <div style="font-size:34px; margin-bottom:4px;">👋</div>
+                <h2 style="font-family:'Outfit'; font-weight:800; font-size:26px; line-height:1.15; margin:0 0 8px;">Choisis ton pseudo</h2>
+                <p style="font-size:14px; color:#64748B; line-height:1.5; margin:0 0 22px;">C'est le nom que verront les autres élèves dans les classements. Pas de vrai nom — reste anonyme !</p>
+                <label style="display:block; font-size:13px; font-weight:600; margin-bottom:7px;">Pseudo</label>
+                <input onInput="{{ onPseudo }}" placeholder="Ex. MaxLeBg" maxlength="16" style="width:100%; font-family:'Lexend'; font-size:16px; padding:14px; border:2px solid #E5E7EF; border-radius:14px; background:#fff;">
+                <div style="font-size:12px; color:#94A3B8; margin-top:8px;">3 à 16 caractères · lettres et chiffres.</div>
+              </div>
+            </sc-if>
+
+            <!-- step 1: avatar -->
+            <sc-if value="{{ isStep1 }}" hint-placeholder-val="{{ false }}">
+              <div>
+                <h2 style="font-family:'Outfit'; font-weight:800; font-size:26px; line-height:1.15; margin:0 0 8px;">Choisis ton avatar</h2>
+                <p style="font-size:14px; color:#64748B; margin:0 0 18px;">20+ personnages illustrés. Tu pourras en débloquer d'autres avec ton XP.</p>
+                <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:12px; padding-bottom:8px;">
+                  <sc-for list="{{ avatars }}" as="av" hint-placeholder-count="20">
+                    <button onClick="{{ av.onClick }}" style="{{ av.style }}">
+                      <svg viewBox="0 0 48 48" width="42" height="42" fill="none">
+                        <sc-if value="{{ av.earAntenna }}" hint-placeholder-val="{{ false }}"><line x1="24" y1="13" x2="24" y2="8" stroke="{{ av.body }}" stroke-width="2.5" stroke-linecap="round"></line><circle cx="24" cy="6.5" r="2.2" fill="{{ av.body }}"></circle></sc-if>
+                        <sc-if value="{{ av.earCat }}" hint-placeholder-val="{{ false }}"><path d="M14 16L17 8L21.5 15Z" fill="{{ av.body }}"></path><path d="M34 16L31 8L26.5 15Z" fill="{{ av.body }}"></path></sc-if>
+                        <sc-if value="{{ av.earRound }}" hint-placeholder-val="{{ false }}"><circle cx="14" cy="14" r="4" fill="{{ av.body }}"></circle><circle cx="34" cy="14" r="4" fill="{{ av.body }}"></circle></sc-if>
+                        <ellipse cx="24" cy="25" rx="13" ry="12" fill="{{ av.body }}"></ellipse>
+                        <sc-if value="{{ av.eyesTwo }}" hint-placeholder-val="{{ true }}"><circle cx="19" cy="24" r="3.4" fill="#fff"></circle><circle cx="29" cy="24" r="3.4" fill="#fff"></circle><circle cx="19" cy="24.5" r="1.6" fill="#1E293B"></circle><circle cx="29" cy="24.5" r="1.6" fill="#1E293B"></circle></sc-if>
+                        <sc-if value="{{ av.eyesOne }}" hint-placeholder-val="{{ false }}"><circle cx="24" cy="24" r="5" fill="#fff"></circle><circle cx="24" cy="24.5" r="2.4" fill="#1E293B"></circle></sc-if>
+                        <path d="M21 30q3 2.2 6 0" stroke="#1E293B" stroke-width="1.6" fill="none" stroke-linecap="round"></path>
+                      </svg>
+                    </button>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-if>
+
+            <!-- step 2: password -->
+            <sc-if value="{{ isStep2 }}" hint-placeholder-val="{{ false }}">
+              <div>
+                <div style="font-size:34px; margin-bottom:4px;">🔐</div>
+                <h2 style="font-family:'Outfit'; font-weight:800; font-size:26px; line-height:1.15; margin:0 0 8px;">Crée ton mot de passe</h2>
+                <p style="font-size:14px; color:#64748B; margin:0 0 22px;">Au moins 6 caractères. Note-le quelque part de sûr.</p>
+                <label style="display:block; font-size:13px; font-weight:600; margin-bottom:7px;">Mot de passe</label>
+                <input onInput="{{ onPw }}" type="password" placeholder="••••••" style="width:100%; font-family:'Lexend'; font-size:16px; padding:14px; border:2px solid #E5E7EF; border-radius:14px; background:#fff; margin-bottom:16px;">
+                <label style="display:block; font-size:13px; font-weight:600; margin-bottom:7px;">Confirme</label>
+                <input onInput="{{ onPw2 }}" type="password" placeholder="••••••" style="{{ pw2Style }}">
+                <sc-if value="{{ pwMismatch }}" hint-placeholder-val="{{ false }}"><div style="display:flex; align-items:center; gap:6px; font-size:12px; color:#EF4444; margin-top:8px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>Les mots de passe ne correspondent pas.</div></sc-if>
+              </div>
+            </sc-if>
+
+            <!-- step 3: level -->
+            <sc-if value="{{ isStep3 }}" hint-placeholder-val="{{ false }}">
+              <div>
+                <h2 style="font-family:'Outfit'; font-weight:800; font-size:26px; line-height:1.15; margin:0 0 8px;">Quel est ton niveau ?</h2>
+                <p style="font-size:14px; color:#64748B; margin:0 0 18px;">On adapte ton parcours. Tu pourras changer plus tard.</p>
+                <div style="display:flex; flex-direction:column; gap:12px;">
+                  <sc-for list="{{ levels }}" as="lv" hint-placeholder-count="4">
+                    <button onClick="{{ lv.onClick }}" style="{{ lv.style }}">
+                      <span style="width:46px; height:46px; border-radius:13px; background:{{ lv.iconBg }}; color:{{ lv.iconColor }}; display:grid; place-items:center; font-family:'Outfit'; font-weight:800; font-size:15px; flex-shrink:0;">{{ lv.short }}</span>
+                      <span style="flex:1; text-align:left;"><span style="display:block; font-family:'Outfit'; font-weight:700; font-size:16px; color:#0F172A;">{{ lv.title }}</span><span style="display:block; font-size:13px; color:#64748B;">{{ lv.sub }}</span></span>
+                      <span style="font-size:18px; color:{{ lv.check }};">✓</span>
+                    </button>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-if>
+
+            <!-- step 4: group code -->
+            <sc-if value="{{ isStep4 }}" hint-placeholder-val="{{ false }}">
+              <div>
+                <div style="font-size:34px; margin-bottom:4px;">🎟️</div>
+                <h2 style="font-family:'Outfit'; font-weight:800; font-size:26px; line-height:1.15; margin:0 0 8px;">Code de groupe ?</h2>
+                <p style="font-size:14px; color:#64748B; margin:0 0 22px;">Si ton prof t'a donné un code de classe, saisis-le pour rejoindre ton groupe. Sinon, passe cette étape.</p>
+                <input onInput="{{ onCode }}" placeholder="Ex. 4MATH-2026" style="width:100%; font-family:'Outfit'; font-weight:700; letter-spacing:2px; text-align:center; font-size:18px; padding:16px; border:2px dashed #C7CCDA; border-radius:14px; background:#fff; text-transform:uppercase;">
+                <div style="text-align:center; margin-top:14px;"><span style="font-size:13px; color:#94A3B8;">Pas de code ? C'est optionnel.</span></div>
+              </div>
+            </sc-if>
+
+            <!-- step 5: done -->
+            <sc-if value="{{ isStep5 }}" hint-placeholder-val="{{ false }}">
+              <div style="text-align:center; padding-top:20px;">
+                <div style="width:96px; height:96px; margin:0 auto 18px; border-radius:28px; background:{{ recapBg }}; display:grid; place-items:center;">
+                  <svg viewBox="0 0 48 48" width="62" height="62" fill="none">
+                    <sc-if value="{{ recapAntenna }}" hint-placeholder-val="{{ false }}"><line x1="24" y1="11" x2="24" y2="5" stroke="{{ recapBody }}" stroke-width="3" stroke-linecap="round"></line><circle cx="24" cy="3.5" r="2.8" fill="{{ recapBody }}"></circle></sc-if>
+                    <sc-if value="{{ recapCat }}" hint-placeholder-val="{{ false }}"><path d="M12 16L16 5L22 14Z" fill="{{ recapBody }}"></path><path d="M36 16L32 5L26 14Z" fill="{{ recapBody }}"></path></sc-if>
+                    <sc-if value="{{ recapRound }}" hint-placeholder-val="{{ false }}"><circle cx="13" cy="13" r="5" fill="{{ recapBody }}"></circle><circle cx="35" cy="13" r="5" fill="{{ recapBody }}"></circle></sc-if>
+                    <ellipse cx="24" cy="26" rx="16" ry="15" fill="{{ recapBody }}"></ellipse>
+                    <circle cx="18" cy="25" r="4.2" fill="#fff"></circle><circle cx="30" cy="25" r="4.2" fill="#fff"></circle><circle cx="18" cy="25.5" r="2" fill="#1E293B"></circle><circle cx="30" cy="25.5" r="2" fill="#1E293B"></circle>
+                    <path d="M20 32q4 3 8 0" stroke="#1E293B" stroke-width="2" fill="none" stroke-linecap="round"></path>
+                  </svg>
+                </div>
+                <h2 style="font-family:'Outfit'; font-weight:800; font-size:26px; line-height:1.15; margin:0 0 8px;">Bienvenue, {{ pseudoEcho }} !</h2>
+                <p style="font-size:14px; color:#64748B; margin:0 0 20px; line-height:1.5;">Ton profil <strong>{{ levelEcho }}</strong> est prêt. Ta première mission t'attend — gagne tes premiers XP dès maintenant.</p>
+                <div style="display:inline-flex; gap:8px; background:#fff; border:1px solid #E5E7EF; border-radius:14px; padding:12px 16px;">
+                  <span style="font-size:13px; color:#64748B;">Objectif :</span><span style="font-size:13px; font-weight:700; color:#4F46E5;">10 min / jour 🔥</span>
+                </div>
+              </div>
+            </sc-if>
+
+          </div>
+
+          <!-- footer CTA -->
+          <div style="padding:14px 24px 22px; flex-shrink:0; display:flex; flex-direction:column; gap:10px;">
+            <sc-if value="{{ showSkip }}" hint-placeholder-val="{{ false }}">
+              <button onClick="{{ onContinue }}" style="font-family:'Outfit'; font-weight:600; font-size:14px; color:#64748B; background:transparent; border:none; cursor:pointer; padding:4px;">Passer cette étape</button>
+            </sc-if>
+            <sc-if value="{{ canContinue }}" hint-placeholder-val="{{ false }}">
+              <button onClick="{{ onContinue }}" style="width:100%; font-family:'Outfit'; font-weight:700; font-size:16px; color:#fff; background:#4F46E5; border:none; border-radius:15px; padding:16px; cursor:pointer; box-shadow:0 4px 0 #3730A3;" style-active="transform:translateY(2px); box-shadow:none;">{{ ctaLabel }}</button>
+            </sc-if>
+            <sc-if value="{{ cantContinue }}" hint-placeholder-val="{{ true }}">
+              <button disabled style="width:100%; font-family:'Outfit'; font-weight:700; font-size:16px; color:#A9AFC4; background:#E5E7EF; border:none; border-radius:15px; padding:16px; cursor:not-allowed;">{{ ctaLabel }}</button>
+            </sc-if>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ CONNEXION ============ -->
+    <div>
+      <div style="text-align:center; font-family:'Outfit'; font-weight:700; font-size:14px; color:#475569; margin-bottom:16px;">Connexion</div>
+      <div style="width:412px; background:#0E1124; border-radius:46px; padding:11px; box-shadow:0 30px 60px -20px rgba(15,23,42,.45);">
+        <div style="width:390px; height:788px; background:#F4F5FB; border-radius:35px; overflow:hidden; display:flex; flex-direction:column;">
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:14px 24px 4px; font-family:'Outfit'; font-weight:700; font-size:14px; flex-shrink:0;"><span>9:41</span><span style="font-size:12px; letter-spacing:1px;">●●● ⌖ ▮</span></div>
+
+          <div style="flex:1; padding:30px 28px 0; display:flex; flex-direction:column;">
+            <div style="text-align:center; margin-bottom:26px;">
+              <div style="width:84px; height:84px; margin:0 auto 16px; border-radius:26px; background:linear-gradient(135deg,#4F46E5,#7C3AED); display:grid; place-items:center; box-shadow:0 12px 28px rgba(79,70,229,.35);">
+                <svg viewBox="0 0 48 48" width="52" height="52" fill="none"><line x1="24" y1="5" x2="24" y2="11" stroke="#fff" stroke-width="2.5" stroke-linecap="round"></line><circle cx="24" cy="4" r="2.6" fill="#FBBF24"></circle><rect x="9" y="11" width="30" height="26" rx="9" fill="#fff"></rect><circle cx="18" cy="23" r="4.6" fill="#4F46E5"></circle><circle cx="30" cy="23" r="4.6" fill="#4F46E5"></circle><circle cx="18.5" cy="23.5" r="2" fill="#fff"></circle><circle cx="30.5" cy="23.5" r="2" fill="#fff"></circle><rect x="19" y="30" width="10" height="3" rx="1.5" fill="#C7D2FE"></rect></svg>
+              </div>
+              <h2 style="font-family:'Outfit'; font-weight:800; font-size:27px; margin:0 0 6px;">Content de te revoir !</h2>
+              <p style="font-size:14px; color:#64748B; margin:0;">Connecte-toi pour continuer ta série 🔥</p>
+            </div>
+
+            <label style="display:block; font-size:13px; font-weight:600; margin-bottom:7px;">Pseudo</label>
+            <input onInput="{{ onLoginUser }}" placeholder="Ton pseudo" style="width:100%; font-family:'Lexend'; font-size:16px; padding:14px; border:2px solid #E5E7EF; border-radius:14px; background:#fff; margin-bottom:16px;">
+            <label style="display:block; font-size:13px; font-weight:600; margin-bottom:7px;">Mot de passe</label>
+            <input onInput="{{ onLoginPw }}" type="password" placeholder="••••••" style="width:100%; font-family:'Lexend'; font-size:16px; padding:14px; border:2px solid #E5E7EF; border-radius:14px; background:#fff; margin-bottom:18px;">
+
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:24px;">
+              <button onClick="{{ toggleRemember }}" style="display:flex; align-items:center; gap:9px; background:transparent; border:none; cursor:pointer; padding:0;">
+                <sc-if value="{{ remember }}" hint-placeholder-val="{{ true }}"><span style="width:22px; height:22px; border-radius:7px; background:#4F46E5; display:grid; place-items:center;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span></sc-if>
+                <sc-if value="{{ notRemember }}" hint-placeholder-val="{{ false }}"><span style="width:22px; height:22px; border-radius:7px; border:2px solid #CBD0DE; background:#fff;"></span></sc-if>
+                <span style="font-size:14px; font-weight:500; color:#334155;">Se souvenir de moi</span>
+              </button>
+              <span style="font-size:13px; font-weight:600; color:#4F46E5;">Oublié ?</span>
+            </div>
+
+            <sc-if value="{{ canLogin }}" hint-placeholder-val="{{ false }}">
+              <button style="width:100%; font-family:'Outfit'; font-weight:700; font-size:16px; color:#fff; background:#4F46E5; border:none; border-radius:15px; padding:16px; cursor:pointer; box-shadow:0 4px 0 #3730A3;" style-active="transform:translateY(2px); box-shadow:none;">Se connecter</button>
+            </sc-if>
+            <sc-if value="{{ cantLogin }}" hint-placeholder-val="{{ true }}">
+              <button disabled style="width:100%; font-family:'Outfit'; font-weight:700; font-size:16px; color:#A9AFC4; background:#E5E7EF; border:none; border-radius:15px; padding:16px; cursor:not-allowed;">Se connecter</button>
+            </sc-if>
+          </div>
+
+          <div style="padding:18px 28px 26px; text-align:center; flex-shrink:0;">
+            <span style="font-size:14px; color:#64748B;">Pas encore de compte ? </span><span style="font-size:14px; font-weight:700; color:#4F46E5;">Crée ton profil</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div style="max-width:760px; margin:52px auto 0; background:#fff; border:1px dashed #CBD5E1; border-radius:18px; padding:24px 30px;">
+    <div style="font-family:'Outfit'; font-weight:700; font-size:13px; letter-spacing:.1em; text-transform:uppercase; color:#94A3B8; margin-bottom:12px;">Prochaines étapes</div>
+    <ol style="margin:0; padding-left:20px; font-size:15px; line-height:1.8; color:#334155;">
+      <li>Écran de jeu / exercice CE1D avec rendu <strong>KaTeX</strong> + gain d'XP animé.</li>
+      <li>Collection de badges & écran de niveaux (Apprenti → Légende).</li>
+      <li>Espaces prof et parent (desktop), bibliothèque de ressources, abonnement.</li>
+    </ol>
+  </div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1260,&quot;height&quot;:1000}}">
+class Component extends DCLogic {
+  state = {
+    step: 0, pseudo: "", avatar: null, pw: "", pw2: "", level: null, code: "",
+    loginUser: "", loginPw: "", remember: true,
+  };
+
+  AV_COLORS = [
+    "#6366F1","#8B5CF6","#3B82F6","#22C55E","#F97316","#EC4899",
+    "#14B8A6","#F59E0B","#EF4444","#06B6D4","#84CC16","#A855F7",
+  ];
+  AV_BG = {
+    "#6366F1":"#EEF0FF","#8B5CF6":"#F3EBFF","#3B82F6":"#E7F0FF","#22C55E":"#DCFCE7",
+    "#F97316":"#FFF1E6","#EC4899":"#FCE7F3","#14B8A6":"#CCFBF1","#F59E0B":"#FEF3C7",
+    "#EF4444":"#FEE2E2","#06B6D4":"#CFFAFE","#84CC16":"#ECFCCB","#A855F7":"#F5E8FF",
+  };
+  EARS = ["antenna","cat","round","none"];
+
+  avatarDef(i) {
+    const body = this.AV_COLORS[i % this.AV_COLORS.length];
+    const ear = this.EARS[i % 4];
+    const eyesOne = i % 5 === 0;
+    return { body, bg: this.AV_BG[body], ear, eyesOne };
+  }
+
+  LEVELS = [
+    { key: "CE1D", short: "CE1D", title: "CE1D", sub: "Examen de fin de 1er degré" },
+    { key: "S1", short: "S1", title: "Secondaire 1", sub: "1re année" },
+    { key: "S2", short: "S2", title: "Secondaire 2", sub: "2e année" },
+    { key: "S3", short: "S3", title: "Secondaire 3", sub: "3e année" },
+  ];
+
+  renderVals() {
+    const s = this.state;
+    const set = (patch) => this.setState(patch);
+
+    // progress segments (5 steps: 0..4, step5 = done)
+    const segments = [0, 1, 2, 3, 4].map((i) => ({
+      style: `flex:1; height:6px; border-radius:999px; background:${i <= s.step ? "#4F46E5" : "#E0E3ED"};`,
+    }));
+
+    // avatars
+    const avatars = Array.from({ length: 20 }, (_, i) => {
+      const d = this.avatarDef(i);
+      const sel = s.avatar === i;
+      return {
+        body: d.body,
+        earAntenna: d.ear === "antenna", earCat: d.ear === "cat", earRound: d.ear === "round",
+        eyesOne: d.eyesOne, eyesTwo: !d.eyesOne,
+        style: `display:grid; place-items:center; aspect-ratio:1; border-radius:18px; background:${d.bg}; border:3px solid ${sel ? "#4F46E5" : "transparent"}; box-shadow:${sel ? "0 4px 12px rgba(79,70,229,.3)" : "none"}; cursor:pointer; padding:0; transition:all .12s;`,
+        onClick: () => set({ avatar: i }),
+      };
+    });
+
+    // levels
+    const levels = this.LEVELS.map((lv) => {
+      const sel = s.level === lv.key;
+      return {
+        short: lv.short, title: lv.title, sub: lv.sub,
+        iconBg: sel ? "#4F46E5" : "#EEF0FF", iconColor: sel ? "#fff" : "#4F46E5",
+        check: sel ? "#4F46E5" : "transparent",
+        style: `display:flex; align-items:center; gap:13px; width:100%; padding:13px 15px; border-radius:16px; border:2px solid ${sel ? "#4F46E5" : "#E9EBF2"}; background:${sel ? "#F5F6FF" : "#fff"}; cursor:pointer; transition:all .12s; font-family:'Lexend',sans-serif;`,
+        onClick: () => set({ level: lv.key }),
+      };
+    });
+
+    // validation per step
+    const valid = [
+      s.pseudo.trim().length >= 3,
+      s.avatar !== null,
+      s.pw.length >= 6 && s.pw === s.pw2,
+      s.level !== null,
+      true,
+    ];
+    const canContinue = s.step <= 4 && valid[s.step];
+    const pwMismatch = s.step === 2 && s.pw2.length > 0 && s.pw !== s.pw2;
+
+    const ctaLabels = ["Continuer", "Continuer", "Continuer", "Continuer", "Terminer", "Commencer 🚀"];
+
+    const recap = s.avatar !== null ? this.avatarDef(s.avatar) : this.avatarDef(0);
+
+    return {
+      segments, avatars, levels,
+      stepLabel: s.step < 5 ? `${s.step + 1}/5` : "✓",
+      isStep0: s.step === 0, isStep1: s.step === 1, isStep2: s.step === 2,
+      isStep3: s.step === 3, isStep4: s.step === 4, isStep5: s.step === 5,
+      onPseudo: (e) => set({ pseudo: e.target.value }),
+      onPw: (e) => set({ pw: e.target.value }),
+      onPw2: (e) => set({ pw2: e.target.value }),
+      onCode: (e) => set({ code: e.target.value }),
+      pwMismatch,
+      pw2Style: `width:100%; font-family:'Lexend'; font-size:16px; padding:14px; border:2px solid ${pwMismatch ? "#EF4444" : "#E5E7EF"}; border-radius:14px; background:${pwMismatch ? "#FEF2F2" : "#fff"};`,
+      canContinue: s.step <= 4 && canContinue,
+      cantContinue: s.step <= 4 && !canContinue,
+      showSkip: s.step === 4 && s.code.trim() === "",
+      ctaLabel: ctaLabels[s.step],
+      onContinue: () => { if (s.step <= 4 && valid[s.step]) set({ step: s.step + 1 }); },
+      onBack: () => set({ step: Math.max(0, s.step - 1) }),
+      pseudoEcho: s.pseudo.trim() || "champion",
+      levelEcho: s.level || "CE1D",
+      recapBg: recap.bg, recapBody: recap.body,
+      recapAntenna: recap.ear === "antenna", recapCat: recap.ear === "cat", recapRound: recap.ear === "round",
+
+      // login
+      onLoginUser: (e) => set({ loginUser: e.target.value }),
+      onLoginPw: (e) => set({ loginPw: e.target.value }),
+      remember: s.remember, notRemember: !s.remember,
+      toggleRemember: () => set({ remember: !s.remember }),
+      canLogin: s.loginUser.trim().length > 0 && s.loginPw.length > 0,
+      cantLogin: !(s.loginUser.trim().length > 0 && s.loginPw.length > 0),
+    };
+  }
+}
+</script>
+</body>
+</html>

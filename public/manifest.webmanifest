@@ -1,0 +1,10 @@
+{
+  "name": "MLC Academy",
+  "short_name": "MLC Academy",
+  "description": "Réussis ton CE1D en mathématiques",
+  "start_url": "/eleve/dashboard",
+  "display": "standalone",
+  "background_color": "#f6f8fb",
+  "theme_color": "#4f46e5",
+  "icons": []
+}

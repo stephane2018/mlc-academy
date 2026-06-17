@@ -1,0 +1,261 @@
+@import "katex/dist/katex.min.css";
+@import "@fontsource-variable/outfit";
+@import "@fontsource-variable/lexend";
+@import "@fontsource-variable/jetbrains-mono";
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ------------------------------------------------------------------ *
+ * MLC Academy — Direction artistique
+ * Indigo primaire · Teal secondaire · Ambre (badges/streak) · Slate
+ * Titres : Outfit · Corps : Lexend
+ * ------------------------------------------------------------------ */
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --font-sans: "Lexend Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-heading: "Outfit Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono Variable", ui-monospace, monospace;
+
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* Tokens sémantiques MLC Academy */
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
+  --color-brand-soft: var(--brand-soft);
+  --color-teal: var(--teal);
+  --color-teal-foreground: var(--teal-foreground);
+  --color-teal-soft: var(--teal-soft);
+  --color-amber: var(--amber);
+  --color-amber-foreground: var(--amber-foreground);
+  --color-amber-soft: var(--amber-soft);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-success-soft: var(--success-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --color-locked: var(--locked);
+
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+}
+
+:root {
+  --radius: 1rem;
+
+  --background: #f6f8fb;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+
+  --primary: #4f46e5;
+  --primary-foreground: #ffffff;
+  --secondary: #f1f5f9;
+  --secondary-foreground: #334155;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  --accent: #eef2ff;
+  --accent-foreground: #4338ca;
+  --destructive: #dc2626;
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  --ring: #4f46e5;
+
+  --brand: #4f46e5;
+  --brand-foreground: #ffffff;
+  --brand-soft: #eef2ff;
+  --teal: #0d9488;
+  --teal-foreground: #ffffff;
+  --teal-soft: #ccfbf1;
+  --amber: #f59e0b;
+  --amber-foreground: #78350f;
+  --amber-soft: #fef3c7;
+  --success: #16a34a;
+  --success-foreground: #ffffff;
+  --success-soft: #dcfce7;
+  --info: #2563eb;
+  --info-soft: #dbeafe;
+  --locked: #94a3b8;
+
+  --chart-1: #4f46e5;
+  --chart-2: #0d9488;
+  --chart-3: #f59e0b;
+  --chart-4: #16a34a;
+  --chart-5: #64748b;
+
+  --sidebar: #0f172a;
+  --sidebar-foreground: #cbd5e1;
+  --sidebar-primary: #0d9488;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #1e293b;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #1e293b;
+  --sidebar-ring: #0d9488;
+}
+
+.dark {
+  --background: #0f172a;
+  --foreground: #f1f5f9;
+  --card: #1e293b;
+  --card-foreground: #f1f5f9;
+  --popover: #1e293b;
+  --popover-foreground: #f1f5f9;
+  --primary: #6366f1;
+  --primary-foreground: #ffffff;
+  --secondary: #1e293b;
+  --secondary-foreground: #f1f5f9;
+  --muted: #1e293b;
+  --muted-foreground: #94a3b8;
+  --accent: #312e81;
+  --accent-foreground: #e0e7ff;
+  --destructive: #ef4444;
+  --border: rgba(255, 255, 255, 0.1);
+  --input: rgba(255, 255, 255, 0.14);
+  --ring: #6366f1;
+
+  --brand: #6366f1;
+  --brand-soft: #312e81;
+  --teal-soft: #134e4a;
+  --amber: #fbbf24;
+  --amber-soft: #422006;
+  --amber-foreground: #fde68a;
+  --success-soft: #14532d;
+  --info-soft: #1e3a8a;
+
+  --sidebar: #020617;
+  --sidebar-foreground: #cbd5e1;
+  --sidebar-accent: #0f172a;
+  --sidebar-border: #1e293b;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans;
+  }
+  body {
+    @apply bg-background text-foreground;
+    margin: 0;
+    min-height: 100%;
+    font-feature-settings: "ss01";
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3, h4, h5 {
+    @apply font-heading;
+  }
+}
+
+@utility no-scrollbar {
+  &::-webkit-scrollbar { display: none; }
+  scrollbar-width: none;
+}
+
+/* --- Profondeur & finitions desktop --- */
+@utility shadow-soft {
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.04),
+    0 4px 12px rgba(15, 23, 42, 0.05);
+}
+@utility shadow-float {
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.04),
+    0 10px 30px -8px rgba(15, 23, 42, 0.12),
+    0 4px 10px -4px rgba(15, 23, 42, 0.06);
+}
+@utility shadow-brand-glow {
+  box-shadow:
+    0 12px 32px -10px color-mix(in oklab, var(--brand) 55%, transparent),
+    0 4px 12px -4px color-mix(in oklab, var(--brand) 30%, transparent);
+}
+
+/* Texte en dégradé de marque */
+@utility text-gradient-brand {
+  background: linear-gradient(100deg, var(--brand), #7c6cff 60%, var(--teal));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Fond pointillé discret pour les héros desktop */
+@utility bg-dotted {
+  background-image: radial-gradient(currentColor 1px, transparent 1px);
+  background-size: 18px 18px;
+}
+
+/* Papier quadrillé — signature de la landing (cahier de maths) */
+@utility bg-grid {
+  background-image:
+    linear-gradient(to right, color-mix(in oklab, var(--brand) 9%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in oklab, var(--brand) 9%, transparent) 1px, transparent 1px);
+  background-size: 26px 26px;
+}
+@utility bg-grid-strong {
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+/* Flottement doux des formules dans le hero */
+@keyframes float-y {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+@utility animate-float {
+  animation: float-y 6s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-float { animation: none; }
+}
+
+/* Carte interactive : élévation au survol */
+@utility card-hover {
+  transition: transform 200ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 200ms ease;
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow:
+      0 1px 2px rgba(15, 23, 42, 0.04),
+      0 16px 40px -12px rgba(15, 23, 42, 0.16);
+  }
+}

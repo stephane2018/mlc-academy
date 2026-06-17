@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Lexend:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; }
+  @keyframes mlc-spin { to { transform: rotate(360deg); } }
+  @keyframes mlc-pop { 0% { transform: scale(.6); opacity: 0; } 60% { transform: scale(1.12); } 100% { transform: scale(1); opacity: 1; } }
+  @keyframes mlc-shine { 0%,100% { box-shadow: 0 6px 18px rgba(245,158,11,.28); } 50% { box-shadow: 0 6px 26px rgba(245,158,11,.55); } }
+  @keyframes mlc-rise { from { transform: translateY(8px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+</style>
+</helmet>
+
+<div style="font-family: 'Lexend', sans-serif; background: #EEF2F6; color: #0F172A; min-height: 100vh; padding: 56px 40px 80px;">
+
+  <!-- ===== PAGE HEADER ===== -->
+  <div style="max-width: 1180px; margin: 0 auto 56px;">
+    <div style="display: inline-flex; align-items: center; gap: 10px; padding: 7px 14px; background: #fff; border: 1px solid #E2E8F0; border-radius: 999px; font-size: 13px; font-weight: 600; color: #0D9488; letter-spacing: .01em;">
+      <span style="width: 22px; height: 22px; border-radius: 7px; background: #0D9488; color: #fff; font-family: 'Outfit'; font-weight: 800; font-size: 13px; display: grid; place-items: center;">M</span>
+      Math'LaClasse · Système de design
+    </div>
+    <h1 style="font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 46px; line-height: 1.05; letter-spacing: -.02em; margin: 22px 0 14px; max-width: 760px;">Étape 1 — Direction visuelle</h1>
+    <p style="font-size: 18px; line-height: 1.55; color: #475569; max-width: 680px; margin: 0; text-wrap: pretty;">Palette avec rôles, typographie et composants signatures, appliqués sur les deux écrans gamifiés (dashboard élève + jeu). Une fois ce registre validé, je le décline sur le back-office sobre, puis sur tous les autres écrans.</p>
+  </div>
+
+  <!-- ===== FONDATIONS ===== -->
+  <div style="max-width: 1180px; margin: 0 auto;">
+    <div style="display: flex; align-items: center; gap: 14px; margin: 0 0 26px;">
+      <span style="font-family: 'Outfit'; font-weight: 700; font-size: 13px; letter-spacing: .14em; text-transform: uppercase; color: #0D9488;">01 — Fondations</span>
+      <span style="flex: 1; height: 1px; background: #D9E2EC;"></span>
+    </div>
+
+    <!-- COULEURS / RÔLES -->
+    <div style="background: #fff; border: 1px solid #E7EDF3; border-radius: 20px; padding: 30px 32px; margin-bottom: 22px;">
+      <h2 style="font-family: 'Outfit'; font-weight: 700; font-size: 22px; margin: 0 0 4px;">Couleurs — par rôle</h2>
+      <p style="font-size: 14px; color: #64748B; margin: 0 0 24px;">Les couleurs portent un sens. L'accent motive, le neutre apporte le sérieux, le sémantique guide.</p>
+
+      <div style="font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #94A3B8; margin-bottom: 12px;">Accents</div>
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); gap: 12px; margin-bottom: 26px;">
+        <div style="border: 1px solid #EEF2F6; border-radius: 14px; overflow: hidden;"><div style="height: 70px; background: #0D9488;"></div><div style="padding: 11px 13px;"><div style="font-weight: 600; font-size: 14px;">Teal primaire</div><div style="font-size: 12px; color: #94A3B8; font-family: 'Outfit';">#0D9488 · CTA, progression</div></div></div>
+        <div style="border: 1px solid #EEF2F6; border-radius: 14px; overflow: hidden;"><div style="height: 70px; background: #0F766E;"></div><div style="padding: 11px 13px;"><div style="font-weight: 600; font-size: 14px;">Teal foncé</div><div style="font-size: 12px; color: #94A3B8; font-family: 'Outfit';">#0F766E · pressed</div></div></div>
+        <div style="border: 1px solid #EEF2F6; border-radius: 14px; overflow: hidden;"><div style="height: 70px; background: #F59E0B;"></div><div style="padding: 11px 13px;"><div style="font-weight: 600; font-size: 14px;">Ambre secondaire</div><div style="font-size: 12px; color: #94A3B8; font-family: 'Outfit';">#F59E0B · badges, niveaux</div></div></div>
+        <div style="border: 1px solid #EEF2F6; border-radius: 14px; overflow: hidden;"><div style="height: 70px; background: #FEF3C7;"></div><div style="padding: 11px 13px;"><div style="font-weight: 600; font-size: 14px;">Ambre clair</div><div style="font-size: 12px; color: #94A3B8; font-family: 'Outfit';">#FEF3C7 · surfaces gain</div></div></div>
+      </div>
+
+      <div style="font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #94A3B8; margin-bottom: 12px;">Sémantique</div>
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); gap: 12px; margin-bottom: 26px;">
+        <div style="border: 1px solid #EEF2F6; border-radius: 14px; overflow: hidden;"><div style="height: 56px; background: #16A34A; display: flex; align-items: center; padding: 0 14px; color: #fff; font-weight: 700; font-size: 18px;">✓</div><div style="padding: 11px 13px;"><div style="font-weight: 600; font-size: 14px;">Succès</div><div style="font-size: 12px; color: #94A3B8; font-family: 'Outfit';">#16A34A · réponse juste</div></div></div>
+        <div style="border: 1px solid #EEF2F6; border-radius: 14px; overflow: hidden;"><div style="height: 56px; background: #DC2626; display: flex; align-items: center; padding: 0 14px; color: #fff; font-weight: 700; font-size: 18px;">✕</div><div style="padding: 11px 13px;"><div style="font-weight: 600; font-size: 14px;">Erreur</div><div style="font-size: 12px; color: #94A3B8; font-family: 'Outfit';">#DC2626 · réponse fausse</div></div></div>
+        <div style="border: 1px solid #EEF2F6; border-radius: 14px; overflow: hidden;"><div style="height: 56px; background: #94A3B8; display: flex; align-items: center; padding: 0 14px; color: #fff; font-weight: 700; font-size: 16px;">🔒</div><div style="padding: 11px 13px;"><div style="font-weight: 600; font-size: 14px;">Verrouillé</div><div style="font-size: 12px; color: #94A3B8; font-family: 'Outfit';">#94A3B8 · premium</div></div></div>
+        <div style="border: 1px solid #EEF2F6; border-radius: 14px; overflow: hidden;"><div style="height: 56px; background: #2563EB; display: flex; align-items: center; padding: 0 14px; color: #fff; font-weight: 700; font-size: 18px;">i</div><div style="padding: 11px 13px;"><div style="font-weight: 600; font-size: 14px;">Info</div><div style="font-size: 12px; color: #94A3B8; font-family: 'Outfit';">#2563EB · aide, astuce</div></div></div>
+      </div>
+
+      <div style="font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #94A3B8; margin-bottom: 12px;">Neutres (encre &amp; surfaces)</div>
+      <div style="display: flex; border: 1px solid #EEF2F6; border-radius: 14px; overflow: hidden;">
+        <div style="flex: 1; height: 58px; background: #0F172A;"></div>
+        <div style="flex: 1; height: 58px; background: #334155;"></div>
+        <div style="flex: 1; height: 58px; background: #64748B;"></div>
+        <div style="flex: 1; height: 58px; background: #CBD5E1;"></div>
+        <div style="flex: 1; height: 58px; background: #F1F5F9;"></div>
+        <div style="flex: 1; height: 58px; background: #fff;"></div>
+      </div>
+      <div style="display: flex; font-size: 11px; color: #94A3B8; font-family: 'Outfit'; margin-top: 6px;">
+        <div style="flex: 1;">#0F172A</div><div style="flex: 1;">#334155</div><div style="flex: 1;">#64748B</div><div style="flex: 1;">#CBD5E1</div><div style="flex: 1;">#F1F5F9</div><div style="flex: 1;">#FFFFFF</div>
+      </div>
+    </div>
+
+    <!-- TYPO + MATH -->
+    <div style="display: grid; grid-template-columns: 1.25fr 1fr; gap: 22px; margin-bottom: 22px;">
+      <div style="background: #fff; border: 1px solid #E7EDF3; border-radius: 20px; padding: 30px 32px;">
+        <h2 style="font-family: 'Outfit'; font-weight: 700; font-size: 22px; margin: 0 0 4px;">Typographie</h2>
+        <p style="font-size: 14px; color: #64748B; margin: 0 0 24px;"><strong style="color:#0F172A;">Outfit</strong> pour les titres (géométrique, du caractère) · <strong style="color:#0F172A;">Lexend</strong> pour le corps (optimisée pour la lecture).</p>
+        <div style="display: flex; flex-direction: column; gap: 16px;">
+          <div style="border-bottom: 1px solid #F1F5F9; padding-bottom: 16px;"><div style="font-size: 11px; color: #94A3B8; font-family: 'Outfit'; margin-bottom: 4px;">Display · Outfit 800 · 46/1.05</div><div style="font-family: 'Outfit'; font-weight: 800; font-size: 42px; line-height: 1.05; letter-spacing: -.02em;">Réussis ton CE1D</div></div>
+          <div style="border-bottom: 1px solid #F1F5F9; padding-bottom: 16px;"><div style="font-size: 11px; color: #94A3B8; font-family: 'Outfit'; margin-bottom: 4px;">H1 · Outfit 700 · 28</div><div style="font-family: 'Outfit'; font-weight: 700; font-size: 28px; letter-spacing: -.01em;">Chapitre 3 — Les fractions</div></div>
+          <div style="border-bottom: 1px solid #F1F5F9; padding-bottom: 16px;"><div style="font-size: 11px; color: #94A3B8; font-family: 'Outfit'; margin-bottom: 4px;">H2 · Outfit 600 · 20</div><div style="font-family: 'Outfit'; font-weight: 600; font-size: 20px;">Ta progression cette semaine</div></div>
+          <div style="border-bottom: 1px solid #F1F5F9; padding-bottom: 16px;"><div style="font-size: 11px; color: #94A3B8; font-family: 'Outfit'; margin-bottom: 4px;">Body · Lexend 400 · 16/1.6</div><div style="font-size: 16px; line-height: 1.6; color: #334155;">Calcule l'aire d'un rectangle de 7 cm de long et 4 cm de large. N'oublie pas l'unité dans ta réponse.</div></div>
+          <div><div style="font-size: 11px; color: #94A3B8; font-family: 'Outfit'; margin-bottom: 4px;">Small · Lexend 500 · 13</div><div style="font-size: 13px; font-weight: 500; color: #64748B;">Examen blanc · 50 min · 20 questions</div></div>
+        </div>
+      </div>
+
+      <div style="background: #fff; border: 1px solid #E7EDF3; border-radius: 20px; padding: 30px 32px;">
+        <h2 style="font-family: 'Outfit'; font-weight: 700; font-size: 22px; margin: 0 0 4px;">Affichage des maths</h2>
+        <p style="font-size: 14px; color: #64748B; margin: 0 0 24px;">Net et non ambigu : fractions empilées, exposants, équations alignées.</p>
+        <div style="display: flex; flex-direction: column; gap: 18px; font-size: 26px; color: #0F172A;">
+          <div style="background: #F8FAFC; border: 1px solid #EEF2F6; border-radius: 12px; padding: 18px 20px; display: flex; align-items: center; gap: 14px;">
+            <span style="display: inline-flex; flex-direction: column; align-items: center; line-height: 1; vertical-align: middle;"><span style="padding: 0 6px 3px;">3</span><span style="height: 2px; align-self: stretch; background: #0F172A;"></span><span style="padding: 3px 6px 0;">4</span></span>
+            <span style="color:#64748B;">+</span>
+            <span style="display: inline-flex; flex-direction: column; align-items: center; line-height: 1;"><span style="padding: 0 6px 3px;">1</span><span style="height: 2px; align-self: stretch; background: #0F172A;"></span><span style="padding: 3px 6px 0;">2</span></span>
+            <span style="color:#64748B;">=</span>
+            <span style="display: inline-flex; flex-direction: column; align-items: center; line-height: 1; color:#0D9488;"><span style="padding: 0 6px 3px;">5</span><span style="height: 2px; align-self: stretch; background: #0D9488;"></span><span style="padding: 3px 6px 0;">4</span></span>
+          </div>
+          <div style="background: #F8FAFC; border: 1px solid #EEF2F6; border-radius: 12px; padding: 18px 20px;">a<sup style="font-size:.62em; vertical-align: super;">2</sup> + b<sup style="font-size:.62em; vertical-align: super;">2</sup> = c<sup style="font-size:.62em; vertical-align: super;">2</sup></div>
+          <div style="background: #F8FAFC; border: 1px solid #EEF2F6; border-radius: 12px; padding: 18px 20px;">2x + 5 = 17 &nbsp;<span style="color:#64748B; font-size: 18px;">⇒</span>&nbsp; x = 6</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== COMPOSANTS ===== -->
+  <div style="max-width: 1180px; margin: 56px auto 0;">
+    <div style="display: flex; align-items: center; gap: 14px; margin: 0 0 26px;">
+      <span style="font-family: 'Outfit'; font-weight: 700; font-size: 13px; letter-spacing: .14em; text-transform: uppercase; color: #0D9488;">02 — Composants signatures</span>
+      <span style="flex: 1; height: 1px; background: #D9E2EC;"></span>
+    </div>
+
+    <!-- BOUTONS -->
+    <div style="background: #fff; border: 1px solid #E7EDF3; border-radius: 20px; padding: 30px 32px; margin-bottom: 22px;">
+      <h2 style="font-family: 'Outfit'; font-weight: 700; font-size: 22px; margin: 0 0 24px;">Boutons &amp; états</h2>
+      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px;">
+        <div>
+          <div style="font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #94A3B8; margin-bottom: 14px;">Primaire</div>
+          <div style="display: flex; flex-direction: column; gap: 12px; align-items: flex-start;">
+            <button style="font-family:'Outfit'; font-weight:600; font-size:15px; color:#fff; background:#0D9488; border:none; border-radius:12px; padding:13px 22px; cursor:pointer; box-shadow:0 2px 0 #0F766E; transition:all .12s;" style-hover="background:#0F8A7E; transform:translateY(-1px);" style-active="background:#0F766E; box-shadow:none; transform:translateY(1px);">Commencer gratuitement</button>
+            <span style="font-size:12px;color:#94A3B8;">défaut · hover · pressed</span>
+            <button disabled style="font-family:'Outfit'; font-weight:600; font-size:15px; color:#94A3B8; background:#F1F5F9; border:none; border-radius:12px; padding:13px 22px; cursor:not-allowed;">Désactivé</button>
+            <button style="font-family:'Outfit'; font-weight:600; font-size:15px; color:#fff; background:#0D9488; border:none; border-radius:12px; padding:13px 22px; display:inline-flex; align-items:center; gap:10px; cursor:wait; opacity:.92;"><span style="width:15px;height:15px;border:2.5px solid rgba(255,255,255,.45);border-top-color:#fff;border-radius:50%;display:inline-block;animation:mlc-spin .7s linear infinite;"></span>Chargement</button>
+          </div>
+        </div>
+        <div>
+          <div style="font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #94A3B8; margin-bottom: 14px;">Secondaire</div>
+          <div style="display: flex; flex-direction: column; gap: 12px; align-items: flex-start;">
+            <button style="font-family:'Outfit'; font-weight:600; font-size:15px; color:#0F766E; background:#fff; border:1.5px solid #99E6DD; border-radius:12px; padding:12px 22px; cursor:pointer; transition:all .12s;" style-hover="background:#F0FDFA; border-color:#0D9488;" style-active="background:#CCFBF1;">Voir les vidéos</button>
+            <span style="font-size:12px;color:#94A3B8;">défaut · hover · pressed</span>
+            <button disabled style="font-family:'Outfit'; font-weight:600; font-size:15px; color:#CBD5E1; background:#fff; border:1.5px solid #E2E8F0; border-radius:12px; padding:12px 22px; cursor:not-allowed;">Désactivé</button>
+          </div>
+        </div>
+        <div>
+          <div style="font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #94A3B8; margin-bottom: 14px;">Fantôme</div>
+          <div style="display: flex; flex-direction: column; gap: 12px; align-items: flex-start;">
+            <button style="font-family:'Outfit'; font-weight:600; font-size:15px; color:#0F766E; background:transparent; border:none; border-radius:12px; padding:12px 18px; cursor:pointer; transition:all .12s;" style-hover="background:#F0FDFA;" style-active="background:#CCFBF1;">Plus tard</button>
+            <span style="font-size:12px;color:#94A3B8;">défaut · hover · pressed</span>
+            <button disabled style="font-family:'Outfit'; font-weight:600; font-size:15px; color:#CBD5E1; background:transparent; border:none; border-radius:12px; padding:12px 18px; cursor:not-allowed;">Désactivé</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BADGE + PROGRESSION + TIER -->
+    <div style="display: grid; grid-template-columns: 1.15fr 1fr; gap: 22px; margin-bottom: 22px;">
+      <div style="background: #fff; border: 1px solid #E7EDF3; border-radius: 20px; padding: 30px 32px;">
+        <h2 style="font-family: 'Outfit'; font-weight: 700; font-size: 22px; margin: 0 0 4px;">Badges</h2>
+        <p style="font-size: 14px; color: #64748B; margin: 0 0 24px;">Verrouillé = silhouette grise · débloqué = coloré, moment satisfaisant.</p>
+        <div style="display: flex; gap: 28px; align-items: flex-start; flex-wrap: wrap;">
+          <div style="text-align: center; width: 96px;">
+            <div style="width: 84px; height: 84px; margin: 0 auto 10px; border-radius: 22px; background: linear-gradient(145deg,#FBBF24,#F59E0B); display: grid; place-items: center; font-size: 38px; animation: mlc-shine 2.6s ease-in-out infinite;">🔥</div>
+            <div style="font-family:'Outfit'; font-weight:700; font-size:13px;">Série de 7</div>
+            <div style="font-size:11px; color:#16A34A; font-weight:600;">Débloqué</div>
+          </div>
+          <div style="text-align: center; width: 96px;">
+            <div style="width: 84px; height: 84px; margin: 0 auto 10px; border-radius: 22px; background: linear-gradient(145deg,#2DD4BF,#0D9488); display: grid; place-items: center; font-size: 38px; box-shadow: 0 6px 18px rgba(13,148,136,.28);">🎯</div>
+            <div style="font-family:'Outfit'; font-weight:700; font-size:13px;">Sans faute</div>
+            <div style="font-size:11px; color:#16A34A; font-weight:600;">Débloqué</div>
+          </div>
+          <div style="text-align: center; width: 96px;">
+            <div style="width: 84px; height: 84px; margin: 0 auto 10px; border-radius: 22px; background: #F1F5F9; border: 2px dashed #CBD5E1; display: grid; place-items: center; font-size: 32px; filter: grayscale(1); opacity: .55;">🏆</div>
+            <div style="font-family:'Outfit'; font-weight:700; font-size:13px; color:#94A3B8;">Champion</div>
+            <div style="font-size:11px; color:#94A3B8; font-weight:600;">🔒 Verrouillé</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="background: #fff; border: 1px solid #E7EDF3; border-radius: 20px; padding: 30px 32px;">
+        <h2 style="font-family: 'Outfit'; font-weight: 700; font-size: 22px; margin: 0 0 24px;">Progression &amp; tiers</h2>
+        <div style="margin-bottom: 22px;">
+          <div style="display:flex; justify-content:space-between; font-size:13px; font-weight:600; margin-bottom:8px;"><span>Chapitre 3 — Fractions</span><span style="color:#0D9488;">60% maîtrisé</span></div>
+          <div style="height: 12px; background: #F1F5F9; border-radius: 999px; overflow: hidden;"><div style="width: 60%; height: 100%; background: linear-gradient(90deg,#0D9488,#2DD4BF); border-radius: 999px;"></div></div>
+        </div>
+        <div style="margin-bottom: 24px;">
+          <div style="display:flex; justify-content:space-between; font-size:13px; font-weight:600; margin-bottom:8px;"><span>Progression globale</span><span style="color:#64748B;">28%</span></div>
+          <div style="height: 8px; background: #F1F5F9; border-radius: 999px; overflow: hidden;"><div style="width: 28%; height: 100%; background: #94A3B8; border-radius: 999px;"></div></div>
+        </div>
+        <div style="display: flex; gap: 10px;">
+          <span style="display:inline-flex; align-items:center; gap:6px; font-family:'Outfit'; font-weight:700; font-size:12px; padding:6px 12px; border-radius:999px; background:#DCFCE7; color:#15803D;">Gratuit</span>
+          <span style="display:inline-flex; align-items:center; gap:6px; font-family:'Outfit'; font-weight:700; font-size:12px; padding:6px 12px; border-radius:999px; background:#FEF3C7; color:#B45309;">🔒 Premium</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- CARTE QUESTION — états -->
+    <div style="background: #fff; border: 1px solid #E7EDF3; border-radius: 20px; padding: 30px 32px;">
+      <h2 style="font-family: 'Outfit'; font-weight: 700; font-size: 22px; margin: 0 0 4px;">Carte de question — états de réponse</h2>
+      <p style="font-size: 14px; color: #64748B; margin: 0 0 24px;">Le feedback ne repose jamais sur la couleur seule (icône + libellé). L'erreur n'est pas punitive.</p>
+      <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;">
+        <div style="border:1.5px solid #E2E8F0; border-radius:14px; padding:16px 18px; display:flex; align-items:center; justify-content:space-between; font-size:16px;"><span>x = 12</span><span style="font-size:12px; color:#94A3B8; font-weight:600;">Neutre</span></div>
+        <div style="border:1.5px solid #0D9488; background:#F0FDFA; border-radius:14px; padding:16px 18px; display:flex; align-items:center; justify-content:space-between; font-size:16px;"><span>x = 6</span><span style="width:20px;height:20px;border-radius:50%;border:2px solid #0D9488;display:grid;place-items:center;color:#0D9488;font-size:12px;">●</span></div>
+        <div style="border:1.5px solid #16A34A; background:#F0FDF4; border-radius:14px; padding:16px 18px; display:flex; align-items:center; justify-content:space-between; font-size:16px; color:#15803D; font-weight:600;"><span>x = 6</span><span style="display:inline-flex;align-items:center;gap:5px;font-size:13px;">Juste ✓</span></div>
+        <div style="border:1.5px solid #DC2626; background:#FEF2F2; border-radius:14px; padding:16px 18px; display:flex; align-items:center; justify-content:space-between; font-size:16px; color:#B91C1C; font-weight:600;"><span>x = 11</span><span style="display:inline-flex;align-items:center;gap:5px;font-size:13px;">Faux ✕</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== ÉCRANS APPLIQUÉS ===== -->
+  <div style="max-width: 1180px; margin: 56px auto 0;">
+    <div style="display: flex; align-items: center; gap: 14px; margin: 0 0 8px;">
+      <span style="font-family: 'Outfit'; font-weight: 700; font-size: 13px; letter-spacing: .14em; text-transform: uppercase; color: #0D9488;">03 — Le système appliqué</span>
+      <span style="flex: 1; height: 1px; background: #D9E2EC;"></span>
+    </div>
+    <p style="font-size: 15px; color: #64748B; margin: 0 0 32px; max-width: 620px;">Univers élève, mobile-first, énergique mais crédible. Le quiz est interactif — tape une réponse puis valide.</p>
+
+    <div style="display: flex; gap: 44px; justify-content: center; flex-wrap: wrap; align-items: flex-start;">
+
+      <!-- DASHBOARD ÉLÈVE -->
+      <div>
+        <div style="text-align:center; font-family:'Outfit'; font-weight:700; font-size:14px; color:#475569; margin-bottom:14px;">D · Dashboard élève</div>
+        <div data-screen-label="Dashboard élève" style="width: 384px; background: #0F172A; border-radius: 42px; padding: 10px; box-shadow: 0 30px 60px -20px rgba(15,23,42,.5);">
+          <div style="background: #F6F8FB; border-radius: 33px; overflow: hidden; height: 812px; overflow-y: auto; position: relative;">
+            <!-- status bar -->
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:14px 26px 6px; font-family:'Outfit'; font-weight:700; font-size:14px;"><span>9:41</span><span style="font-size:12px; letter-spacing:1px;">●●● ⌖ ▮</span></div>
+            <!-- header -->
+            <div style="background: linear-gradient(160deg,#0D9488,#0F766E); padding: 18px 22px 26px; color:#fff; border-radius: 0 0 26px 26px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;">
+                <div><div style="font-size:13px; opacity:.85;">Salut Léa 👋</div><div style="font-family:'Outfit'; font-weight:700; font-size:21px;">Objectif du jour : 10 min</div></div>
+                <div style="display:inline-flex; align-items:center; gap:7px; background:rgba(255,255,255,.15); padding:7px 12px; border-radius:999px; font-family:'Outfit'; font-weight:700; font-size:14px;">🔥 7</div>
+              </div>
+              <div style="background:rgba(255,255,255,.13); border-radius:16px; padding:14px 16px; display:flex; align-items:center; gap:14px;">
+                <div style="font-family:'Outfit'; font-weight:800; font-size:30px;">1 240</div>
+                <div style="font-size:13px; line-height:1.3; opacity:.9;">points cette<br>semaine</div>
+                <div style="margin-left:auto; text-align:right; font-size:12px; opacity:.85;">14ᵉ / 312<br><span style="opacity:.7;">classement</span></div>
+              </div>
+            </div>
+            <div style="padding: 22px 20px 30px; display:flex; flex-direction:column; gap:20px;">
+              <!-- reprendre -->
+              <button style="text-align:left; background:#fff; border:1px solid #ECF1F6; border-radius:18px; padding:16px 18px; display:flex; align-items:center; gap:14px; cursor:pointer; box-shadow:0 4px 14px rgba(15,23,42,.05);">
+                <span style="width:48px;height:48px;border-radius:14px;background:#FEF3C7;display:grid;place-items:center;font-size:24px;">🎮</span>
+                <span style="flex:1;"><span style="display:block; font-family:'Outfit'; font-weight:700; font-size:16px;">Reprendre le jeu</span><span style="display:block; font-size:13px; color:#64748B;">Fractions · question 4/10</span></span>
+                <span style="color:#0D9488; font-size:20px;">›</span>
+              </button>
+              <!-- progression chapitres -->
+              <div>
+                <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:12px;"><h3 style="font-family:'Outfit'; font-weight:700; font-size:17px; margin:0;">Tes chapitres</h3><span style="font-size:13px; color:#0D9488; font-weight:600;">Tout voir</span></div>
+                <div style="display:flex; flex-direction:column; gap:12px;">
+                  <div style="background:#fff; border:1px solid #ECF1F6; border-radius:14px; padding:13px 15px;"><div style="display:flex; justify-content:space-between; font-size:14px; font-weight:600; margin-bottom:8px;"><span>Nombres &amp; calcul</span><span style="color:#16A34A;">85%</span></div><div style="height:8px; background:#F1F5F9; border-radius:999px;"><div style="width:85%;height:100%;background:linear-gradient(90deg,#0D9488,#2DD4BF);border-radius:999px;"></div></div></div>
+                  <div style="background:#fff; border:1px solid #ECF1F6; border-radius:14px; padding:13px 15px;"><div style="display:flex; justify-content:space-between; font-size:14px; font-weight:600; margin-bottom:8px;"><span>Fractions</span><span style="color:#0D9488;">60%</span></div><div style="height:8px; background:#F1F5F9; border-radius:999px;"><div style="width:60%;height:100%;background:linear-gradient(90deg,#0D9488,#2DD4BF);border-radius:999px;"></div></div></div>
+                  <div style="background:#fff; border:1px solid #FEE2E2; border-radius:14px; padding:13px 15px;"><div style="display:flex; justify-content:space-between; font-size:14px; font-weight:600; margin-bottom:8px;"><span>Géométrie <span style="font-size:11px;color:#DC2626;background:#FEF2F2;padding:2px 7px;border-radius:999px;">à retravailler</span></span><span style="color:#DC2626;">32%</span></div><div style="height:8px; background:#F1F5F9; border-radius:999px;"><div style="width:32%;height:100%;background:#F59E0B;border-radius:999px;"></div></div></div>
+                </div>
+              </div>
+              <!-- défi de la semaine -->
+              <div style="background:linear-gradient(135deg,#FEF3C7,#FDE68A); border-radius:18px; padding:18px; display:flex; align-items:center; gap:14px;">
+                <span style="width:46px;height:46px;border-radius:14px;background:#fff;display:grid;place-items:center;font-size:24px;">⚡</span>
+                <div style="flex:1;"><div style="font-family:'Outfit'; font-weight:700; font-size:15px; color:#92400E;">Défi de la semaine</div><div style="font-size:13px; color:#B45309;">Réussis 3 examens blancs · 2/3</div></div>
+              </div>
+              <!-- badges -->
+              <div>
+                <h3 style="font-family:'Outfit'; font-weight:700; font-size:17px; margin:0 0 12px;">Mes badges</h3>
+                <div style="display:flex; gap:14px;">
+                  <div style="width:58px;height:58px;border-radius:16px;background:linear-gradient(145deg,#FBBF24,#F59E0B);display:grid;place-items:center;font-size:26px;">🔥</div>
+                  <div style="width:58px;height:58px;border-radius:16px;background:linear-gradient(145deg,#2DD4BF,#0D9488);display:grid;place-items:center;font-size:26px;">🎯</div>
+                  <div style="width:58px;height:58px;border-radius:16px;background:#F1F5F9;border:2px dashed #CBD5E1;display:grid;place-items:center;font-size:22px;filter:grayscale(1);opacity:.5;">🏆</div>
+                  <div style="width:58px;height:58px;border-radius:16px;background:#F1F5F9;border:2px dashed #CBD5E1;display:grid;place-items:center;font-size:22px;filter:grayscale(1);opacity:.5;">⭐</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- QUIZ INTERACTIF -->
+      <div>
+        <div style="text-align:center; font-family:'Outfit'; font-weight:700; font-size:14px; color:#475569; margin-bottom:14px;">C · Jeu / quiz (interactif)</div>
+        <div data-screen-label="Jeu / quiz" style="width: 384px; background: #0F172A; border-radius: 42px; padding: 10px; box-shadow: 0 30px 60px -20px rgba(15,23,42,.5);">
+          <div style="background: #fff; border-radius: 33px; overflow: hidden; height: 812px; position: relative; display:flex; flex-direction:column;">
+            <!-- status bar -->
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:14px 26px 6px; font-family:'Outfit'; font-weight:700; font-size:14px;"><span>9:41</span><span style="font-size:12px; letter-spacing:1px;">●●● ⌖ ▮</span></div>
+            <!-- top bar -->
+            <div style="padding: 10px 22px 16px;">
+              <div style="display:flex; align-items:center; gap:14px; margin-bottom:14px;">
+                <span style="font-size:24px; color:#94A3B8; cursor:pointer;">✕</span>
+                <div style="flex:1; height:10px; background:#F1F5F9; border-radius:999px; overflow:hidden;"><div style="width:{{ progressPct }}; height:100%; background:linear-gradient(90deg,#0D9488,#2DD4BF); border-radius:999px; transition:width .3s;"></div></div>
+                <span style="display:inline-flex; align-items:center; gap:5px; font-family:'Outfit'; font-weight:700; font-size:14px; color:#B45309; background:#FEF3C7; padding:5px 11px; border-radius:999px;">⏱ 0:42</span>
+              </div>
+              <div style="display:flex; justify-content:space-between; font-size:13px; font-weight:600; color:#64748B;"><span>Question {{ qNum }}/10</span><span style="color:#0D9488;">+{{ sessionPoints }} pts</span></div>
+            </div>
+            <!-- question -->
+            <div style="flex:1; padding: 14px 22px 0; display:flex; flex-direction:column;">
+              <div style="background:#F8FAFC; border:1px solid #EEF2F6; border-radius:18px; padding:24px 22px; margin-bottom:22px;">
+                <div style="font-size:13px; font-weight:600; color:#0D9488; margin-bottom:10px;">FRACTIONS · ÉQUATION</div>
+                <div style="font-family:'Outfit'; font-weight:600; font-size:25px; line-height:1.35;">Résous l'équation :</div>
+                <div style="font-size:30px; margin-top:12px; color:#0F172A;">2x + 5 = 17</div>
+                <div style="font-size:16px; color:#64748B; margin-top:8px;">Quelle est la valeur de x ?</div>
+              </div>
+              <!-- options -->
+              <div style="display:flex; flex-direction:column; gap:12px;">
+                <sc-for list="{{ options }}" as="opt" hint-placeholder-count="4">
+                  <button onClick="{{ opt.onSelect }}" style="{{ opt.style }}">
+                    <span style="font-family:'Outfit'; font-weight:700; font-size:14px; width:28px; height:28px; border-radius:9px; display:grid; place-items:center; background:{{ opt.tagBg }}; color:{{ opt.tagColor }};">{{ opt.letter }}</span>
+                    <span style="flex:1; text-align:left; font-size:19px; font-weight:600;">{{ opt.label }}</span>
+                    <span style="font-size:15px; font-weight:700; color:{{ opt.iconColor }};">{{ opt.icon }}</span>
+                  </button>
+                </sc-for>
+              </div>
+              <!-- corrigé -->
+              <sc-if value="{{ answered }}" hint-placeholder-val="{{ false }}">
+                <div style="margin-top:18px; background:{{ feedbackBg }}; border:1px solid {{ feedbackBorder }}; border-radius:16px; padding:16px 18px; animation:mlc-rise .25s ease;">
+                  <div style="font-family:'Outfit'; font-weight:700; font-size:16px; color:{{ feedbackColor }}; margin-bottom:6px;">{{ feedbackTitle }}</div>
+                  <div style="font-size:14px; color:#475569; line-height:1.5;">2x = 17 − 5 = 12, donc x = 12 ÷ 2 = <strong>6</strong>.</div>
+                </div>
+              </sc-if>
+            </div>
+            <!-- footer cta -->
+            <div style="padding: 16px 22px 26px;">
+              <button onClick="{{ primaryAction }}" style="{{ ctaStyle }}">{{ ctaLabel }}</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- next steps -->
+    <div style="max-width:760px; margin:60px auto 0; background:#fff; border:1px dashed #CBD5E1; border-radius:18px; padding:26px 30px;">
+      <div style="font-family:'Outfit'; font-weight:700; font-size:13px; letter-spacing:.1em; text-transform:uppercase; color:#94A3B8; margin-bottom:12px;">Prochaines étapes</div>
+      <ol style="margin:0; padding-left:20px; font-size:15px; line-height:1.8; color:#334155;">
+        <li>Tu valides cette direction (couleurs, typo, composants, ressenti gamifié).</li>
+        <li>Je décline le même système sur le <strong>back-office admin</strong> (registre sobre &amp; dense) pour valider le 2ᵉ registre.</li>
+        <li>Ensuite seulement : landing, pricing, catalogue, classement, examen blanc, auth.</li>
+      </ol>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1260,&quot;height&quot;:900}}">
+class Component extends DCLogic {
+  state = { selected: null, answered: false };
+
+  renderVals() {
+    const CORRECT = "b"; // x = 6
+    const opts = [
+      { id: "a", letter: "A", label: "x = 12" },
+      { id: "b", letter: "B", label: "x = 6" },
+      { id: "c", letter: "C", label: "x = 11" },
+      { id: "d", letter: "D", label: "x = 8" },
+    ];
+    const sel = this.state.selected;
+    const answered = this.state.answered;
+
+    const options = opts.map((o) => {
+      let border = "#E2E8F0", bg = "#fff", tagBg = "#F1F5F9", tagColor = "#64748B";
+      let icon = "", iconColor = "transparent";
+      if (answered) {
+        if (o.id === CORRECT) {
+          border = "#16A34A"; bg = "#F0FDF4"; tagBg = "#16A34A"; tagColor = "#fff"; icon = "✓"; iconColor = "#15803D";
+        } else if (o.id === sel) {
+          border = "#DC2626"; bg = "#FEF2F2"; tagBg = "#DC2626"; tagColor = "#fff"; icon = "✕"; iconColor = "#B91C1C";
+        } else {
+          border = "#EEF2F6"; bg = "#fff"; tagColor = "#CBD5E1";
+        }
+      } else if (o.id === sel) {
+        border = "#0D9488"; bg = "#F0FDFA"; tagBg = "#0D9488"; tagColor = "#fff";
+      }
+      const style = `display:flex; align-items:center; gap:14px; width:100%; padding:14px 16px; border:2px solid ${border}; background:${bg}; border-radius:16px; cursor:${answered ? "default" : "pointer"}; transition:all .15s; font-family:'Lexend',sans-serif;`;
+      return {
+        ...o, style, tagBg, tagColor, icon, iconColor,
+        onSelect: () => { if (!this.state.answered) this.setState({ selected: o.id }); },
+      };
+    });
+
+    const isCorrect = sel === CORRECT;
+    return {
+      options,
+      answered,
+      qNum: 4,
+      progressPct: answered ? "40%" : "35%",
+      sessionPoints: answered ? (isCorrect ? 180 : 150) : 150,
+      feedbackBg: isCorrect ? "#F0FDF4" : "#FEF2F2",
+      feedbackBorder: isCorrect ? "#BBF7D0" : "#FECACA",
+      feedbackColor: isCorrect ? "#15803D" : "#B91C1C",
+      feedbackTitle: isCorrect ? "Bravo, c'est juste ! +30 pts 🎉" : "Pas tout à fait — voici comment faire :",
+      ctaLabel: answered ? "Question suivante →" : (sel ? "Valider ma réponse" : "Choisis une réponse"),
+      ctaStyle: `width:100%; font-family:'Outfit',sans-serif; font-weight:700; font-size:17px; color:#fff; border:none; border-radius:14px; padding:16px; cursor:${sel ? "pointer" : "not-allowed"}; background:${sel ? "#0D9488" : "#CBD5E1"}; box-shadow:${sel ? "0 3px 0 #0F766E" : "none"}; transition:all .15s;`,
+      primaryAction: () => {
+        if (!this.state.selected) return;
+        if (!this.state.answered) this.setState({ answered: true });
+        else this.setState({ selected: null, answered: false });
+      },
+    };
+  }
+}
+</script>
+</body>
+</html>

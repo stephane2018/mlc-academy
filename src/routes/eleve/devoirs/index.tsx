@@ -1,0 +1,225 @@
+import { createFileRoute, Link } from '@tanstack/react-router'
+import {
+  Dumbbell,
+  Clock,
+  Zap,
+  Trophy,
+  ArrowRight,
+  CheckCircle2,
+  CalendarDays,
+} from '@/components/icons'
+import { Meter, SoftIcon } from '@/components/student/parts'
+import { PageHero } from '@/components/blocks'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { cn } from '@/lib/utils'
+import {
+  assignmentsForStudent,
+  submissions,
+  domainLabels,
+  student,
+  type Assignment,
+  type Submission,
+} from '@/lib/mock'
+
+export const Route = createFileRoute('/eleve/devoirs/')({
+  component: DevoirsListPage,
+})
+
+const STUDENT_ID = 's1'
+const STUDENT_GROUP = 'Groupe A'
+
+function submissionFor(assignmentId: string): Submission | undefined {
+  return submissions.find(
+    (s) => s.assignmentId === assignmentId && s.studentId === STUDENT_ID,
+  )
+}
+
+function isEval(a: Assignment) {
+  return a.type === 'evaluation' && typeof a.durationMin === 'number'
+}
+
+function DevoirsListPage() {
+  const all = assignmentsForStudent(STUDENT_GROUP, student.pseudo)
+
+  const todo = all.filter((a) => submissionFor(a.id)?.status !== 'rendu')
+  const done = all
+    .map((a) => ({ assignment: a, submission: submissionFor(a.id) }))
+    .filter((x) => x.submission?.status === 'rendu')
+
+  return (
+    <div className="mx-auto w-full max-w-3xl space-y-6 px-4 py-6 2xl:max-w-4xl">
+      <PageHero
+        variant="surface"
+        eyebrow="Travail à rendre"
+        title="Mes devoirs"
+        subtitle="Tes devoirs maison et évaluations surprises, au même endroit."
+        actions={
+          <Button asChild variant="outline" className="rounded-xl">
+            <Link to="/eleve/historique">
+              <Trophy className="size-4" /> Voir l'historique
+            </Link>
+          </Button>
+        }
+      />
+
+      {/* À faire */}
+      <section className="space-y-3">
+        <div className="flex items-center gap-2">
+          <h2 className="font-heading text-lg font-bold tracking-tight">À faire</h2>
+          <Badge variant="secondary">{todo.length}</Badge>
+        </div>
+
+        {todo.length === 0 ? (
+          <EmptyState
+            icon={<CheckCircle2 className="size-6" />}
+            title="Rien à rendre pour l'instant"
+            subtitle="Tu es à jour, profites-en pour t'entraîner !"
+          />
+        ) : (
+          <div className="space-y-3">
+            {todo.map((a) => (
+              <TodoCard key={a.id} assignment={a} />
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* Terminés */}
+      {done.length > 0 && (
+        <section className="space-y-3">
+          <div className="flex items-center gap-2">
+            <h2 className="font-heading text-lg font-bold tracking-tight">Terminés</h2>
+            <Badge variant="secondary">{done.length}</Badge>
+          </div>
+          <div className="space-y-3">
+            {done.map(({ assignment, submission }) => (
+              <DoneCard key={assignment.id} assignment={assignment} submission={submission!} />
+            ))}
+          </div>
+        </section>
+      )}
+    </div>
+  )
+}
+
+function TodoCard({ assignment: a }: { assignment: Assignment }) {
+  const evaluation = isEval(a)
+
+  return (
+    <Link
+      to="/eleve/devoirs/$id"
+      params={{ id: a.id }}
+      className={cn(
+        'card-hover block rounded-2xl border bg-card p-4 shadow-soft sm:p-5',
+        evaluation ? 'border-amber/40 ring-1 ring-amber/20' : 'border-border',
+      )}
+    >
+      <div className="flex items-start gap-4">
+        <SoftIcon tone={evaluation ? 'amber' : 'brand'}>
+          {evaluation ? <Zap className="size-5" /> : <Dumbbell className="size-5" />}
+        </SoftIcon>
+
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            {evaluation ? (
+              <Badge className="bg-amber text-amber-foreground">Éval. surprise</Badge>
+            ) : (
+              <Badge variant="secondary">Devoir maison</Badge>
+            )}
+            <Badge variant="outline">{domainLabels[a.domain]}</Badge>
+          </div>
+
+          <h3 className="mt-2 font-heading text-base font-bold leading-snug">{a.title}</h3>
+
+          <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+            <span className="flex items-center gap-1.5">
+              <CalendarDays className="size-4" /> à rendre pour {a.dueDate}
+            </span>
+            <span>
+              {a.questions.length} question{a.questions.length > 1 ? 's' : ''}
+            </span>
+            {evaluation && (
+              <span className="flex items-center gap-1 font-semibold text-amber-foreground">
+                <Clock className="size-4" /> chronométré · {a.durationMin} min
+              </span>
+            )}
+          </div>
+
+          <div className="mt-3 flex items-center justify-between gap-3">
+            <span className="flex items-center gap-1 rounded-full bg-amber-soft px-2.5 py-1 text-sm font-bold text-amber-foreground">
+              <Zap className="size-4 fill-amber text-amber" /> +{a.xpReward} XP
+            </span>
+            <Button size="sm" className="rounded-xl" tabIndex={-1}>
+              Commencer <ArrowRight className="size-4" />
+            </Button>
+          </div>
+        </div>
+      </div>
+    </Link>
+  )
+}
+
+function DoneCard({
+  assignment: a,
+  submission: s,
+}: {
+  assignment: Assignment
+  submission: Submission
+}) {
+  const score = s.score ?? 0
+  return (
+    <div className="rounded-2xl border border-border bg-card p-4 shadow-soft sm:p-5">
+      <div className="flex items-start gap-4">
+        <SoftIcon tone="success">
+          <CheckCircle2 className="size-5" />
+        </SoftIcon>
+
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge variant="secondary">
+              {a.type === 'evaluation' ? 'Évaluation' : 'Devoir maison'}
+            </Badge>
+            <Badge variant="outline">{domainLabels[a.domain]}</Badge>
+            <span className="text-xs text-muted-foreground">rendu le {s.submittedAt}</span>
+          </div>
+
+          <h3 className="mt-2 font-heading text-base font-bold leading-snug">{a.title}</h3>
+
+          <div className="mt-3 flex items-center gap-3">
+            <Meter value={score} color="auto" className="flex-1" />
+            <span className="w-12 text-right font-heading text-sm font-bold tabular-nums">
+              {score}%
+            </span>
+          </div>
+
+          <div className="mt-3 flex justify-end">
+            <Button asChild size="sm" variant="outline" className="rounded-xl">
+              <Link to="/eleve/historique">Voir le détail</Link>
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function EmptyState({
+  icon,
+  title,
+  subtitle,
+}: {
+  icon: React.ReactNode
+  title: string
+  subtitle: string
+}) {
+  return (
+    <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-border bg-card/50 py-10 text-center">
+      <span className="grid size-12 place-items-center rounded-full bg-success-soft text-success">
+        {icon}
+      </span>
+      <p className="font-heading font-bold">{title}</p>
+      <p className="text-sm text-muted-foreground">{subtitle}</p>
+    </div>
+  )
+}
