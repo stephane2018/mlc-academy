@@ -1,10 +1,14 @@
 import { useState } from 'react'
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { toast } from 'sonner'
 import { ArrowLeft, ArrowRight, Check, ShieldCheck, AlertCircle } from '@/components/icons'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
+import { useAuth } from '@/lib/auth'
+import { authService } from '@/services/auth'
+import { ApiError } from '@/lib/api-client'
 
 export const Route = createFileRoute('/onboarding')({
   component: OnboardingPage,
@@ -80,6 +84,8 @@ function OnboardingPage() {
 }
 
 function SignupFlow({ onSwitchLogin }: { onSwitchLogin: () => void }) {
+  const { signInStudent } = useAuth()
+  const navigate = useNavigate()
   const [step, setStep] = useState(0)
   const [pseudo, setPseudo] = useState('')
   const [avatar, setAvatar] = useState<string | null>(null)
@@ -87,6 +93,7 @@ function SignupFlow({ onSwitchLogin }: { onSwitchLogin: () => void }) {
   const [confirm, setConfirm] = useState('')
   const [level, setLevel] = useState<string | null>(null)
   const [groupCode, setGroupCode] = useState('')
+  const [loading, setLoading] = useState(false)
 
   const passwordMismatch = confirm.length > 0 && password !== confirm
   const isLast = step === STEPS.length - 1
@@ -98,13 +105,35 @@ function SignupFlow({ onSwitchLogin }: { onSwitchLogin: () => void }) {
       case 1:
         return avatar !== null
       case 2:
-        return password.length >= 4 && password === confirm
+        return password.length >= 8 && password === confirm
       case 3:
         return level !== null
       default:
         return true
     }
   })()
+
+  async function submit() {
+    setLoading(true)
+    try {
+      await authService.signupStudent({
+        pseudo: pseudo.trim(),
+        password,
+        classCode: level ?? undefined,
+        avatar: avatar ?? undefined,
+      })
+      await signInStudent(pseudo.trim(), password) // connexion automatique
+      await navigate({ to: '/eleve/dashboard' })
+    } catch (err) {
+      toast.error(
+        err instanceof ApiError && err.status === 409
+          ? 'Ce pseudo est déjà pris.'
+          : 'Inscription impossible. Réessaie.',
+      )
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
     <div className="flex flex-1 flex-col px-5 pt-5">
@@ -260,10 +289,8 @@ function SignupFlow({ onSwitchLogin }: { onSwitchLogin: () => void }) {
           </Button>
         )}
         {isLast ? (
-          <Button asChild size="lg" className="flex-1 rounded-xl text-base">
-            <Link to="/eleve/dashboard">
-              <Check className="size-5" /> Créer mon compte
-            </Link>
+          <Button size="lg" disabled={loading} onClick={submit} className="flex-1 rounded-xl text-base">
+            <Check className="size-5" /> {loading ? 'Création…' : 'Créer mon compte'}
           </Button>
         ) : (
           <Button
@@ -281,8 +308,27 @@ function SignupFlow({ onSwitchLogin }: { onSwitchLogin: () => void }) {
 }
 
 function LoginForm({ onSwitchSignup }: { onSwitchSignup: () => void }) {
+  const { signInStudent } = useAuth()
+  const navigate = useNavigate()
+  const [pseudo, setPseudo] = useState('')
+  const [password, setPassword] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setLoading(true)
+    try {
+      await signInStudent(pseudo.trim(), password)
+      await navigate({ to: '/eleve/dashboard' })
+    } catch {
+      toast.error('Pseudo ou mot de passe incorrect.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
-    <div className="flex flex-1 flex-col px-5 pt-8">
+    <form onSubmit={onSubmit} className="flex flex-1 flex-col px-5 pt-8">
       <h1 className="font-heading text-2xl font-extrabold tracking-tight">Se connecter</h1>
       <p className="mt-1 text-sm text-muted-foreground">
         Content de te revoir ! Entre tes identifiants.
@@ -291,16 +337,31 @@ function LoginForm({ onSwitchSignup }: { onSwitchSignup: () => void }) {
       <div className="mt-6 space-y-4">
         <div className="space-y-2">
           <Label htmlFor="login-pseudo">Pseudo</Label>
-          <Input id="login-pseudo" placeholder="MaxLeBg" />
+          <Input
+            id="login-pseudo"
+            value={pseudo}
+            onChange={(e) => setPseudo(e.target.value)}
+            placeholder="MaxLeBg"
+            autoComplete="username"
+            required
+          />
         </div>
         <div className="space-y-2">
           <Label htmlFor="login-pwd">Mot de passe</Label>
-          <Input id="login-pwd" type="password" placeholder="••••••" />
+          <Input
+            id="login-pwd"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="••••••"
+            autoComplete="current-password"
+            required
+          />
         </div>
       </div>
 
-      <Button asChild size="lg" className="mt-6 w-full rounded-xl text-base">
-        <Link to="/eleve/dashboard">Se connecter</Link>
+      <Button type="submit" size="lg" disabled={loading} className="mt-6 w-full rounded-xl text-base">
+        {loading ? 'Connexion…' : 'Se connecter'}
       </Button>
 
       <button
@@ -310,6 +371,6 @@ function LoginForm({ onSwitchSignup }: { onSwitchSignup: () => void }) {
       >
         Pas encore de compte ? Crée-en un
       </button>
-    </div>
+    </form>
   )
 }

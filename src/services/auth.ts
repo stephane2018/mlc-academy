@@ -20,6 +20,14 @@ export const authService = {
   signupParent: (email: string, password: string) =>
     api.post<{ ok: true }>('/auth/signup-parent', { email, password }, { skipAuth: true }),
 
+  /** Auto-inscription élève au pseudo (public). */
+  signupStudent: (input: { pseudo: string; password: string; classCode?: string; avatar?: string }) =>
+    api.post<{ ok: true }>('/auth/signup-student', input, { skipAuth: true }),
+
+  /** Connexion élève au pseudo → jetons de session (public). */
+  loginStudent: (pseudo: string, password: string) =>
+    api.post<{ accessToken: string; refreshToken: string }>('/auth/login-student', { pseudo, password }, { skipAuth: true }),
+
   /** L'élève génère un code de rattachement (à transmettre au parent). */
   issueParentCode: () => api.post<{ code: string; expiresAt: string }>('/auth/parent-code'),
 
