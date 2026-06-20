@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { toast } from 'sonner'
+import { useAuth } from '@/lib/auth'
 import {
   AlertCircle,
   ArrowRight,
@@ -147,8 +148,28 @@ function ConnexionParentPage() {
 }
 
 function LoginForm() {
+  const { signInWithPassword } = useAuth()
+  const navigate = useNavigate()
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setLoading(true)
+    try {
+      await signInWithPassword(email, password)
+      // Le garde de route /parent redirige vers la bonne home si le rôle diffère.
+      await navigate({ to: '/parent' })
+    } catch {
+      toast.error('Email ou mot de passe incorrect.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
-    <div>
+    <form onSubmit={onSubmit}>
       <h1 className="font-heading text-2xl font-extrabold tracking-tight">Se connecter</h1>
       <p className="mt-1 text-sm text-muted-foreground">
         Accédez au suivi de votre enfant.
@@ -157,16 +178,32 @@ function LoginForm() {
       <div className="mt-6 space-y-4">
         <div className="space-y-2">
           <Label htmlFor="login-email">Email</Label>
-          <Input id="login-email" type="email" placeholder="parent@email.com" autoComplete="email" />
+          <Input
+            id="login-email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="parent@email.com"
+            autoComplete="email"
+            required
+          />
         </div>
         <div className="space-y-2">
           <Label htmlFor="login-pwd">Mot de passe</Label>
-          <Input id="login-pwd" type="password" placeholder="••••••••" autoComplete="current-password" />
+          <Input
+            id="login-pwd"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="••••••••"
+            autoComplete="current-password"
+            required
+          />
         </div>
       </div>
 
-      <Button asChild size="lg" className="mt-6 w-full rounded-xl text-base">
-        <Link to="/parent">Se connecter</Link>
+      <Button type="submit" size="lg" disabled={loading} className="mt-6 w-full rounded-xl text-base">
+        {loading ? 'Connexion…' : 'Se connecter'}
       </Button>
 
       <button
@@ -175,7 +212,7 @@ function LoginForm() {
       >
         Mot de passe oublié ?
       </button>
-    </div>
+    </form>
   )
 }
 
