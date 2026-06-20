@@ -16,6 +16,10 @@ export const authService = {
   /** Profil + rôles + permissions effectives de l'utilisateur courant. */
   me: () => api.get<Me>('/auth/me'),
 
+  /** Auto-inscription d'un compte parent (public, sans JWT). */
+  signupParent: (email: string, password: string) =>
+    api.post<{ ok: true }>('/auth/signup-parent', { email, password }, { skipAuth: true }),
+
   /** L'élève génère un code de rattachement (à transmettre au parent). */
   issueParentCode: () => api.post<{ code: string; expiresAt: string }>('/auth/parent-code'),
 

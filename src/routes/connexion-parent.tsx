@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { toast } from 'sonner'
 import { useAuth } from '@/lib/auth'
+import { authService } from '@/services/auth'
+import { ApiError } from '@/lib/api-client'
 import {
   AlertCircle,
   ArrowRight,
@@ -217,19 +219,39 @@ function LoginForm() {
 }
 
 function SignupForm() {
+  const { signInWithPassword } = useAuth()
+  const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
+  const [loading, setLoading] = useState(false)
 
   const mismatch = confirm.length > 0 && password !== confirm
-  const valid = email.includes('@') && password.length >= 6 && password === confirm
+  const valid = email.includes('@') && password.length >= 8 && password === confirm
+
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!valid) return
+    setLoading(true)
+    try {
+      await authService.signupParent(email, password)
+      await signInWithPassword(email, password) // connexion automatique
+      await navigate({ to: '/parent' })
+    } catch (err) {
+      const msg =
+        err instanceof ApiError && err.status === 409
+          ? 'Un compte existe déjà avec cet e-mail.'
+          : 'Inscription impossible. Réessayez.'
+      toast.error(msg)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
-    <div>
+    <form onSubmit={onSubmit}>
       <h1 className="font-heading text-2xl font-extrabold tracking-tight">Créer un compte parent</h1>
-      <p className="mt-1 text-sm text-muted-foreground">
-        Une adresse email suffit pour démarrer.
-      </p>
+      <p className="mt-1 text-sm text-muted-foreground">Une adresse email suffit pour démarrer.</p>
 
       <div className="mt-6 space-y-4">
         <div className="space-y-2">
@@ -241,6 +263,7 @@ function SignupForm() {
             onChange={(e) => setEmail(e.target.value)}
             placeholder="parent@email.com"
             autoComplete="email"
+            required
           />
         </div>
         <div className="space-y-2">
@@ -250,8 +273,9 @@ function SignupForm() {
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="6 caractères minimum"
+            placeholder="8 caractères minimum"
             autoComplete="new-password"
+            required
           />
         </div>
         <div className="space-y-2">
@@ -264,6 +288,7 @@ function SignupForm() {
             placeholder="••••••••"
             autoComplete="new-password"
             aria-invalid={mismatch}
+            required
           />
           {mismatch && (
             <p className="flex items-center gap-1.5 text-xs font-medium text-destructive">
@@ -273,16 +298,10 @@ function SignupForm() {
         </div>
       </div>
 
-      <Button
-        asChild
-        size="lg"
-        className={cn('mt-6 w-full rounded-xl text-base', !valid && 'pointer-events-none opacity-50')}
-      >
-        <Link to="/parent">
-          Créer mon compte <ArrowRight className="size-5" />
-        </Link>
+      <Button type="submit" size="lg" disabled={!valid || loading} className="mt-6 w-full rounded-xl text-base">
+        {loading ? 'Création…' : <>Créer mon compte <ArrowRight className="size-5" /></>}
       </Button>
-    </div>
+    </form>
   )
 }
 
