@@ -12,7 +12,8 @@ import {
 } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
 import { RequireRole } from '@/components/auth/require-role'
-import { parentChild, unreadCount } from '@/lib/mock'
+import { ParentChildProvider, useSelectedChild } from '@/lib/parent-child'
+import { unreadCount } from '@/lib/mock'
 
 export const Route = createFileRoute('/parent')({
   component: () => (
@@ -28,11 +29,33 @@ const tabs = [
   { to: '/parent/boutique', label: 'Boutique', exact: false },
 ] as const
 
+/** Sélecteur d'enfant (header) — partagé via le contexte ParentChild. */
+function ChildSelect() {
+  const { kids, selected, setSelectedId } = useSelectedChild()
+  if (kids.length === 0) return null
+  return (
+    <Select value={selected?.id ?? ''} onValueChange={setSelectedId}>
+      <SelectTrigger className="h-9 w-auto gap-2 border-border">
+        <span className="text-base">{selected?.avatar}</span>
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        {kids.map((k) => (
+          <SelectItem key={k.id} value={k.id}>
+            {k.pseudo}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  )
+}
+
 function ParentLayout() {
   const { pathname } = useLocation()
   const parentUnread = unreadCount('parent')
 
   return (
+    <ParentChildProvider>
     <div className="min-h-dvh bg-background text-foreground">
       <header className="sticky top-0 z-30 border-b border-border bg-card/95 backdrop-blur">
         <div className="flex w-full items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
@@ -55,16 +78,7 @@ function ParentLayout() {
                 <BellBadge count={parentUnread} />
               </Link>
             </Button>
-            <Select defaultValue={parentChild.pseudo}>
-              <SelectTrigger className="h-9 w-auto gap-2 border-border">
-                <span className="text-base">{parentChild.avatar}</span>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={parentChild.pseudo}>{parentChild.pseudo}</SelectItem>
-                <SelectItem value="Léa">Léa</SelectItem>
-              </SelectContent>
-            </Select>
+            <ChildSelect />
           </div>
         </div>
 
@@ -94,5 +108,6 @@ function ParentLayout() {
         <Outlet />
       </main>
     </div>
+    </ParentChildProvider>
   )
 }

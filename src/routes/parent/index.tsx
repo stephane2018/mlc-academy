@@ -14,7 +14,8 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { PageHero, RailLayout, StatTile, SparkBars } from '@/components/blocks'
-import { useChildren, useChildOverview } from '@/hooks/use-parent'
+import { useChildOverview } from '@/hooks/use-parent'
+import { useSelectedChild } from '@/lib/parent-child'
 import { useReports } from '@/hooks/use-reports'
 
 export const Route = createFileRoute('/parent/')({
@@ -31,12 +32,11 @@ function HeroStat({ label, value }: { label: string; value: string }) {
 }
 
 function ParentDashboard() {
-  const childrenQuery = useChildren()
-  const child = childrenQuery.data?.[0]
+  const { selected: child, isLoading } = useSelectedChild()
   const overview = useChildOverview(child?.id)
   const reportsQuery = useReports({ limit: 20 })
 
-  if (childrenQuery.isLoading) {
+  if (isLoading) {
     return <div className="grid min-h-[50vh] place-items-center text-sm text-muted-foreground">Chargement…</div>
   }
 

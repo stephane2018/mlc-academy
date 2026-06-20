@@ -14,7 +14,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { useChildren, useChildOverview, useChildAssignments } from '@/hooks/use-parent'
+import { useChildOverview, useChildAssignments } from '@/hooks/use-parent'
+import { useSelectedChild } from '@/lib/parent-child'
 import { useReports, useReport, useMarkReportRead, useReportPdf } from '@/hooks/use-reports'
 import { useSubjects } from '@/hooks/use-catalog'
 
@@ -35,8 +36,7 @@ const typeBadge: Record<string, string> = {
 
 function ParentDevoirs() {
   const [openId, setOpenId] = useState<string | null>(null)
-  const childrenQuery = useChildren()
-  const child = childrenQuery.data?.[0]
+  const { selected: child } = useSelectedChild()
   const overview = useChildOverview(child?.id)
   const reportsQuery = useReports({ limit: 50 })
   const assignmentsQuery = useChildAssignments(child?.id)
