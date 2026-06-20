@@ -22,3 +22,8 @@ export function useMarkReportRead() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['reports'] }),
   })
 }
+
+/** Récupère une URL signée du PDF (à la demande, sur clic). */
+export function useReportPdf() {
+  return useMutation({ mutationFn: (id: string) => reportsService.pdfUrl(id) })
+}

@@ -14,3 +14,12 @@ export function useChildOverview(childId: string | undefined) {
     enabled: !!childId,
   })
 }
+
+/** Devoirs/évaluations ciblant l'enfant + statut. */
+export function useChildAssignments(childId: string | undefined) {
+  return useQuery({
+    queryKey: ['parent', 'assignments', childId],
+    queryFn: () => parentService.assignments(childId!),
+    enabled: !!childId,
+  })
+}

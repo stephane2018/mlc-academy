@@ -38,4 +38,5 @@ export const reportsService = {
   get: (id: string) => api.get<ReportDetail>(`/reports/${id}`),
   send: (input: SendReportInput) => api.post<ReportSummary>('/reports', input),
   markRead: (id: string) => api.put<{ ok: true }>(`/reports/${id}/read`),
+  pdfUrl: (id: string) => api.get<{ url: string }>(`/reports/${id}/pdf`),
 }

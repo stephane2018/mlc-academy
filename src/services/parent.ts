@@ -19,8 +19,22 @@ export type ChildOverview = {
   weeklyXp: WeeklyXpDay[]
 }
 
+export type ChildAssignment = {
+  id: string
+  title: string
+  type: string
+  subjectId: string
+  themeId: string | null
+  difficulty: string | null
+  dueDate: string | null
+  xpReward: number
+  status: 'a_faire' | 'en_cours' | 'rendu'
+  score: number | null
+}
+
 /** Service espace parent — `/parent/*`. */
 export const parentService = {
   children: () => api.get<Child[]>('/parent/children'),
   overview: (childId: string) => api.get<ChildOverview>(`/parent/children/${childId}/overview`),
+  assignments: (childId: string) => api.get<ChildAssignment[]>(`/parent/children/${childId}/assignments`),
 }
