@@ -1,12 +1,30 @@
-import { Outlet, createFileRoute } from '@tanstack/react-router'
+import { Outlet, createFileRoute, useLocation } from '@tanstack/react-router'
 import { BottomNav } from '@/components/student/bottom-nav'
 import { StudentSideNav } from '@/components/student/side-nav'
+import { RequireRole } from '@/components/auth/require-role'
+import { cn } from '@/lib/utils'
 
 export const Route = createFileRoute('/eleve')({
-  component: EleveLayout,
+  component: () => (
+    <RequireRole roles={['eleve']}>
+      <EleveLayout />
+    </RequireRole>
+  ),
 })
 
+/** Flux focalisés (quiz, passation, salle live) : barre d'action propre → pas de bottom-nav. */
+function isFocusedFlow(pathname: string): boolean {
+  return (
+    pathname === '/eleve/jeu' ||
+    pathname.startsWith('/eleve/salle/') ||
+    /^\/eleve\/(examens|devoirs)\/[^/]+$/.test(pathname)
+  )
+}
+
 function EleveLayout() {
+  const { pathname } = useLocation()
+  const focused = isFocusedFlow(pathname)
+
   return (
     <div className="flex min-h-dvh w-full bg-background">
       {/* Desktop : navigation latérale */}
@@ -14,14 +32,19 @@ function EleveLayout() {
 
       {/* Colonne de contenu : pleine largeur */}
       <div className="flex min-h-dvh w-full min-w-0 flex-1 flex-col bg-background">
-        <main className="w-full flex-1">
+        <main
+          className={cn(
+            'w-full flex-1',
+            // Marge basse pour la nav fixe (mobile/tablette), sauf en flux focalisé
+            !focused && 'pb-[calc(4.75rem+env(safe-area-inset-bottom))] lg:pb-0',
+          )}
+        >
           <Outlet />
         </main>
-        {/* Mobile/tablette : navigation basse */}
-        <div className="lg:hidden">
-          <BottomNav />
-        </div>
       </div>
+
+      {/* Mobile/tablette : navigation basse fixée (app-like) */}
+      {!focused && <BottomNav />}
     </div>
   )
 }

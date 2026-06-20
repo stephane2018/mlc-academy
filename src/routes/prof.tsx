@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation, createFileRoute } from '@tanstack/react-router'
-import { LayoutDashboard, CalendarDays, Users, Search, Bell, GraduationCap, Library, Boxes, MessageSquare, FileText, Dumbbell } from '@/components/icons'
+import { LayoutDashboard, CalendarDays, Users, Search, Bell, GraduationCap, Library, Boxes, MessageSquare, FileText, Dumbbell, Store } from '@/components/icons'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -7,10 +7,15 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import { Menu } from '@/components/icons'
 import { cn } from '@/lib/utils'
 import { ThemeToggle } from '@/components/theme'
+import { RequireRole } from '@/components/auth/require-role'
 import { unreadCount } from '@/lib/mock'
 
 export const Route = createFileRoute('/prof')({
-  component: ProfLayout,
+  component: () => (
+    <RequireRole roles={['prof']}>
+      <ProfLayout />
+    </RequireRole>
+  ),
 })
 
 const navItems = [
@@ -20,6 +25,7 @@ const navItems = [
   { to: '/prof/eleves', label: 'Annuaire', icon: Users, exact: false },
   { to: '/prof/groupes', label: 'Groupes', icon: Boxes, exact: false },
   { to: '/prof/ressources', label: 'Ressources', icon: Library, exact: false },
+  { to: '/prof/produits', label: 'Boutique', icon: Store, exact: false },
   { to: '/prof/messages', label: 'Messages', icon: MessageSquare, exact: false },
   { to: '/prof/rapports', label: 'Rapports', icon: FileText, exact: false },
 ] as const
@@ -31,6 +37,7 @@ const pageTitles: Record<string, string> = {
   '/prof/eleves': 'Annuaire des élèves',
   '/prof/groupes': 'Mes groupes',
   '/prof/ressources': 'Ressources',
+  '/prof/produits': 'Boutique — mes produits',
   '/prof/messages': 'Messagerie',
   '/prof/rapports': 'Rapports',
   '/prof/notifications': 'Notifications',

@@ -10,6 +10,7 @@ import TanStackQueryDevtools from '../integrations/tanstack-query/devtools'
 import { Toaster } from '@/components/ui/sonner'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { THEME_SCRIPT } from '@/components/theme'
+import { AuthProvider } from '@/lib/auth'
 
 import appCss from '../styles.css?url'
 
@@ -53,7 +54,9 @@ function RootDocument({ children }: { children: ReactNode }) {
         <HeadContent />
       </head>
       <body className="min-h-dvh antialiased">
-        <TooltipProvider delayDuration={150}>{children}</TooltipProvider>
+        <AuthProvider>
+          <TooltipProvider delayDuration={150}>{children}</TooltipProvider>
+        </AuthProvider>
         <Toaster position="top-center" richColors />
         <TanStackDevtools
           config={{ position: 'bottom-right' }}

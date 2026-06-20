@@ -17,9 +17,15 @@ import {
 import { toast } from 'sonner'
 import { AdminSidebar } from '@/components/admin/sidebar'
 import { pageTitles } from '@/components/admin/nav'
+import { RequireRole } from '@/components/auth/require-role'
 
 export const Route = createFileRoute('/admin')({
-  component: AdminLayout,
+  // gestionnaire accède aussi au back-office (droits via permissions admin.*)
+  component: () => (
+    <RequireRole roles={['admin', 'gestionnaire']}>
+      <AdminLayout />
+    </RequireRole>
+  ),
 })
 
 function AdminLayout() {

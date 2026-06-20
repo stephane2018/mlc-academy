@@ -11,15 +11,21 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
+import { RequireRole } from '@/components/auth/require-role'
 import { parentChild, unreadCount } from '@/lib/mock'
 
 export const Route = createFileRoute('/parent')({
-  component: ParentLayout,
+  component: () => (
+    <RequireRole roles={['parent']}>
+      <ParentLayout />
+    </RequireRole>
+  ),
 })
 
 const tabs = [
   { to: '/parent', label: "Tableau de bord", exact: true },
   { to: '/parent/devoirs', label: 'Suivi & rapports', exact: false },
+  { to: '/parent/boutique', label: 'Boutique', exact: false },
 ] as const
 
 function ParentLayout() {
@@ -28,7 +34,7 @@ function ParentLayout() {
 
   return (
     <div className="min-h-dvh bg-background text-foreground">
-      <header className="border-b border-border bg-card">
+      <header className="sticky top-0 z-30 border-b border-border bg-card/95 backdrop-blur">
         <div className="flex w-full items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
           <div className="flex items-center gap-2.5">
             <div className="grid size-9 place-items-center rounded-xl bg-brand text-white">
