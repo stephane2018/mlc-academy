@@ -17,6 +17,7 @@ import { PageHero, RailLayout, StatTile, SparkBars } from '@/components/blocks'
 import { useChildOverview } from '@/hooks/use-parent'
 import { useSelectedChild } from '@/lib/parent-child'
 import { useReports } from '@/hooks/use-reports'
+import { ResetPinDialog } from '@/components/parent/reset-pin-dialog'
 
 export const Route = createFileRoute('/parent/')({
   component: ParentDashboard,
@@ -107,6 +108,15 @@ function ParentDashboard() {
                 Alerte automatique si <span className="font-semibold">{child.pseudo}</span> est inactif 3 jours
                 d'affilée.
               </p>
+            </Card>
+
+            {/* Code de connexion de l'enfant */}
+            <Card className="gap-2 rounded-2xl p-4 shadow-soft">
+              <p className="font-heading text-sm font-bold">Code de connexion</p>
+              <p className="text-xs text-muted-foreground">
+                {child.pseudo} a oublié son code ? Définissez-en un nouveau.
+              </p>
+              <ResetPinDialog childId={child.id} childName={child.pseudo} />
             </Card>
 
             {/* Rappel lecture seule */}

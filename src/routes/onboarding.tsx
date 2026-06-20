@@ -16,7 +16,7 @@ export const Route = createFileRoute('/onboarding')({
 
 const avatars = ['🤖', '🦊', '🚀', '🐱', '🐼', '🦁', '🐸', '🦉', '🐯', '🐧', '🦄', '🐙']
 const levels = ['CE1D', 'S1', 'S2', 'S3']
-const STEPS = ['Pseudo', 'Avatar', 'Mot de passe', 'Niveau', 'Groupe']
+const STEPS = ['Pseudo', 'Avatar', 'Code secret', 'Niveau', 'Groupe']
 
 function OnboardingPage() {
   const [mode, setMode] = useState<'signup' | 'login'>('signup')
@@ -89,13 +89,13 @@ function SignupFlow({ onSwitchLogin }: { onSwitchLogin: () => void }) {
   const [step, setStep] = useState(0)
   const [pseudo, setPseudo] = useState('')
   const [avatar, setAvatar] = useState<string | null>(null)
-  const [password, setPassword] = useState('')
+  const [pin, setPin] = useState('')
   const [confirm, setConfirm] = useState('')
   const [level, setLevel] = useState<string | null>(null)
   const [groupCode, setGroupCode] = useState('')
   const [loading, setLoading] = useState(false)
 
-  const passwordMismatch = confirm.length > 0 && password !== confirm
+  const pinMismatch = confirm.length === 6 && pin !== confirm
   const isLast = step === STEPS.length - 1
 
   const canNext = (() => {
@@ -105,7 +105,7 @@ function SignupFlow({ onSwitchLogin }: { onSwitchLogin: () => void }) {
       case 1:
         return avatar !== null
       case 2:
-        return password.length >= 8 && password === confirm
+        return /^\d{6}$/.test(pin) && pin === confirm
       case 3:
         return level !== null
       default:
@@ -118,11 +118,11 @@ function SignupFlow({ onSwitchLogin }: { onSwitchLogin: () => void }) {
     try {
       await authService.signupStudent({
         pseudo: pseudo.trim(),
-        password,
+        pin,
         classCode: level ?? undefined,
         avatar: avatar ?? undefined,
       })
-      await signInStudent(pseudo.trim(), password) // connexion automatique
+      await signInStudent(pseudo.trim(), pin) // connexion automatique
       await navigate({ to: '/eleve/dashboard' })
     } catch (err) {
       toast.error(
@@ -204,28 +204,37 @@ function SignupFlow({ onSwitchLogin }: { onSwitchLogin: () => void }) {
 
         {step === 2 && (
           <div className="space-y-3">
-            <Label htmlFor="pwd">Mot de passe</Label>
+            <Label htmlFor="pin">Choisis un code secret (6 chiffres)</Label>
             <Input
-              id="pwd"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              id="pin"
+              inputMode="numeric"
+              autoComplete="off"
+              maxLength={6}
+              value={pin}
+              onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
               placeholder="••••••"
+              className="text-center text-2xl font-bold tracking-[0.5em]"
             />
-            <Label htmlFor="pwd2">Confirme le mot de passe</Label>
+            <Label htmlFor="pin2">Confirme ton code</Label>
             <Input
-              id="pwd2"
-              type="password"
+              id="pin2"
+              inputMode="numeric"
+              autoComplete="off"
+              maxLength={6}
               value={confirm}
-              onChange={(e) => setConfirm(e.target.value)}
+              onChange={(e) => setConfirm(e.target.value.replace(/\D/g, '').slice(0, 6))}
               placeholder="••••••"
-              aria-invalid={passwordMismatch}
+              aria-invalid={pinMismatch}
+              className="text-center text-2xl font-bold tracking-[0.5em]"
             />
-            {passwordMismatch && (
+            {pinMismatch && (
               <p className="flex items-center gap-1.5 text-xs font-medium text-destructive">
-                <AlertCircle className="size-4" /> Les mots de passe ne correspondent pas.
+                <AlertCircle className="size-4" /> Les deux codes ne correspondent pas.
               </p>
             )}
+            <p className="text-xs text-muted-foreground">
+              Facile à retenir, comme un code de téléphone. Tes parents pourront le réinitialiser si tu l'oublies.
+            </p>
           </div>
         )}
 
@@ -311,17 +320,18 @@ function LoginForm({ onSwitchSignup }: { onSwitchSignup: () => void }) {
   const { signInStudent } = useAuth()
   const navigate = useNavigate()
   const [pseudo, setPseudo] = useState('')
-  const [password, setPassword] = useState('')
+  const [pin, setPin] = useState('')
   const [loading, setLoading] = useState(false)
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
+    if (!/^\d{6}$/.test(pin)) return
     setLoading(true)
     try {
-      await signInStudent(pseudo.trim(), password)
+      await signInStudent(pseudo.trim(), pin)
       await navigate({ to: '/eleve/dashboard' })
     } catch {
-      toast.error('Pseudo ou mot de passe incorrect.')
+      toast.error('Pseudo ou code incorrect.')
     } finally {
       setLoading(false)
     }
@@ -331,7 +341,7 @@ function LoginForm({ onSwitchSignup }: { onSwitchSignup: () => void }) {
     <form onSubmit={onSubmit} className="flex flex-1 flex-col px-5 pt-8">
       <h1 className="font-heading text-2xl font-extrabold tracking-tight">Se connecter</h1>
       <p className="mt-1 text-sm text-muted-foreground">
-        Content de te revoir ! Entre tes identifiants.
+        Content de te revoir ! Entre ton pseudo et ton code.
       </p>
 
       <div className="mt-6 space-y-4">
@@ -347,14 +357,16 @@ function LoginForm({ onSwitchSignup }: { onSwitchSignup: () => void }) {
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="login-pwd">Mot de passe</Label>
+          <Label htmlFor="login-pin">Code secret</Label>
           <Input
-            id="login-pwd"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            id="login-pin"
+            inputMode="numeric"
+            maxLength={6}
+            value={pin}
+            onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
             placeholder="••••••"
-            autoComplete="current-password"
+            autoComplete="off"
+            className="text-center text-2xl font-bold tracking-[0.5em]"
             required
           />
         </div>

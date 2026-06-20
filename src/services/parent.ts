@@ -37,4 +37,6 @@ export const parentService = {
   children: () => api.get<Child[]>('/parent/children'),
   overview: (childId: string) => api.get<ChildOverview>(`/parent/children/${childId}/overview`),
   assignments: (childId: string) => api.get<ChildAssignment[]>(`/parent/children/${childId}/assignments`),
+  /** Réinitialise le code PIN (6 chiffres) de l'enfant. */
+  resetPin: (childId: string, pin: string) => api.post<{ ok: true }>(`/parent/children/${childId}/pin`, { pin }),
 }

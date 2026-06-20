@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import { parentService } from '@/services/parent'
 
 /** Enfants rattachés au parent courant. */
@@ -21,5 +21,12 @@ export function useChildAssignments(childId: string | undefined) {
     queryKey: ['parent', 'assignments', childId],
     queryFn: () => parentService.assignments(childId!),
     enabled: !!childId,
+  })
+}
+
+/** Réinitialisation du code PIN d'un enfant. */
+export function useResetChildPin() {
+  return useMutation({
+    mutationFn: ({ childId, pin }: { childId: string; pin: string }) => parentService.resetPin(childId, pin),
   })
 }

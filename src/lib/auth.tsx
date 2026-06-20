@@ -17,8 +17,8 @@ type AuthValue = {
   can: (permission: string) => boolean
   hasRole: (role: AppRole) => boolean
   signInWithPassword: (email: string, password: string) => Promise<void>
-  /** Connexion élève au pseudo (le BFF renvoie la session, on la pose). */
-  signInStudent: (pseudo: string, password: string) => Promise<void>
+  /** Connexion élève au pseudo + PIN (le BFF renvoie la session, on la pose). */
+  signInStudent: (pseudo: string, pin: string) => Promise<void>
   signOut: () => Promise<void>
 }
 
@@ -79,9 +79,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (error) throw error
       // onAuthStateChange déclenchera le sync du profil.
     },
-    async signInStudent(pseudo, password) {
-      // Le BFF résout pseudo→e-mail et fait le password-grant, puis nous rend la session.
-      const { accessToken, refreshToken } = await authService.loginStudent(pseudo, password)
+    async signInStudent(pseudo, pin) {
+      // Le BFF résout pseudo→e-mail et fait le password-grant (PIN), puis nous rend la session.
+      const { accessToken, refreshToken } = await authService.loginStudent(pseudo, pin)
       const { error } = await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken })
       if (error) throw error
     },
