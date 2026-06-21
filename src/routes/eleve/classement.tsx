@@ -19,14 +19,19 @@ import {
 } from '@/components/ui/select'
 import { avatarTint } from '@/components/student/parts'
 import { cn } from '@/lib/utils'
-import { leaderboard, classes, type LeaderRow } from '@/lib/mock'
+import { useWeeklyLeaderboard } from '@/hooks/use-gamification'
+import { useClasses } from '@/hooks/use-catalog'
+import { useAuth } from '@/lib/auth'
 
 export const Route = createFileRoute('/eleve/classement')({
   component: ClassementPage,
 })
 
+/** Ligne de classement (vue) — issue du BFF. */
+type Row = { rank: number; pseudo: string; avatar: string; points: number; me: boolean; trend: 'up' | 'down' | 'stable' }
+
 /** Tendance → icône + libellé (jamais la couleur seule). */
-function Trend({ trend }: { trend: LeaderRow['trend'] }) {
+function Trend({ trend }: { trend: Row['trend'] }) {
   if (trend === 'up')
     return (
       <span className="flex items-center gap-1 text-xs font-bold text-success">
@@ -47,7 +52,7 @@ function Trend({ trend }: { trend: LeaderRow['trend'] }) {
 }
 
 /** Un emplacement du podium (top 3). */
-function PodiumSpot({ row, place }: { row: LeaderRow; place: 1 | 2 | 3 }) {
+function PodiumSpot({ row, place }: { row: Row; place: 1 | 2 | 3 }) {
   const config = {
     1: {
       height: 'h-32 sm:h-40',
@@ -120,15 +125,39 @@ function PodiumSpot({ row, place }: { row: LeaderRow; place: 1 | 2 | 3 }) {
 }
 
 function ClassementPage() {
-  // Portée « classe » cosmétique : classes ouvertes (active), classe par défaut = la première active.
-  const activeClasses = classes.filter((c) => c.active)
-  const defaultClass = activeClasses[0]?.code ?? classes[0].code
+  const { session } = useAuth()
+  const myId = session?.user.id
+  const { data: weekly = [], isLoading } = useWeeklyLeaderboard()
+  const { data: catalogClasses = [] } = useClasses()
+
+  // Tendance non suivie côté backend (pas d'historique hebdo) → neutre, jamais inventée.
+  const leaderboard: Row[] = weekly
+    .map((r) => ({
+      rank: r.rankInClass,
+      pseudo: r.pseudo,
+      avatar: r.avatar,
+      points: r.weekXp,
+      me: r.studentId === myId,
+      trend: 'stable' as const,
+    }))
+    .sort((a, b) => a.rank - b.rank)
+
+  // Portée « classe » cosmétique : classe de l'élève par défaut.
+  const myClassCode = weekly.find((r) => r.studentId === myId)?.classCode
+  const defaultClass = myClassCode ?? catalogClasses[0]?.code ?? '—'
   const me = leaderboard.find((r) => r.me) ?? leaderboard[leaderboard.length - 1]
   const top3 = leaderboard.slice(0, 3)
-  const podium = {
-    1: top3.find((r) => r.rank === 1)!,
-    2: top3.find((r) => r.rank === 2)!,
-    3: top3.find((r) => r.rank === 3)!,
+  const podium =
+    top3.length === 3
+      ? { 1: top3.find((r) => r.rank === 1), 2: top3.find((r) => r.rank === 2), 3: top3.find((r) => r.rank === 3) }
+      : null
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center px-6 text-sm text-muted-foreground">
+        Chargement du classement…
+      </div>
+    )
   }
 
   return (
@@ -154,7 +183,7 @@ function ClassementPage() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {activeClasses.map((c) => (
+                {catalogClasses.map((c) => (
                   <SelectItem key={c.code} value={c.code}>
                     {c.code}
                   </SelectItem>
@@ -166,21 +195,24 @@ function ClassementPage() {
       />
 
       {/* Podium top 3 */}
-      <Card className="gap-0 overflow-hidden border-0 bg-gradient-to-br from-amber-soft via-card to-brand-soft/40 p-5 shadow-soft sm:p-6">
-        <div className="mb-5 flex items-center justify-center gap-2">
-          <Trophy className="size-5 text-amber" />
-          <h2 className="font-heading text-lg font-extrabold">
-            Le podium de ta classe ({defaultClass})
-          </h2>
-        </div>
-        <div className="flex items-end justify-center gap-3 sm:gap-5">
-          <PodiumSpot row={podium[2]} place={2} />
-          <PodiumSpot row={podium[1]} place={1} />
-          <PodiumSpot row={podium[3]} place={3} />
-        </div>
-      </Card>
+      {podium && (
+        <Card className="gap-0 overflow-hidden border-0 bg-gradient-to-br from-amber-soft via-card to-brand-soft/40 p-5 shadow-soft sm:p-6">
+          <div className="mb-5 flex items-center justify-center gap-2">
+            <Trophy className="size-5 text-amber" />
+            <h2 className="font-heading text-lg font-extrabold">
+              Le podium de ta classe ({defaultClass})
+            </h2>
+          </div>
+          <div className="flex items-end justify-center gap-3 sm:gap-5">
+            <PodiumSpot row={podium[2]!} place={2} />
+            <PodiumSpot row={podium[1]!} place={1} />
+            <PodiumSpot row={podium[3]!} place={3} />
+          </div>
+        </Card>
+      )}
 
       {/* Ta position */}
+      {me && (
       <Card className="gap-0 overflow-hidden border-0 bg-gradient-to-r from-brand to-indigo-600 p-5 text-white shadow-brand-glow">
         <div className="flex items-center gap-4">
           <div className="grid size-14 shrink-0 place-items-center rounded-2xl bg-white/15 text-3xl">
@@ -219,6 +251,7 @@ function ClassementPage() {
           </div>
         </div>
       </Card>
+      )}
 
       {/* Liste complète */}
       <Card className="gap-0 p-4 shadow-soft sm:p-5">
@@ -228,6 +261,11 @@ function ClassementPage() {
             {leaderboard.length} joueurs
           </span>
         </div>
+        {leaderboard.length === 0 && (
+          <p className="py-8 text-center text-sm text-muted-foreground">
+            Pas encore de classement cette semaine. Joue pour apparaître ici !
+          </p>
+        )}
         <ul className="space-y-1.5">
           {leaderboard.map((row) => (
             <li
