@@ -14,28 +14,40 @@ export function BottomNav() {
   const { pathname } = useLocation();
 
   return (
-    <nav className="sticky bottom-0 z-30 border-t border-border bg-card/95 backdrop-blur">
-      <ul className="mx-auto flex max-w-md items-stretch justify-around px-2 pb-[env(safe-area-inset-bottom)]">
+    <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden">
+      <ul className="mx-auto flex h-16 max-w-md items-stretch">
         {items.map(({ href, label, icon: Icon }) => {
           const active = pathname === href || pathname.startsWith(href + "/");
           return (
             <li key={href} className="flex-1">
               <Link
                 to={href}
-                className={cn(
-                  "flex flex-col items-center gap-1 py-2.5 text-[11px] font-medium transition-colors",
-                  active ? "text-brand" : "text-muted-foreground hover:text-foreground",
-                )}
+                className="flex h-full flex-col items-center justify-center gap-1"
+                aria-current={active ? "page" : undefined}
               >
+                {/* Pilule indicatrice (style app native) */}
                 <span
                   className={cn(
-                    "grid size-9 place-items-center rounded-xl transition-colors",
-                    active && "bg-brand-soft",
+                    "grid h-7 w-12 place-items-center rounded-full transition-colors duration-200",
+                    active ? "bg-brand-soft" : "bg-transparent",
                   )}
                 >
-                  <Icon className="size-[20px]" strokeWidth={active ? 2.4 : 2} />
+                  <Icon
+                    className={cn(
+                      "size-[22px] transition-colors",
+                      active ? "text-brand" : "text-muted-foreground",
+                    )}
+                    strokeWidth={active ? 2.3 : 2}
+                  />
                 </span>
-                {label}
+                <span
+                  className={cn(
+                    "text-[11px] leading-none transition-colors",
+                    active ? "font-bold text-brand" : "font-medium text-muted-foreground",
+                  )}
+                >
+                  {label}
+                </span>
               </Link>
             </li>
           );

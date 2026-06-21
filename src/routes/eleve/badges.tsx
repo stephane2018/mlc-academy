@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { Lock, Sparkles } from '@/components/icons'
 import { Card } from '@/components/ui/card'
 import { PageHero } from '@/components/blocks'
+import { avatarTint } from '@/components/student/parts'
 import { cn } from '@/lib/utils'
 import { badges, student } from '@/lib/mock'
 
@@ -100,20 +101,20 @@ function BadgeCard({ badge }: { badge: (typeof badges)[number] }) {
   }
 
   return (
-    <Card className="items-center gap-2 bg-amber-soft p-4 text-center shadow-sm transition-transform hover:scale-[1.02]">
+    <Card
+      className={cn(
+        'items-center gap-2 p-4 text-center shadow-sm transition-transform hover:scale-[1.02]',
+        avatarTint(badge.id),
+      )}
+    >
       <span className="grid size-14 place-items-center rounded-full bg-card text-3xl shadow-sm">
         {badge.emoji}
       </span>
-      <span className="text-sm font-bold text-amber-foreground">{badge.name}</span>
-      <span className="text-[11px] leading-tight text-amber-foreground/80">
+      <span className="text-sm font-bold text-foreground">{badge.name}</span>
+      <span className="text-[11px] leading-tight text-muted-foreground">
         {badge.description}
       </span>
-      <span
-        className={cn(
-          'mt-0.5 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide',
-          'bg-card text-amber',
-        )}
-      >
+      <span className="mt-0.5 rounded-full bg-card px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber">
         {badge.tier}
       </span>
     </Card>

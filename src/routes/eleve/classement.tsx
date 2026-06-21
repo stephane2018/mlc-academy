@@ -17,8 +17,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { avatarTint } from '@/components/student/parts'
 import { cn } from '@/lib/utils'
-import { leaderboard, type LeaderRow } from '@/lib/mock'
+import { leaderboard, classes, type LeaderRow } from '@/lib/mock'
 
 export const Route = createFileRoute('/eleve/classement')({
   component: ClassementPage,
@@ -86,7 +87,8 @@ function PodiumSpot({ row, place }: { row: LeaderRow; place: 1 | 2 | 3 }) {
       <div className="relative">
         <span
           className={cn(
-            'grid place-items-center rounded-full bg-card shadow-soft ring-4',
+            'grid place-items-center rounded-full shadow-soft ring-4',
+            row.me ? 'bg-brand-soft' : avatarTint(row.pseudo),
             config.avatar,
             config.ring,
           )}
@@ -118,6 +120,9 @@ function PodiumSpot({ row, place }: { row: LeaderRow; place: 1 | 2 | 3 }) {
 }
 
 function ClassementPage() {
+  // Portée « classe » cosmétique : classes ouvertes (active), classe par défaut = la première active.
+  const activeClasses = classes.filter((c) => c.active)
+  const defaultClass = activeClasses[0]?.code ?? classes[0].code
   const me = leaderboard.find((r) => r.me) ?? leaderboard[leaderboard.length - 1]
   const top3 = leaderboard.slice(0, 3)
   const podium = {
@@ -132,7 +137,7 @@ function ClassementPage() {
         variant="surface"
         eyebrow="Gamification"
         title="Classement"
-        subtitle="Affronte tes camarades et grimpe dans le tableau cette semaine."
+        subtitle="Affronte tes camarades de classe et grimpe dans le tableau cette semaine."
         actions={
           <div className="flex flex-wrap items-center gap-2">
             <Select defaultValue="week">
@@ -144,13 +149,16 @@ function ClassementPage() {
                 <SelectItem value="month">Ce mois</SelectItem>
               </SelectContent>
             </Select>
-            <Select defaultValue="a">
-              <SelectTrigger className="w-[130px] rounded-xl">
+            <Select defaultValue={defaultClass}>
+              <SelectTrigger className="w-[170px] rounded-xl">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="a">Groupe A</SelectItem>
-                <SelectItem value="b">Groupe B</SelectItem>
+                {activeClasses.map((c) => (
+                  <SelectItem key={c.code} value={c.code}>
+                    {c.code}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -161,7 +169,9 @@ function ClassementPage() {
       <Card className="gap-0 overflow-hidden border-0 bg-gradient-to-br from-amber-soft via-card to-brand-soft/40 p-5 shadow-soft sm:p-6">
         <div className="mb-5 flex items-center justify-center gap-2">
           <Trophy className="size-5 text-amber" />
-          <h2 className="font-heading text-lg font-extrabold">Le podium de la semaine</h2>
+          <h2 className="font-heading text-lg font-extrabold">
+            Le podium de ta classe ({defaultClass})
+          </h2>
         </div>
         <div className="flex items-end justify-center gap-3 sm:gap-5">
           <PodiumSpot row={podium[2]} place={2} />
@@ -239,7 +249,12 @@ function ClassementPage() {
               >
                 {row.rank}
               </span>
-              <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-secondary text-lg">
+              <span
+                className={cn(
+                  'grid size-9 shrink-0 place-items-center rounded-xl text-lg',
+                  row.me ? 'bg-card ring-1 ring-brand/30' : avatarTint(row.pseudo),
+                )}
+              >
                 {row.avatar}
               </span>
               <span className="min-w-0 flex-1 truncate text-sm font-bold">

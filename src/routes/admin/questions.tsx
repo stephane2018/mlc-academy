@@ -13,8 +13,15 @@ import {
   Sparkles,
 } from '@/components/icons'
 import { toast } from 'sonner'
-import { questionBank, domainLabels } from '@/lib/mock'
-import type { BankQuestion } from '@/lib/mock'
+import {
+  questionBank,
+  subjects,
+  subjectLabel,
+  themesFor,
+  themeLabel,
+} from '@/lib/mock'
+import type { BankQuestion, SubjectKey } from '@/lib/mock'
+import { SubjectFilter, type SubjectFilterValue } from '@/components/student/subject-filter'
 import { StatTile } from '@/components/blocks'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -51,11 +58,6 @@ export const Route = createFileRoute('/admin/questions')({
   component: AdminQuestions,
 })
 
-type DomainKey = keyof typeof domainLabels
-type DomainFilter = 'all' | DomainKey
-
-const domainKeys = Object.keys(domainLabels) as DomainKey[]
-
 const difficultyMeta: Record<BankQuestion['difficulty'], { label: string; className: string }> = {
   facile: { label: 'Facile', className: 'bg-success-soft text-success' },
   moyen: { label: 'Moyen', className: 'bg-amber-soft text-amber-foreground' },
@@ -68,6 +70,7 @@ function DifficultyBadge({ difficulty }: { difficulty: BankQuestion['difficulty'
 }
 
 function CreateQuestionDialog() {
+  const [subject, setSubject] = useState<SubjectKey>('maths')
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -80,30 +83,45 @@ function CreateQuestionDialog() {
         <DialogHeader>
           <DialogTitle>Créer une question</DialogTitle>
           <DialogDescription>
-            Ajoutez une question à la banque du jeu CE1D. Associez-la à un domaine et une difficulté.
+            Ajoutez une question à la banque. Associez-la à une matière, un thème et une difficulté.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-2">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Domaine</Label>
-              <Select>
+              <Label>Matière</Label>
+              <Select value={subject} onValueChange={(v) => setSubject(v as SubjectKey)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Choisir" />
                 </SelectTrigger>
                 <SelectContent>
-                  {domainKeys.map((key) => (
-                    <SelectItem key={key} value={key}>
-                      {domainLabels[key]}
+                  {subjects.map((s) => (
+                    <SelectItem key={s.key} value={s.key}>
+                      {s.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="q-type">Type</Label>
-              <Input id="q-type" placeholder="Ex. : Équation" />
+              <Label>Thème</Label>
+              <Select>
+                <SelectTrigger>
+                  <SelectValue placeholder="Choisir" />
+                </SelectTrigger>
+                <SelectContent>
+                  {themesFor(subject).map((t) => (
+                    <SelectItem key={t.key} value={t.key}>
+                      {t.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="q-type">Type</Label>
+            <Input id="q-type" placeholder="Ex. : Équation" />
           </div>
           <div className="space-y-2">
             <Label htmlFor="q-prompt">Énoncé</Label>
@@ -145,23 +163,31 @@ function CreateQuestionDialog() {
 }
 
 function AdminQuestions() {
-  const [domain, setDomain] = useState<DomainFilter>('all')
+  const [subject, setSubject] = useState<SubjectFilterValue>('all')
+  const [theme, setTheme] = useState<'all' | string>('all')
   const [search, setSearch] = useState('')
 
   const totalUses = useMemo(() => questionBank.reduce((sum, q) => sum + q.uses, 0), [])
-  const coveredDomains = useMemo(
-    () => new Set(questionBank.map((q) => q.domain)).size,
+  const coveredSubjects = useMemo(
+    () => new Set(questionBank.map((q) => q.subject)).size,
     [],
+  )
+
+  // Thèmes disponibles selon la matière sélectionnée (cascade).
+  const themeOptions = useMemo(
+    () => (subject === 'all' ? [] : themesFor(subject)),
+    [subject],
   )
 
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase()
     return questionBank.filter((q) => {
-      const matchDomain = domain === 'all' || q.domain === domain
+      const matchSubject = subject === 'all' || q.subject === subject
+      const matchTheme = theme === 'all' || q.theme === theme
       const matchSearch = term === '' || q.prompt.toLowerCase().includes(term)
-      return matchDomain && matchSearch
+      return matchSubject && matchTheme && matchSearch
     })
-  }, [domain, search])
+  }, [subject, theme, search])
 
   return (
     <div className="space-y-5 2xl:mx-auto 2xl:max-w-[1700px]">
@@ -181,36 +207,39 @@ function AdminQuestions() {
         <StatTile
           icon={Sparkles}
           tone="amber"
-          label="Domaines couverts"
-          value={`${coveredDomains} / ${domainKeys.length}`}
+          label="Matières couvertes"
+          value={`${coveredSubjects} / ${subjects.length}`}
         />
       </div>
 
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-3">
           <span className="hidden items-center gap-1.5 text-sm text-muted-foreground sm:flex">
             <Filter className="size-4" />
-            Domaine :
+            Matière :
           </span>
-          <Button
-            variant={domain === 'all' ? 'default' : 'outline'}
-            size="sm"
-            className="rounded-full"
-            onClick={() => setDomain('all')}
-          >
-            Tout
-          </Button>
-          {domainKeys.map((key) => (
-            <Button
-              key={key}
-              variant={domain === key ? 'default' : 'outline'}
-              size="sm"
-              className="rounded-full"
-              onClick={() => setDomain(key)}
-            >
-              {domainLabels[key]}
-            </Button>
-          ))}
+          <SubjectFilter
+            value={subject}
+            onChange={(v) => {
+              setSubject(v)
+              setTheme('all')
+            }}
+          />
+          {subject !== 'all' && themeOptions.length > 0 && (
+            <Select value={theme} onValueChange={setTheme}>
+              <SelectTrigger className="h-9 w-44">
+                <SelectValue placeholder="Tous les thèmes" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tous les thèmes</SelectItem>
+                {themeOptions.map((t) => (
+                  <SelectItem key={t.key} value={t.key}>
+                    {t.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <div className="relative w-full sm:w-64">
@@ -234,7 +263,8 @@ function AdminQuestions() {
             <thead>
               <tr className="border-b border-border bg-secondary/60 text-left text-xs uppercase tracking-wide text-muted-foreground">
                 <th className="px-5 py-3 font-semibold">Énoncé</th>
-                <th className="px-5 py-3 font-semibold">Domaine</th>
+                <th className="px-5 py-3 font-semibold">Matière</th>
+                <th className="px-5 py-3 font-semibold">Thème</th>
                 <th className="px-5 py-3 font-semibold">Type</th>
                 <th className="px-5 py-3 font-semibold">Difficulté</th>
                 <th className="px-5 py-3 font-semibold text-right">Utilisations</th>
@@ -246,7 +276,10 @@ function AdminQuestions() {
                 <tr key={q.id} className="transition-colors hover:bg-secondary/40">
                   <td className="px-5 py-3 font-medium">{q.prompt}</td>
                   <td className="px-5 py-3">
-                    <Badge variant="outline">{domainLabels[q.domain]}</Badge>
+                    <Badge variant="outline">{subjectLabel(q.subject)}</Badge>
+                  </td>
+                  <td className="px-5 py-3 text-muted-foreground">
+                    {themeLabel(q.theme, q.subject)}
                   </td>
                   <td className="px-5 py-3 text-muted-foreground">{q.type}</td>
                   <td className="px-5 py-3">
@@ -286,7 +319,7 @@ function AdminQuestions() {
               ))}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-5 py-12 text-center text-muted-foreground">
+                  <td colSpan={7} className="px-5 py-12 text-center text-muted-foreground">
                     <CircleHelp className="mx-auto mb-2 size-6 text-muted-foreground" />
                     Aucune question ne correspond à votre recherche.
                   </td>

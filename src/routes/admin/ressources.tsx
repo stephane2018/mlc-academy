@@ -3,6 +3,14 @@ import { useState } from 'react'
 import { Plus, MoreHorizontal, Pencil, EyeOff, Trash2, Video, FileText, CheckSquare } from '@/components/icons'
 import type { LucideIcon } from '@/components/icons'
 import { toast } from 'sonner'
+import {
+  subjects,
+  subjectLabel,
+  themesFor,
+  themeLabel,
+  type SubjectKey,
+} from '@/lib/mock'
+import { SubjectFilter, type SubjectFilterValue } from '@/components/student/subject-filter'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -44,20 +52,21 @@ type Resource = {
   id: string
   title: string
   type: ResourceType
-  domain: string
+  subject: SubjectKey
+  theme: string
   status: ResourceStatus
   date: string
 }
 
 const resources: Resource[] = [
-  { id: 'r1', title: 'Théorème de Pythagore', type: 'Vidéo', domain: 'Géométrie', status: 'Publié', date: '12 juin 2026' },
-  { id: 'r2', title: 'Résoudre une équation du 1er degré', type: 'Vidéo', domain: 'Algèbre', status: 'Publié', date: '10 juin 2026' },
-  { id: 'r3', title: 'Fiche : les fractions', type: 'PDF', domain: 'Nombres', status: 'Publié', date: '8 juin 2026' },
-  { id: 'r4', title: 'Examen blanc — Géométrie n°3', type: 'Examen blanc', domain: 'Géométrie', status: 'Brouillon', date: '6 juin 2026' },
-  { id: 'r5', title: 'Lecture de graphiques', type: 'Vidéo', domain: 'Statistiques', status: 'Publié', date: '4 juin 2026' },
-  { id: 'r6', title: 'Fiche : périmètre et aire', type: 'PDF', domain: 'Mesures', status: 'Brouillon', date: '2 juin 2026' },
-  { id: 'r7', title: 'Examen blanc — Algèbre n°2', type: 'Examen blanc', domain: 'Algèbre', status: 'Publié', date: '30 mai 2026' },
-  { id: 'r8', title: 'Calcul de pourcentages', type: 'Vidéo', domain: 'Nombres', status: 'Brouillon', date: '28 mai 2026' },
+  { id: 'r1', title: 'Théorème de Pythagore', type: 'Vidéo', subject: 'maths', theme: 'geometrie', status: 'Publié', date: '12 juin 2026' },
+  { id: 'r2', title: 'Résoudre une équation du 1er degré', type: 'Vidéo', subject: 'maths', theme: 'algebre', status: 'Publié', date: '10 juin 2026' },
+  { id: 'r3', title: 'Fiche : les fractions', type: 'PDF', subject: 'maths', theme: 'nombres', status: 'Publié', date: '8 juin 2026' },
+  { id: 'r4', title: 'Examen blanc — Géométrie n°3', type: 'Examen blanc', subject: 'maths', theme: 'geometrie', status: 'Brouillon', date: '6 juin 2026' },
+  { id: 'r5', title: 'Lecture de graphiques', type: 'Vidéo', subject: 'maths', theme: 'statistiques', status: 'Publié', date: '4 juin 2026' },
+  { id: 'r6', title: 'Fiche : périmètre et aire', type: 'PDF', subject: 'maths', theme: 'mesures', status: 'Brouillon', date: '2 juin 2026' },
+  { id: 'r7', title: 'Examen blanc — Algèbre n°2', type: 'Examen blanc', subject: 'maths', theme: 'algebre', status: 'Publié', date: '30 mai 2026' },
+  { id: 'r8', title: 'Calcul de pourcentages', type: 'Vidéo', subject: 'maths', theme: 'nombres', status: 'Brouillon', date: '28 mai 2026' },
 ]
 
 const typeIcons: Record<ResourceType, LucideIcon> = {
@@ -75,6 +84,7 @@ function StatusBadge({ status }: { status: ResourceStatus }) {
 }
 
 function AddResourceDialog() {
+  const [subject, setSubject] = useState<SubjectKey>('maths')
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -110,20 +120,35 @@ function AddResourceDialog() {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Domaine</Label>
-              <Select>
+              <Label>Matière</Label>
+              <Select value={subject} onValueChange={(v) => setSubject(v as SubjectKey)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Choisir" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="nombres">Nombres</SelectItem>
-                  <SelectItem value="algebre">Algèbre</SelectItem>
-                  <SelectItem value="geometrie">Géométrie</SelectItem>
-                  <SelectItem value="mesures">Mesures</SelectItem>
-                  <SelectItem value="statistiques">Statistiques</SelectItem>
+                  {subjects.map((s) => (
+                    <SelectItem key={s.key} value={s.key}>
+                      {s.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
+          </div>
+          <div className="space-y-2">
+            <Label>Thème</Label>
+            <Select>
+              <SelectTrigger>
+                <SelectValue placeholder="Choisir" />
+              </SelectTrigger>
+              <SelectContent>
+                {themesFor(subject).map((t) => (
+                  <SelectItem key={t.key} value={t.key}>
+                    {t.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
         <DialogFooter>
@@ -142,7 +167,10 @@ function AddResourceDialog() {
 }
 
 function AdminRessources() {
-  const [items] = useState(resources)
+  const [allItems] = useState(resources)
+  const [subject, setSubject] = useState<SubjectFilterValue>('all')
+  const items =
+    subject === 'all' ? allItems : allItems.filter((r) => r.subject === subject)
   const published = items.filter((r) => r.status === 'Publié').length
   const drafts = items.length - published
 
@@ -157,6 +185,8 @@ function AdminRessources() {
         <AddResourceDialog />
       </div>
 
+      <SubjectFilter value={subject} onChange={setSubject} />
+
       <Card className="overflow-hidden rounded-2xl p-0 shadow-soft">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[640px] text-sm">
@@ -164,7 +194,8 @@ function AdminRessources() {
               <tr className="border-b border-border bg-secondary/60 text-left text-xs uppercase tracking-wide text-muted-foreground">
                 <th className="px-5 py-3 font-semibold">Titre</th>
                 <th className="px-5 py-3 font-semibold">Type</th>
-                <th className="px-5 py-3 font-semibold">Domaine</th>
+                <th className="px-5 py-3 font-semibold">Matière</th>
+                <th className="px-5 py-3 font-semibold">Thème</th>
                 <th className="px-5 py-3 font-semibold">Statut</th>
                 <th className="px-5 py-3 font-semibold">Date</th>
                 <th className="px-5 py-3 font-semibold text-right">Actions</th>
@@ -182,7 +213,12 @@ function AdminRessources() {
                         {res.type}
                       </Badge>
                     </td>
-                    <td className="px-5 py-3 text-muted-foreground">{res.domain}</td>
+                    <td className="px-5 py-3">
+                      <Badge variant="outline">{subjectLabel(res.subject)}</Badge>
+                    </td>
+                    <td className="px-5 py-3 text-muted-foreground">
+                      {themeLabel(res.theme, res.subject)}
+                    </td>
                     <td className="px-5 py-3">
                       <StatusBadge status={res.status} />
                     </td>

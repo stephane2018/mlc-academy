@@ -32,10 +32,13 @@ import { cn } from '@/lib/utils'
 import {
   profGroups,
   profStudents,
-  domainLabels,
+  subjects,
+  getSubject,
+  themesFor,
+  themeLabel,
   type AssignmentType,
   type AssignmentQuestion,
-  type SkillKey,
+  type SubjectKey,
 } from '@/lib/mock'
 
 export const Route = createFileRoute('/prof/exercices/nouveau')({
@@ -73,7 +76,8 @@ function ExerciceBuilder() {
   const [title, setTitle] = useState('')
   const [type, setType] = useState<AssignmentType>('devoir')
   const [durationMin, setDurationMin] = useState('15')
-  const [domain, setDomain] = useState<SkillKey>('nombres')
+  const [subject, setSubject] = useState<SubjectKey>('maths')
+  const [theme, setTheme] = useState<string>(themesFor('maths')[0].key)
   const [difficulty, setDifficulty] = useState<'facile' | 'moyen' | 'difficile'>('moyen')
   const [dueDate, setDueDate] = useState('')
 
@@ -85,6 +89,11 @@ function ExerciceBuilder() {
   const [selGroups, setSelGroups] = useState<string[]>([])
   const [selStudents, setSelStudents] = useState<string[]>([])
   const [message, setMessage] = useState('')
+
+  function changeSubject(next: SubjectKey) {
+    setSubject(next)
+    setTheme(themesFor(next)[0].key)
+  }
 
   function patchQuestion(idx: number, patch: Partial<AssignmentQuestion>) {
     setQuestions((qs) => qs.map((q, i) => (i === idx ? { ...q, ...patch } : q)))
@@ -190,8 +199,11 @@ function ExerciceBuilder() {
               </p>
 
               <div className="mt-4 rounded-2xl border border-border bg-card p-4 shadow-sm">
-                <p className="text-xs font-bold uppercase tracking-widest text-brand">
-                  {domainLabels[domain]}
+                <p
+                  className="text-xs font-bold uppercase tracking-widest"
+                  style={{ color: getSubject(subject).color }}
+                >
+                  {getSubject(subject).label} · {themeLabel(theme, subject)}
                 </p>
                 <p className="mt-2 text-sm font-medium leading-relaxed">
                   {current.prompt || 'Saisis un énoncé…'}
@@ -384,17 +396,33 @@ function ExerciceBuilder() {
             </div>
           )}
 
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <div className="space-y-1.5">
-              <Label>Domaine</Label>
-              <Select value={domain} onValueChange={(v) => setDomain(v as SkillKey)}>
+              <Label>Matière</Label>
+              <Select value={subject} onValueChange={(v) => changeSubject(v as SubjectKey)}>
                 <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {(Object.keys(domainLabels) as SkillKey[]).map((k) => (
-                    <SelectItem key={k} value={k}>
-                      {domainLabels[k]}
+                  {subjects.map((s) => (
+                    <SelectItem key={s.key} value={s.key}>
+                      {s.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>Thème</Label>
+              <Select value={theme} onValueChange={setTheme}>
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {themesFor(subject).map((t) => (
+                    <SelectItem key={t.key} value={t.key}>
+                      {t.label}
                     </SelectItem>
                   ))}
                 </SelectContent>

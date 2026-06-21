@@ -24,6 +24,123 @@ export const skills: Skill[] = [
   { key: "statistiques", label: "Statistiques", mastery: 38 },
 ];
 
+/* --------------------- Référentiels (multi-matières) ------------------- */
+// Reflètent la BD : classes (niveaux dynamiques), subjects (matières),
+// subject_themes (thèmes/chapitres par matière). Le front filtre par matière
+// écran par écran ; chaque contenu porte un `subject` + un `theme`.
+
+export type SubjectKey = "maths" | "francais" | "sciences";
+
+export type ThemeDef = { key: string; label: string };
+
+export type SubjectDef = {
+  key: SubjectKey;
+  label: string;
+  color: string; // hex (accent UI)
+  icon: string; // nom d'icône (composants/icons)
+  themes: ThemeDef[];
+};
+
+export const subjects: SubjectDef[] = [
+  {
+    key: "maths",
+    label: "Mathématiques",
+    color: "#6C5CE7",
+    icon: "Calculator",
+    themes: [
+      { key: "nombres", label: "Nombres" },
+      { key: "algebre", label: "Algèbre" },
+      { key: "geometrie", label: "Géométrie" },
+      { key: "mesures", label: "Grandeurs & mesures" },
+      { key: "statistiques", label: "Statistiques" },
+    ],
+  },
+  {
+    key: "francais",
+    label: "Français",
+    color: "#E17055",
+    icon: "BookOpen",
+    themes: [
+      { key: "grammaire", label: "Grammaire" },
+      { key: "conjugaison", label: "Conjugaison" },
+      { key: "orthographe", label: "Orthographe" },
+      { key: "lecture", label: "Lecture & compréhension" },
+    ],
+  },
+  {
+    key: "sciences",
+    label: "Sciences",
+    color: "#00B894",
+    icon: "Flask",
+    themes: [
+      { key: "biologie", label: "Biologie" },
+      { key: "chimie", label: "Chimie" },
+      { key: "physique", label: "Physique" },
+    ],
+  },
+];
+
+export function getSubject(key: SubjectKey): SubjectDef {
+  return subjects.find((s) => s.key === key) ?? subjects[0];
+}
+
+export function subjectLabel(key: SubjectKey): string {
+  return getSubject(key).label;
+}
+
+export function themesFor(key: SubjectKey): ThemeDef[] {
+  return getSubject(key).themes;
+}
+
+/** Libellé d'un thème, recherché dans toutes les matières (ou une matière donnée). */
+export function themeLabel(themeKey: string, subject?: SubjectKey): string {
+  const pool = subject ? themesFor(subject) : subjects.flatMap((s) => s.themes);
+  return pool.find((t) => t.key === themeKey)?.label ?? themeKey;
+}
+
+export type ClassDef = { code: string; label: string; active: boolean };
+
+export const classes: ClassDef[] = [
+  { code: "CE1D", label: "CE1D — Certificat du 1er degré", active: true },
+  { code: "S1", label: "1re secondaire (S1)", active: true },
+  { code: "S2", label: "2e secondaire (S2)", active: true },
+  { code: "S3", label: "3e secondaire (S3)", active: false },
+];
+
+/** Matière d'un élève + maîtrise par thème (alimente dashboard/profil agrégés). */
+export type SubjectMastery = {
+  subject: SubjectKey;
+  mastery: number; // moyenne matière
+  themes: { key: string; label: string; mastery: number }[];
+};
+
+export const subjectMastery: SubjectMastery[] = [
+  {
+    subject: "maths",
+    mastery: 60,
+    themes: skills.map((s) => ({ key: s.key, label: s.label, mastery: s.mastery })),
+  },
+  {
+    subject: "francais",
+    mastery: 74,
+    themes: [
+      { key: "grammaire", label: "Grammaire", mastery: 78 },
+      { key: "conjugaison", label: "Conjugaison", mastery: 81 },
+      { key: "orthographe", label: "Orthographe", mastery: 66 },
+      { key: "lecture", label: "Lecture & compréhension", mastery: 70 },
+    ],
+  },
+  {
+    subject: "sciences",
+    mastery: 52,
+    themes: [
+      { key: "biologie", label: "Biologie", mastery: 64 },
+      { key: "chimie", label: "Chimie", mastery: 41 },
+      { key: "physique", label: "Physique", mastery: 50 },
+    ],
+  },
+];
+
 export const student = {
   pseudo: "MaxLeBg",
   avatar: "🤖",
@@ -77,6 +194,7 @@ export const badges: Badge[] = [
 export type QuizOption = { id: string; label: string };
 export type QuizQuestion = {
   id: string;
+  subject: SubjectKey;
   domain: string;
   type: string;
   prompt: string;
@@ -90,7 +208,7 @@ export type QuizQuestion = {
 export const quizQuestions: QuizQuestion[] = [
   {
     id: "q1",
-    domain: "Algèbre",
+    subject: "maths",    domain: "Algèbre",
     type: "Équation",
     prompt: "Résous l'équation. Quelle est la valeur de x ?",
     katex: "2x + 5 = 17",
@@ -106,7 +224,7 @@ export const quizQuestions: QuizQuestion[] = [
   },
   {
     id: "q2",
-    domain: "Nombres",
+    subject: "maths",    domain: "Nombres",
     type: "Fractions",
     prompt: "Combien font ces deux fractions additionnées ?",
     katex: "\\frac{3}{4} + \\frac{1}{2}",
@@ -122,7 +240,7 @@ export const quizQuestions: QuizQuestion[] = [
   },
   {
     id: "q3",
-    domain: "Géométrie",
+    subject: "maths",    domain: "Géométrie",
     type: "Aire",
     prompt: "Calcule l'aire d'un rectangle de 7 cm de long et 4 cm de large.",
     options: [
@@ -134,6 +252,36 @@ export const quizQuestions: QuizQuestion[] = [
     correctId: "c",
     explanation: "Aire = longueur × largeur :",
     explanationKatex: "7 \\times 4 = 28\\ \\text{cm}^2",
+  },
+  {
+    id: "q4",
+    subject: "francais",
+    domain: "Conjugaison",
+    type: "Passé composé",
+    prompt: "Quelle est la forme correcte ? « Hier, elles sont ___ au cinéma. »",
+    options: [
+      { id: "a", label: "allé" },
+      { id: "b", label: "allés" },
+      { id: "c", label: "allées" },
+      { id: "d", label: "aller" },
+    ],
+    correctId: "c",
+    explanation: "Avec l'auxiliaire « être », le participe s'accorde avec le sujet (elles → allées).",
+  },
+  {
+    id: "q5",
+    subject: "sciences",
+    domain: "Chimie",
+    type: "États de la matière",
+    prompt: "Comment s'appelle le passage de l'état liquide à l'état gazeux ?",
+    options: [
+      { id: "a", label: "La fusion" },
+      { id: "b", label: "La vaporisation" },
+      { id: "c", label: "La condensation" },
+      { id: "d", label: "La solidification" },
+    ],
+    correctId: "b",
+    explanation: "Le passage liquide → gaz est la vaporisation (évaporation ou ébullition).",
   },
 ];
 
@@ -234,7 +382,8 @@ export const weeklyActivity: ChartPoint[] = [
 export type ProfGroup = {
   id: string;
   name: string;
-  level: string;
+  level: string; // code classe (CE1D/S1/…)
+  subjects: SubjectKey[]; // matières enseignées au groupe
   students: number;
   avgScore: number;
   activityRate: number;
@@ -243,9 +392,9 @@ export type ProfGroup = {
 };
 
 export const profGroups: ProfGroup[] = [
-  { id: "g1", name: "Groupe A", level: "CE1D", students: 8, avgScore: 74, activityRate: 88, weakSkill: "Géométrie", code: "MLC-A7K2" },
-  { id: "g2", name: "Groupe B", level: "CE1D", students: 6, avgScore: 68, activityRate: 71, weakSkill: "Statistiques", code: "MLC-B3F9" },
-  { id: "g3", name: "Tronc Commun S1", level: "S1", students: 5, avgScore: 81, activityRate: 92, weakSkill: "Algèbre", code: "MLC-S1Q4" },
+  { id: "g1", name: "Groupe A", level: "CE1D", subjects: ["maths", "francais", "sciences"], students: 8, avgScore: 74, activityRate: 88, weakSkill: "Géométrie", code: "MLC-A7K2" },
+  { id: "g2", name: "Groupe B", level: "CE1D", subjects: ["maths", "francais"], students: 6, avgScore: 68, activityRate: 71, weakSkill: "Statistiques", code: "MLC-B3F9" },
+  { id: "g3", name: "Tronc Commun S1", level: "S1", subjects: ["maths"], students: 5, avgScore: 81, activityRate: 92, weakSkill: "Algèbre", code: "MLC-S1Q4" },
 ];
 
 export type ProfStudent = {
@@ -297,7 +446,8 @@ export type LibraryItem = {
   id: string;
   title: string;
   chapter: string;
-  domain: SkillKey;
+  subject: SubjectKey;
+  theme: string;
   type: ResourceType;
   duration?: string; // vidéo
   pages?: number; // pdf / fiche
@@ -327,30 +477,41 @@ export const resourceTypeMeta: Record<
 
 export const library: LibraryItem[] = [
   // Nombres
-  { id: "r1", title: "Les fractions équivalentes", chapter: "Chapitre 3", domain: "nombres", type: "video", duration: "6:24", progress: 100, premium: false, description: "Comprendre et reconnaître des fractions qui représentent la même quantité, et simplifier une fraction." },
-  { id: "r2", title: "Additionner des fractions", chapter: "Chapitre 3", domain: "nombres", type: "exercice", questions: 12, progress: 45, premium: false, description: "Série d'exercices corrigés sur l'addition de fractions au même dénominateur puis à dénominateurs différents." },
-  { id: "r3", title: "Fiche mémo — Fractions", chapter: "Chapitre 3", domain: "nombres", type: "fiche", pages: 2, progress: 0, premium: false, description: "L'essentiel à retenir : vocabulaire, règles d'addition, multiplication et simplification." },
-  { id: "r4", title: "Nombres relatifs", chapter: "Chapitre 4", domain: "nombres", type: "video", duration: "7:58", progress: 30, premium: false, description: "Additionner et soustraire des nombres positifs et négatifs sur la droite graduée." },
+  { id: "r1", title: "Les fractions équivalentes", chapter: "Chapitre 3", subject: "maths", theme: "nombres", type: "video", duration: "6:24", progress: 100, premium: false, description: "Comprendre et reconnaître des fractions qui représentent la même quantité, et simplifier une fraction." },
+  { id: "r2", title: "Additionner des fractions", chapter: "Chapitre 3", subject: "maths", theme: "nombres", type: "exercice", questions: 12, progress: 45, premium: false, description: "Série d'exercices corrigés sur l'addition de fractions au même dénominateur puis à dénominateurs différents." },
+  { id: "r3", title: "Fiche mémo — Fractions", chapter: "Chapitre 3", subject: "maths", theme: "nombres", type: "fiche", pages: 2, progress: 0, premium: false, description: "L'essentiel à retenir : vocabulaire, règles d'addition, multiplication et simplification." },
+  { id: "r4", title: "Nombres relatifs", chapter: "Chapitre 4", subject: "maths", theme: "nombres", type: "video", duration: "7:58", progress: 30, premium: false, description: "Additionner et soustraire des nombres positifs et négatifs sur la droite graduée." },
 
   // Algèbre
-  { id: "r5", title: "Résoudre une équation du 1er degré", chapter: "Chapitre 5", domain: "algebre", type: "video", duration: "8:10", progress: 60, premium: false, description: "La méthode FWB pas à pas pour isoler l'inconnue et vérifier sa solution." },
-  { id: "r6", title: "Équations — exercices types CE1D", chapter: "Chapitre 5", domain: "algebre", type: "exercice", questions: 15, progress: 0, premium: false, description: "Entraîne-toi sur des équations comme tu en auras au CE1D, avec correction instantanée." },
-  { id: "r7", title: "Développer et réduire", chapter: "Chapitre 6", domain: "algebre", type: "pdf", pages: 4, progress: 0, premium: true, description: "Tout sur la distributivité et la réduction d'expressions littérales, avec exemples corrigés." },
+  { id: "r5", title: "Résoudre une équation du 1er degré", chapter: "Chapitre 5", subject: "maths", theme: "algebre", type: "video", duration: "8:10", progress: 60, premium: false, description: "La méthode FWB pas à pas pour isoler l'inconnue et vérifier sa solution." },
+  { id: "r6", title: "Équations — exercices types CE1D", chapter: "Chapitre 5", subject: "maths", theme: "algebre", type: "exercice", questions: 15, progress: 0, premium: false, description: "Entraîne-toi sur des équations comme tu en auras au CE1D, avec correction instantanée." },
+  { id: "r7", title: "Développer et réduire", chapter: "Chapitre 6", subject: "maths", theme: "algebre", type: "pdf", pages: 4, progress: 0, premium: true, description: "Tout sur la distributivité et la réduction d'expressions littérales, avec exemples corrigés." },
 
   // Géométrie
-  { id: "r8", title: "Aires et périmètres", chapter: "Chapitre 7", domain: "geometrie", type: "video", duration: "7:45", progress: 0, premium: false, description: "Calculer l'aire et le périmètre des figures usuelles : rectangle, triangle, cercle." },
-  { id: "r9", title: "Le théorème de Pythagore", chapter: "Chapitre 8", domain: "geometrie", type: "video", duration: "9:30", progress: 0, premium: true, description: "Énoncé, démonstration visuelle et applications du théorème dans un triangle rectangle." },
-  { id: "r10", title: "Fiche — Formules de géométrie", chapter: "Chapitre 8", domain: "geometrie", type: "fiche", pages: 3, progress: 100, premium: false, description: "Toutes les formules d'aires, de périmètres et de volumes à connaître pour le CE1D." },
-  { id: "r11", title: "Constructions géométriques", chapter: "Chapitre 9", domain: "geometrie", type: "exercice", questions: 10, progress: 0, premium: true, description: "Médiatrices, bissectrices et hauteurs : exercices guidés à la règle et au compas." },
+  { id: "r8", title: "Aires et périmètres", chapter: "Chapitre 7", subject: "maths", theme: "geometrie", type: "video", duration: "7:45", progress: 0, premium: false, description: "Calculer l'aire et le périmètre des figures usuelles : rectangle, triangle, cercle." },
+  { id: "r9", title: "Le théorème de Pythagore", chapter: "Chapitre 8", subject: "maths", theme: "geometrie", type: "video", duration: "9:30", progress: 0, premium: true, description: "Énoncé, démonstration visuelle et applications du théorème dans un triangle rectangle." },
+  { id: "r10", title: "Fiche — Formules de géométrie", chapter: "Chapitre 8", subject: "maths", theme: "geometrie", type: "fiche", pages: 3, progress: 100, premium: false, description: "Toutes les formules d'aires, de périmètres et de volumes à connaître pour le CE1D." },
+  { id: "r11", title: "Constructions géométriques", chapter: "Chapitre 9", subject: "maths", theme: "geometrie", type: "exercice", questions: 10, progress: 0, premium: true, description: "Médiatrices, bissectrices et hauteurs : exercices guidés à la règle et au compas." },
 
   // Mesures
-  { id: "r12", title: "Conversions d'unités", chapter: "Chapitre 6", domain: "mesures", type: "video", duration: "6:50", progress: 80, premium: false, description: "Passer des km aux mm, des L aux mL : la méthode du tableau de conversion." },
-  { id: "r13", title: "Mesures — PDF d'exercices", chapter: "Chapitre 6", domain: "mesures", type: "pdf", pages: 5, progress: 20, premium: false, description: "Fiche d'exercices imprimable sur les longueurs, masses, capacités et durées." },
+  { id: "r12", title: "Conversions d'unités", chapter: "Chapitre 6", subject: "maths", theme: "mesures", type: "video", duration: "6:50", progress: 80, premium: false, description: "Passer des km aux mm, des L aux mL : la méthode du tableau de conversion." },
+  { id: "r13", title: "Mesures — PDF d'exercices", chapter: "Chapitre 6", subject: "maths", theme: "mesures", type: "pdf", pages: 5, progress: 20, premium: false, description: "Fiche d'exercices imprimable sur les longueurs, masses, capacités et durées." },
 
   // Statistiques
-  { id: "r14", title: "Lire un diagramme", chapter: "Chapitre 10", domain: "statistiques", type: "video", duration: "5:12", progress: 0, premium: true, description: "Diagrammes en bâtons, circulaires et histogrammes : comment les lire et les interpréter." },
-  { id: "r15", title: "Moyenne et étendue", chapter: "Chapitre 10", domain: "statistiques", type: "exercice", questions: 8, progress: 0, premium: false, description: "Calcule la moyenne et l'étendue d'une série de données dans des situations concrètes." },
-  { id: "r16", title: "Fiche mémo — Statistiques", chapter: "Chapitre 10", domain: "statistiques", type: "fiche", pages: 2, progress: 0, premium: true, description: "Vocabulaire et formules clés : effectif, fréquence, moyenne, étendue." },
+  { id: "r14", title: "Lire un diagramme", chapter: "Chapitre 10", subject: "maths", theme: "statistiques", type: "video", duration: "5:12", progress: 0, premium: true, description: "Diagrammes en bâtons, circulaires et histogrammes : comment les lire et les interpréter." },
+  { id: "r15", title: "Moyenne et étendue", chapter: "Chapitre 10", subject: "maths", theme: "statistiques", type: "exercice", questions: 8, progress: 0, premium: false, description: "Calcule la moyenne et l'étendue d'une série de données dans des situations concrètes." },
+  { id: "r16", title: "Fiche mémo — Statistiques", chapter: "Chapitre 10", subject: "maths", theme: "statistiques", type: "fiche", pages: 2, progress: 0, premium: true, description: "Vocabulaire et formules clés : effectif, fréquence, moyenne, étendue." },
+
+  // Français
+  { id: "r17", title: "Les classes de mots", chapter: "Grammaire 1", subject: "francais", theme: "grammaire", type: "video", duration: "7:20", progress: 100, premium: false, description: "Nom, verbe, adjectif, déterminant : reconnaître la nature des mots dans une phrase." },
+  { id: "r18", title: "Conjuguer au passé composé", chapter: "Conjugaison 2", subject: "francais", theme: "conjugaison", type: "exercice", questions: 14, progress: 40, premium: false, description: "Auxiliaire avoir / être et accord du participe passé : exercices corrigés." },
+  { id: "r19", title: "Les accords dans le groupe nominal", chapter: "Orthographe 3", subject: "francais", theme: "orthographe", type: "fiche", pages: 2, progress: 0, premium: false, description: "Règles d'accord en genre et en nombre, avec exemples et pièges courants." },
+  { id: "r20", title: "Comprendre un texte argumentatif", chapter: "Lecture 4", subject: "francais", theme: "lecture", type: "pdf", pages: 6, progress: 0, premium: true, description: "Repérer la thèse, les arguments et les connecteurs logiques dans un texte." },
+
+  // Sciences
+  { id: "r21", title: "La cellule, unité du vivant", chapter: "Bio 1", subject: "sciences", theme: "biologie", type: "video", duration: "8:05", progress: 0, premium: false, description: "Cellule animale et végétale : structures principales et rôles." },
+  { id: "r22", title: "États de la matière", chapter: "Chimie 2", subject: "sciences", theme: "chimie", type: "exercice", questions: 10, progress: 0, premium: false, description: "Solide, liquide, gaz et changements d'état : exercices et schémas." },
+  { id: "r23", title: "Les forces et le mouvement", chapter: "Physique 3", subject: "sciences", theme: "physique", type: "fiche", pages: 3, progress: 0, premium: true, description: "Notion de force, vitesse et équilibre : l'essentiel à retenir." },
 ];
 
 export function getLibraryItem(id: string): LibraryItem | undefined {
@@ -406,6 +567,7 @@ export type SharedResource = {
   id: string;
   title: string;
   description: string;
+  subject: SubjectKey;
   type: ResourceType;
   status: "publié" | "planifié" | "brouillon";
   date: string;
@@ -420,7 +582,7 @@ export type SharedResource = {
 
 export const sharedResources: SharedResource[] = [
   {
-    id: "sr1", title: "Correction interro fractions", type: "pdf", status: "publié", date: "14 juin",
+    id: "sr1", title: "Correction interro fractions", subject: "maths", type: "pdf", status: "publié", date: "14 juin",
     views: 7, likes: 5, fileName: "correction-fractions.pdf", fileSize: "1,2 Mo",
     description: "Correction détaillée de l'interrogation sur l'addition et la simplification de fractions.",
     groups: ["Groupe A"], students: [],
@@ -430,7 +592,7 @@ export const sharedResources: SharedResource[] = [
     ],
   },
   {
-    id: "sr2", title: "Vidéo : méthode Pythagore", type: "video", status: "publié", date: "10 juin",
+    id: "sr2", title: "Vidéo : méthode Pythagore", subject: "maths", type: "video", status: "publié", date: "10 juin",
     views: 22, likes: 14, fileName: "pythagore-methode.mp4", fileSize: "48 Mo",
     description: "Vidéo expliquant le théorème de Pythagore avec une démonstration visuelle et 3 exemples.",
     groups: ["Groupe A", "Groupe B"], students: [],
@@ -439,22 +601,34 @@ export const sharedResources: SharedResource[] = [
     ],
   },
   {
-    id: "sr3", title: "Exercices supplémentaires — Léa", type: "exercice", status: "publié", date: "9 juin",
+    id: "sr3", title: "Exercices supplémentaires — Léa", subject: "maths", type: "exercice", status: "publié", date: "9 juin",
     views: 1, likes: 1, fileName: "exos-equations-lea.pdf", fileSize: "640 Ko",
     description: "Série d'exercices d'équations assignée individuellement à Léa pour consolider.",
     groups: [], students: ["Léa_2012"], comments: [],
   },
   {
-    id: "sr4", title: "Fiche méthode équations", type: "fiche", status: "planifié", date: "20 juin",
+    id: "sr4", title: "Fiche méthode équations", subject: "maths", type: "fiche", status: "planifié", date: "20 juin",
     views: 0, likes: 0, fileName: "fiche-equations.pdf", fileSize: "320 Ko",
     description: "Fiche mémo sur la résolution d'équations du premier degré (mise en ligne planifiée).",
     groups: ["Groupe A"], students: [], comments: [],
   },
   {
-    id: "sr5", title: "Examen blanc n°3", type: "pdf", status: "brouillon", date: "—",
+    id: "sr5", title: "Examen blanc n°3", subject: "maths", type: "pdf", status: "brouillon", date: "—",
     views: 0, likes: 0, fileName: "examen-blanc-3.pdf", fileSize: "—",
     description: "Brouillon d'un nouvel examen blanc, pas encore publié.",
     groups: ["Groupe B"], students: [], comments: [],
+  },
+  {
+    id: "sr6", title: "Fiche — Le passé composé", subject: "francais", type: "fiche", status: "publié", date: "12 juin",
+    views: 9, likes: 6, fileName: "fiche-passe-compose.pdf", fileSize: "410 Ko",
+    description: "Mémo de conjugaison du passé composé : auxiliaires et accords du participe passé.",
+    groups: ["Groupe A"], students: [], comments: [],
+  },
+  {
+    id: "sr7", title: "Vidéo — Les états de la matière", subject: "sciences", type: "video", status: "publié", date: "8 juin",
+    views: 15, likes: 9, fileName: "etats-matiere.mp4", fileSize: "52 Mo",
+    description: "Solide, liquide, gaz et changements d'état illustrés par des expériences simples.",
+    groups: ["Groupe A", "Groupe B"], students: [], comments: [],
   },
 ];
 
@@ -480,7 +654,8 @@ export type Assignment = {
   id: string;
   title: string;
   type: AssignmentType; // devoir = à faire à la maison · evaluation = évaluation surprise
-  domain: SkillKey;
+  subject: SubjectKey;
+  theme: string;
   difficulty: "facile" | "moyen" | "difficile";
   durationMin?: number; // évaluations chronométrées
   dueDate: string;
@@ -510,9 +685,11 @@ const Q_GEO: AssignmentQuestion[] = [
 ];
 
 export const assignments: Assignment[] = [
-  { id: "a1", title: "Devoir maison — Les fractions", type: "devoir", domain: "nombres", difficulty: "moyen", dueDate: "22 juin", groups: ["Groupe A"], students: [], status: "publié", createdAt: "14 juin", xpReward: 40, questions: Q_FRACTIONS },
-  { id: "a2", title: "Évaluation surprise — Équations", type: "evaluation", domain: "algebre", difficulty: "difficile", durationMin: 15, dueDate: "Aujourd'hui", groups: ["Groupe A"], students: [], status: "publié", createdAt: "17 juin", xpReward: 60, questions: Q_EQUATIONS },
-  { id: "a3", title: "Devoir — Aires et Pythagore", type: "devoir", domain: "geometrie", difficulty: "moyen", dueDate: "12 juin", groups: ["Groupe A"], students: [], status: "clôturé", createdAt: "6 juin", xpReward: 40, questions: Q_GEO },
+  { id: "a1", title: "Devoir maison — Les fractions", type: "devoir", subject: "maths", theme: "nombres", difficulty: "moyen", dueDate: "22 juin", groups: ["Groupe A"], students: [], status: "publié", createdAt: "14 juin", xpReward: 40, questions: Q_FRACTIONS },
+  { id: "a2", title: "Évaluation surprise — Équations", type: "evaluation", subject: "maths", theme: "algebre", difficulty: "difficile", durationMin: 15, dueDate: "Aujourd'hui", groups: ["Groupe A"], students: [], status: "publié", createdAt: "17 juin", xpReward: 60, questions: Q_EQUATIONS },
+  { id: "a3", title: "Devoir — Aires et Pythagore", type: "devoir", subject: "maths", theme: "geometrie", difficulty: "moyen", dueDate: "12 juin", groups: ["Groupe A"], students: [], status: "clôturé", createdAt: "6 juin", xpReward: 40, questions: Q_GEO },
+  { id: "a4", title: "Devoir — Conjugaison du passé composé", type: "devoir", subject: "francais", theme: "conjugaison", difficulty: "moyen", dueDate: "24 juin", groups: ["Groupe A"], students: [], status: "publié", createdAt: "17 juin", xpReward: 40, questions: Q_FRACTIONS },
+  { id: "a5", title: "Évaluation — Les états de la matière", type: "evaluation", subject: "sciences", theme: "chimie", difficulty: "facile", durationMin: 20, dueDate: "26 juin", groups: ["Groupe A"], students: [], status: "publié", createdAt: "18 juin", xpReward: 50, questions: Q_GEO },
 ];
 
 export function getAssignment(id: string): Assignment | undefined {
@@ -714,6 +891,7 @@ export type ExamAttempt = { date: string; score: number };
 export type Exam = {
   id: string;
   title: string;
+  subject: SubjectKey;
   theme: string;
   durationMin: number;
   questionCount: number;
@@ -723,11 +901,13 @@ export type Exam = {
 };
 
 export const exams: Exam[] = [
-  { id: "ex1", title: "Examen blanc CE1D — Complet n°1", theme: "Tout le programme", durationMin: 50, questionCount: 20, premium: false, bestScore: 72, attempts: [{ date: "10 juin", score: 72 }, { date: "2 juin", score: 64 }] },
-  { id: "ex2", title: "Examen blanc CE1D — Complet n°2", theme: "Tout le programme", durationMin: 50, questionCount: 20, premium: true, bestScore: null, attempts: [] },
-  { id: "ex3", title: "Nombres & calcul", theme: "Nombres", durationMin: 25, questionCount: 12, premium: false, bestScore: 83, attempts: [{ date: "8 juin", score: 83 }] },
-  { id: "ex4", title: "Géométrie", theme: "Géométrie", durationMin: 25, questionCount: 12, premium: true, bestScore: null, attempts: [] },
-  { id: "ex5", title: "Algèbre & équations", theme: "Algèbre", durationMin: 30, questionCount: 14, premium: false, bestScore: 45, attempts: [{ date: "5 juin", score: 45 }] },
+  { id: "ex1", subject: "maths", title: "Examen blanc CE1D — Complet n°1", theme: "Tout le programme", durationMin: 50, questionCount: 20, premium: false, bestScore: 72, attempts: [{ date: "10 juin", score: 72 }, { date: "2 juin", score: 64 }] },
+  { id: "ex2", subject: "maths", title: "Examen blanc CE1D — Complet n°2", theme: "Tout le programme", durationMin: 50, questionCount: 20, premium: true, bestScore: null, attempts: [] },
+  { id: "ex3", subject: "maths", title: "Nombres & calcul", theme: "Nombres", durationMin: 25, questionCount: 12, premium: false, bestScore: 83, attempts: [{ date: "8 juin", score: 83 }] },
+  { id: "ex4", subject: "maths", title: "Géométrie", theme: "Géométrie", durationMin: 25, questionCount: 12, premium: true, bestScore: null, attempts: [] },
+  { id: "ex5", subject: "maths", title: "Algèbre & équations", theme: "Algèbre", durationMin: 30, questionCount: 14, premium: false, bestScore: 45, attempts: [{ date: "5 juin", score: 45 }] },
+  { id: "ex6", subject: "francais", title: "Français — Grammaire & conjugaison", theme: "Grammaire", durationMin: 30, questionCount: 15, premium: false, bestScore: 68, attempts: [{ date: "7 juin", score: 68 }] },
+  { id: "ex7", subject: "sciences", title: "Sciences — Matière & vivant", theme: "Tout le programme", durationMin: 25, questionCount: 12, premium: true, bestScore: null, attempts: [] },
 ];
 
 export function getExam(id: string): Exam | undefined {
@@ -852,7 +1032,8 @@ export const liveChat: LiveChatMsg[] = [
 
 export type BankQuestion = {
   id: string;
-  domain: SkillKey;
+  subject: SubjectKey;
+  theme: string;
   type: string;
   prompt: string;
   difficulty: "facile" | "moyen" | "difficile";
@@ -860,14 +1041,18 @@ export type BankQuestion = {
 };
 
 export const questionBank: BankQuestion[] = [
-  { id: "qb1", domain: "algebre", type: "Équation", prompt: "Résous 2x + 5 = 17", difficulty: "moyen", uses: 124 },
-  { id: "qb2", domain: "nombres", type: "Fractions", prompt: "Calcule 3/4 + 1/2", difficulty: "facile", uses: 211 },
-  { id: "qb3", domain: "geometrie", type: "Aire", prompt: "Aire d'un rectangle 7×4 cm", difficulty: "facile", uses: 98 },
-  { id: "qb4", domain: "geometrie", type: "Pythagore", prompt: "Calcule l'hypoténuse (3 ; 4)", difficulty: "difficile", uses: 67 },
-  { id: "qb5", domain: "mesures", type: "Conversion", prompt: "Convertis 2,5 km en m", difficulty: "facile", uses: 143 },
-  { id: "qb6", domain: "statistiques", type: "Moyenne", prompt: "Moyenne de 12, 15, 9, 14", difficulty: "moyen", uses: 54 },
-  { id: "qb7", domain: "algebre", type: "Développement", prompt: "Développe 3(x + 2)", difficulty: "moyen", uses: 88 },
-  { id: "qb8", domain: "nombres", type: "Relatifs", prompt: "Calcule -7 + 12", difficulty: "facile", uses: 176 },
+  { id: "qb1", subject: "maths", theme: "algebre", type: "Équation", prompt: "Résous 2x + 5 = 17", difficulty: "moyen", uses: 124 },
+  { id: "qb2", subject: "maths", theme: "nombres", type: "Fractions", prompt: "Calcule 3/4 + 1/2", difficulty: "facile", uses: 211 },
+  { id: "qb3", subject: "maths", theme: "geometrie", type: "Aire", prompt: "Aire d'un rectangle 7×4 cm", difficulty: "facile", uses: 98 },
+  { id: "qb4", subject: "maths", theme: "geometrie", type: "Pythagore", prompt: "Calcule l'hypoténuse (3 ; 4)", difficulty: "difficile", uses: 67 },
+  { id: "qb5", subject: "maths", theme: "mesures", type: "Conversion", prompt: "Convertis 2,5 km en m", difficulty: "facile", uses: 143 },
+  { id: "qb6", subject: "maths", theme: "statistiques", type: "Moyenne", prompt: "Moyenne de 12, 15, 9, 14", difficulty: "moyen", uses: 54 },
+  { id: "qb7", subject: "maths", theme: "algebre", type: "Développement", prompt: "Développe 3(x + 2)", difficulty: "moyen", uses: 88 },
+  { id: "qb8", subject: "maths", theme: "nombres", type: "Relatifs", prompt: "Calcule -7 + 12", difficulty: "facile", uses: 176 },
+  { id: "qb9", subject: "francais", theme: "conjugaison", type: "Conjugaison", prompt: "Conjugue « finir » au présent (nous)", difficulty: "facile", uses: 132 },
+  { id: "qb10", subject: "francais", theme: "grammaire", type: "Nature", prompt: "Donne la nature du mot souligné", difficulty: "moyen", uses: 74 },
+  { id: "qb11", subject: "sciences", theme: "chimie", type: "États", prompt: "Nomme le passage liquide → gaz", difficulty: "facile", uses: 61 },
+  { id: "qb12", subject: "sciences", theme: "physique", type: "Forces", prompt: "Unité de mesure d'une force ?", difficulty: "moyen", uses: 39 },
 ];
 
 export const conversations: Conversation[] = [
@@ -895,5 +1080,276 @@ export const conversations: Conversation[] = [
       { id: "m1", from: "prof", text: "Léa, regarde la vidéo sur les aires avant le prochain cours.", time: "Lun. 14:02" },
       { id: "m2", from: "eleve", text: "D'accord, je regarde la vidéo ce soir.", time: "Lun. 18:30" },
     ],
+  },
+];
+
+// ============================================================================
+// PERMISSIONS PAR RÔLE (RBAC section-level) — table `permissions` +
+// `role_permissions`. Pilotage super admin : matrice rôle × fonctionnalité.
+// L'admin a tout (non listé ici, bypass côté BD via has_permission).
+// ============================================================================
+export type RoleKey = "eleve" | "prof" | "parent";
+export type PermissionCategory = "eleve" | "prof" | "parent" | "marketplace" | "commun";
+
+export type PermissionDef = {
+  key: string;
+  label: string;
+  description: string;
+  category: PermissionCategory;
+};
+
+export const roleLabels: Record<RoleKey, string> = {
+  eleve: "Élève",
+  prof: "Professeur",
+  parent: "Parent",
+};
+
+export const permissionCategories: { key: PermissionCategory; label: string }[] = [
+  { key: "eleve", label: "Espace élève" },
+  { key: "prof", label: "Espace professeur" },
+  { key: "parent", label: "Espace parent" },
+  { key: "marketplace", label: "Boutique" },
+  { key: "commun", label: "Commun" },
+];
+
+export const permissions: PermissionDef[] = [
+  // Élève
+  { key: "eleve.dashboard.view", label: "Tableau de bord élève", description: "Accès à l'accueil élève", category: "eleve" },
+  { key: "library.view", label: "Bibliothèque", description: "Consulter les ressources en autonomie", category: "eleve" },
+  { key: "assignment.do", label: "Faire ses devoirs", description: "Réaliser les devoirs/évaluations assignés", category: "eleve" },
+  { key: "exam.take", label: "Examens blancs", description: "Passer les examens blancs", category: "eleve" },
+  { key: "game.play", label: "Jeu", description: "Jouer aux missions/défis", category: "eleve" },
+  { key: "leaderboard.view", label: "Classement", description: "Voir le classement", category: "eleve" },
+  { key: "coach.use", label: "Coach IA", description: "Discuter avec le coach", category: "eleve" },
+  { key: "live.join", label: "Rejoindre un live", description: "Participer aux cours en direct", category: "eleve" },
+  { key: "badges.view", label: "Badges", description: "Voir ses badges", category: "eleve" },
+  // Prof
+  { key: "prof.groups.manage", label: "Gérer ses groupes", description: "Créer/administrer les groupes", category: "prof" },
+  { key: "assignment.create", label: "Créer des devoirs", description: "Assigner devoirs/évaluations", category: "prof" },
+  { key: "question.create", label: "Banque de questions", description: "Créer des questions de quiz", category: "prof" },
+  { key: "exam.create", label: "Créer des examens", description: "Composer des examens blancs", category: "prof" },
+  { key: "resource.share", label: "Partager des ressources", description: "Diffuser des ressources aux élèves", category: "prof" },
+  { key: "live.host", label: "Animer un live", description: "Planifier/animer des cours en direct", category: "prof" },
+  { key: "report.send", label: "Envoyer des rapports", description: "Générer/envoyer les rapports parents", category: "prof" },
+  { key: "marketplace.sell", label: "Vendre du contenu", description: "Publier des produits à la vente", category: "prof" },
+  // Parent
+  { key: "parent.dashboard.view", label: "Tableau de bord parent", description: "Accès à l'accueil parent", category: "parent" },
+  { key: "parent.assignments.view", label: "Suivi des devoirs", description: "Voir les devoirs de l'enfant", category: "parent" },
+  { key: "parent.reports.view", label: "Rapports", description: "Consulter les rapports de progression", category: "parent" },
+  { key: "parent.subscription.manage", label: "Abonnement", description: "Gérer l'abonnement/paiement", category: "parent" },
+  // Marketplace & commun
+  { key: "marketplace.browse", label: "Parcourir la boutique", description: "Voir le catalogue de produits", category: "marketplace" },
+  { key: "marketplace.buy", label: "Acheter", description: "Acheter un produit de la boutique", category: "marketplace" },
+  { key: "messaging.use", label: "Messagerie", description: "Échanger des messages", category: "commun" },
+  { key: "notifications.manage", label: "Notifications", description: "Gérer ses préférences de notification", category: "commun" },
+];
+
+/** Matrice par défaut : droits accordés par rôle (clés autorisées). */
+export const rolePermissions: Record<RoleKey, string[]> = {
+  eleve: [
+    "eleve.dashboard.view", "library.view", "assignment.do", "exam.take",
+    "game.play", "leaderboard.view", "coach.use", "live.join", "badges.view",
+    "marketplace.browse", "marketplace.buy", "messaging.use", "notifications.manage",
+  ],
+  prof: [
+    "prof.groups.manage", "assignment.create", "question.create", "exam.create",
+    "resource.share", "live.host", "report.send", "marketplace.sell",
+    "marketplace.browse", "messaging.use", "notifications.manage",
+  ],
+  parent: [
+    "parent.dashboard.view", "parent.assignments.view", "parent.reports.view",
+    "parent.subscription.manage", "marketplace.browse", "marketplace.buy",
+    "notifications.manage",
+  ],
+};
+
+// ============================================================================
+// MARKETPLACE — produits vendables publiés par les profs (table `products`).
+// Modèle économique configurable (app_settings.marketplace).
+// ============================================================================
+export type ProductKind = "ebook" | "fiche" | "pack" | "video" | "autre";
+export type ProductStatus = "brouillon" | "en_attente" | "publie" | "rejete" | "archive";
+export type PayoutMode = "academie" | "commission" | "reversement";
+
+export const productKindLabels: Record<ProductKind, string> = {
+  ebook: "Bouquin / e-book",
+  fiche: "Fiche",
+  pack: "Pack d'exercices",
+  video: "Vidéo",
+  autre: "Autre",
+};
+
+export const productStatusLabels: Record<ProductStatus, string> = {
+  brouillon: "Brouillon",
+  en_attente: "En attente",
+  publie: "Publié",
+  rejete: "Rejeté",
+  archive: "Archivé",
+};
+
+/** Fichier livrable d'un produit (table product_files). */
+export type ProductFile = { name: string; size: string };
+
+export type MarketProduct = {
+  id: string;
+  sellerName: string; // nom du prof vendeur (null en BD = produit académie)
+  title: string;
+  description: string;
+  kind: ProductKind;
+  subject: SubjectKey | null; // null = transversal
+  classCode: string | null; // null = toutes classes
+  priceCents: number;
+  status: ProductStatus;
+  emoji: string; // visuel de couverture mock (cover_path en BD)
+  files: ProductFile[]; // livrables (product_files)
+  sales: number; // nb d'achats payés
+  reviewNote?: string; // motif de rejet (admin → prof)
+  createdAt: string;
+};
+
+/** Un acheteur d'un produit (table purchases). */
+export type ProductBuyer = {
+  id: string;
+  name: string; // pseudo élève ou nom parent
+  role: "eleve" | "parent";
+  date: string;
+  amountCents: number;
+};
+
+export const marketplaceSettings: {
+  payoutMode: PayoutMode;
+  commissionRate: number; // %
+  currency: string;
+  requireReview: boolean;
+} = {
+  payoutMode: "commission",
+  commissionRate: 30,
+  currency: "eur",
+  requireReview: true,
+};
+
+export const payoutModeLabels: Record<PayoutMode, string> = {
+  academie: "Académie (aucun reversement)",
+  commission: "Commission tracée (net dû au prof)",
+  reversement: "Reversement auto (Stripe Connect)",
+};
+
+/** Formatte un prix en centimes → « 12,90 € ». */
+export function formatPrice(cents: number): string {
+  return (cents / 100).toLocaleString("fr-BE", { style: "currency", currency: "EUR" });
+}
+
+export const products: MarketProduct[] = [
+  { id: "p1", sellerName: "M. Minko", title: "Réussir le CE1D Maths", description: "100 pages de méthodes, rappels et exercices types corrigés pour préparer l'épreuve externe.", kind: "ebook", subject: "maths", classCode: "CE1D", priceCents: 1490, status: "publie", emoji: "📘", files: [{ name: "reussir-ce1d-maths.pdf", size: "8,4 Mo" }, { name: "corriges-annexes.pdf", size: "2,1 Mo" }], sales: 42, createdAt: "2026-05-02" },
+  { id: "p2", sellerName: "M. Minko", title: "Pack 200 équations corrigées", description: "Banque d'exercices progressifs sur les équations du premier degré, avec corrigés détaillés.", kind: "pack", subject: "maths", classCode: "S1", priceCents: 990, status: "publie", emoji: "🧮", files: [{ name: "200-equations.pdf", size: "5,2 Mo" }], sales: 27, createdAt: "2026-05-10" },
+  { id: "p3", sellerName: "Mme Dubois", title: "Fiches de conjugaison", description: "Toutes les conjugaisons du programme sur fiches synthétiques imprimables.", kind: "fiche", subject: "francais", classCode: null, priceCents: 590, status: "en_attente", emoji: "✍️", files: [{ name: "fiches-conjugaison.pdf", size: "3,0 Mo" }], sales: 0, createdAt: "2026-06-12" },
+  { id: "p4", sellerName: "Mme Leroy", title: "Vidéos — La cellule", description: "Série de 5 capsules vidéo sur la biologie cellulaire (chapitre Sciences).", kind: "video", subject: "sciences", classCode: "S2", priceCents: 1290, status: "en_attente", emoji: "🔬", files: [{ name: "cellule-01.mp4", size: "180 Mo" }, { name: "cellule-02.mp4", size: "164 Mo" }], sales: 0, createdAt: "2026-06-15" },
+  { id: "p5", sellerName: "Mme Dubois", title: "Dictées audio (lot)", description: "30 dictées audio graduées avec corrigés.", kind: "pack", subject: "francais", classCode: "CE1D", priceCents: 790, status: "rejete", emoji: "🎧", files: [{ name: "dictees-lot.zip", size: "92 Mo" }], sales: 0, reviewNote: "Qualité audio insuffisante sur 6 pistes — merci de réuploader.", createdAt: "2026-06-05" },
+  { id: "p6", sellerName: "M. Minko", title: "Géométrie : aires & périmètres", description: "Brouillon en cours de rédaction.", kind: "ebook", subject: "maths", classCode: "CE1D", priceCents: 0, status: "brouillon", emoji: "📐", files: [], sales: 0, createdAt: "2026-06-17" },
+  { id: "p7", sellerName: "Mme Dubois", title: "Cahier de lecture — CE1D", description: "Textes choisis et questions de compréhension pour s'entraîner toute l'année.", kind: "ebook", subject: "francais", classCode: "CE1D", priceCents: 1190, status: "publie", emoji: "📖", files: [{ name: "cahier-lecture.pdf", size: "6,7 Mo" }], sales: 18, createdAt: "2026-04-22" },
+  { id: "p8", sellerName: "Mme Leroy", title: "Mémo Sciences illustré", description: "Toutes les notions clés du programme de sciences en fiches illustrées.", kind: "fiche", subject: "sciences", classCode: null, priceCents: 690, status: "publie", emoji: "🧪", files: [{ name: "memo-sciences.pdf", size: "4,3 Mo" }], sales: 11, createdAt: "2026-05-28" },
+];
+
+/** Acheteurs par produit (échantillon des derniers achats payés — table purchases). */
+export const productBuyers: Record<string, ProductBuyer[]> = {
+  p1: [
+    { id: "b1", name: "Famille Dupont", role: "parent", date: "2026-06-18", amountCents: 1490 },
+    { id: "b2", name: "MaxLeBg", role: "eleve", date: "2026-06-17", amountCents: 1490 },
+    { id: "b3", name: "Famille Karim", role: "parent", date: "2026-06-15", amountCents: 1490 },
+    { id: "b4", name: "NoaMath", role: "eleve", date: "2026-06-13", amountCents: 1490 },
+    { id: "b5", name: "Famille Léa", role: "parent", date: "2026-06-11", amountCents: 1490 },
+  ],
+  p2: [
+    { id: "b6", name: "Famille Mertens", role: "parent", date: "2026-06-16", amountCents: 990 },
+    { id: "b7", name: "ZoéS1", role: "eleve", date: "2026-06-14", amountCents: 990 },
+    { id: "b8", name: "Famille Nguyen", role: "parent", date: "2026-06-09", amountCents: 990 },
+  ],
+};
+
+/** Derniers acheteurs connus d'un produit. */
+export function buyersFor(id: string): ProductBuyer[] {
+  return productBuyers[id] ?? [];
+}
+
+// ============================================================================
+// GESTIONNAIRES — staff back-office à pouvoirs délégués PAR PERSONNE.
+// Le super admin coche, pour chaque gestionnaire, les sections/éléments du
+// back-office qu'il peut gérer (droits `admin.*` → table user_permissions).
+// ============================================================================
+export type AdminCapability = { key: string; label: string };
+export type AdminSection = { key: string; label: string; items: AdminCapability[] };
+
+/** Capacités déléguables, groupées par section de nav admin.
+ *  (Pilotage = toujours accordé ; gestion des gestionnaires = super admin only.) */
+export const adminSections: AdminSection[] = [
+  {
+    key: "comptes",
+    label: "Comptes",
+    items: [{ key: "admin.users", label: "Utilisateurs" }],
+  },
+  {
+    key: "contenu",
+    label: "Contenu",
+    items: [
+      { key: "admin.classes", label: "Classes" },
+      { key: "admin.subjects", label: "Matières" },
+      { key: "admin.resources", label: "Ressources" },
+      { key: "admin.questions", label: "Questions de quiz" },
+      { key: "admin.exams", label: "Examens blancs" },
+    ],
+  },
+  {
+    key: "business",
+    label: "Business",
+    items: [
+      { key: "admin.subscriptions", label: "Abonnements" },
+      { key: "admin.marketplace", label: "Marketplace" },
+    ],
+  },
+  {
+    key: "systeme",
+    label: "Système",
+    items: [
+      { key: "admin.permissions", label: "Permissions" },
+      { key: "admin.notifications", label: "Notifications" },
+      { key: "admin.settings", label: "Paramètres" },
+    ],
+  },
+];
+
+/** Toutes les clés de capacité déléguables (à plat). */
+export const allAdminCaps: string[] = adminSections.flatMap((s) => s.items.map((i) => i.key));
+
+export type Manager = {
+  id: string;
+  name: string;
+  email: string;
+  active: boolean;
+  caps: string[]; // clés admin.* accordées (user_permissions.allowed = true)
+};
+
+export const managers: Manager[] = [
+  {
+    id: "g1",
+    name: "Awa Traoré",
+    email: "awa.traore@mlc-academy.be",
+    active: true,
+    // Gère tout le Contenu
+    caps: ["admin.classes", "admin.subjects", "admin.resources", "admin.questions", "admin.exams"],
+  },
+  {
+    id: "g2",
+    name: "Karim Benali",
+    email: "karim.benali@mlc-academy.be",
+    active: true,
+    // Comptes + Business
+    caps: ["admin.users", "admin.subscriptions", "admin.marketplace"],
+  },
+  {
+    id: "g3",
+    name: "Sofia Rossi",
+    email: "sofia.rossi@mlc-academy.be",
+    active: false,
+    caps: ["admin.notifications"],
   },
 ];

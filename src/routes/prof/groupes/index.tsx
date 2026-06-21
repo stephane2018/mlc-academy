@@ -26,13 +26,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { profGroups, type ProfGroup } from '@/lib/mock'
+import {
+  profGroups,
+  getSubject,
+  classes,
+  subjects,
+  type ProfGroup,
+  type SubjectKey,
+} from '@/lib/mock'
 
 export const Route = createFileRoute('/prof/groupes/')({
   component: ProfGroupes,
 })
 
-const LEVELS = ['CE1D', 'S1', 'S2', 'S3']
+/** Classes proposées au prof = celles activées par l'admin (référentiel). */
+const activeClasses = classes.filter((c) => c.active)
 
 function ProfGroupes() {
   return (
@@ -75,9 +83,26 @@ function GroupCard({ group }: { group: ProfGroup }) {
             <p className="text-xs text-muted-foreground">{group.students} élèves</p>
           </div>
         </div>
-        <Badge variant="secondary" className="bg-amber-soft text-amber-foreground">
-          {group.level}
-        </Badge>
+        <div className="flex shrink-0 flex-col items-end gap-1.5">
+          <Badge variant="secondary" className="bg-amber-soft text-amber-foreground">
+            {group.level}
+          </Badge>
+          <div className="flex flex-wrap justify-end gap-1">
+            {group.subjects.map((k) => {
+              const s = getSubject(k)
+              return (
+                <span
+                  key={k}
+                  title={s.label}
+                  className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold text-white"
+                  style={{ backgroundColor: s.color }}
+                >
+                  {s.label}
+                </span>
+              )
+            })}
+          </div>
+        </div>
       </Link>
 
       <div className="mt-4 flex items-center gap-3">
@@ -129,6 +154,7 @@ function CreateGroupDialog() {
   const [open, setOpen] = useState(false)
   const [name, setName] = useState('')
   const [level, setLevel] = useState('')
+  const [subs, setSubs] = useState<SubjectKey[]>([])
 
   const genCode = () =>
     'MLC-' +
@@ -136,9 +162,13 @@ function CreateGroupDialog() {
       'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'.charAt(Math.floor(Math.random() * 32)),
     ).join('')
 
+  const toggleSub = (k: SubjectKey) =>
+    setSubs((prev) => (prev.includes(k) ? prev.filter((s) => s !== k) : [...prev, k]))
+
   const reset = () => {
     setName('')
     setLevel('')
+    setSubs([])
   }
 
   return (
@@ -172,19 +202,51 @@ function CreateGroupDialog() {
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="group-level">Niveau</Label>
+            <Label htmlFor="group-level">Classe</Label>
             <Select value={level} onValueChange={setLevel}>
               <SelectTrigger id="group-level" className="w-full">
-                <SelectValue placeholder="Sélectionner un niveau" />
+                <SelectValue placeholder="Sélectionner une classe" />
               </SelectTrigger>
               <SelectContent>
-                {LEVELS.map((l) => (
-                  <SelectItem key={l} value={l}>
-                    {l}
+                {activeClasses.map((c) => (
+                  <SelectItem key={c.code} value={c.code}>
+                    {c.label}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
+            <p className="text-xs text-muted-foreground">
+              Seules les classes activées par l'administration sont proposées.
+            </p>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label>Matières du groupe</Label>
+            <div className="flex flex-wrap gap-2">
+              {subjects.map((s) => {
+                const active = subs.includes(s.key)
+                return (
+                  <button
+                    key={s.key}
+                    type="button"
+                    aria-pressed={active}
+                    onClick={() => toggleSub(s.key)}
+                    style={active ? { backgroundColor: s.color, borderColor: s.color } : undefined}
+                    className={[
+                      'inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors',
+                      active
+                        ? 'border-transparent text-white'
+                        : 'border-border bg-card text-muted-foreground hover:text-foreground',
+                    ].join(' ')}
+                  >
+                    {!active && (
+                      <span className="size-2 rounded-full" style={{ backgroundColor: s.color }} />
+                    )}
+                    {s.label}
+                  </button>
+                )
+              })}
+            </div>
           </div>
         </div>
 
@@ -193,7 +255,7 @@ function CreateGroupDialog() {
             <Button variant="ghost">Annuler</Button>
           </DialogClose>
           <Button
-            disabled={!name.trim() || !level}
+            disabled={!name.trim() || !level || subs.length === 0}
             onClick={() => {
               const code = genCode()
               setOpen(false)

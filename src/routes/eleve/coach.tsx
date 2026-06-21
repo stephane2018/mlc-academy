@@ -31,7 +31,7 @@ function Bubble({ message }: { message: CoachMessage }) {
   return (
     <div className={cn('flex items-end gap-2', fromCoach ? 'flex-row' : 'flex-row-reverse')}>
       {fromCoach && (
-        <span className="grid size-8 shrink-0 place-items-center rounded-full bg-gradient-to-br from-brand to-teal text-white shadow-sm">
+        <span className="grid size-8 shrink-0 place-items-center rounded-full bg-gradient-to-br from-brand to-violet text-white shadow-sm">
           <Sparkles className="size-4" />
         </span>
       )}
@@ -53,7 +53,7 @@ function Bubble({ message }: { message: CoachMessage }) {
 function TypingBubble() {
   return (
     <div className="flex items-end gap-2">
-      <span className="grid size-8 shrink-0 place-items-center rounded-full bg-gradient-to-br from-brand to-teal text-white shadow-sm">
+      <span className="grid size-8 shrink-0 place-items-center rounded-full bg-gradient-to-br from-brand to-violet text-white shadow-sm">
         <Sparkles className="size-4" />
       </span>
       <div className="flex items-center gap-1.5 rounded-2xl rounded-bl-md bg-secondary px-4 py-3 shadow-sm">
@@ -99,7 +99,7 @@ function CoachPage() {
     <div className="flex h-[calc(100dvh-7rem)] flex-col px-4 pb-4 pt-5 sm:px-6 lg:px-8 2xl:mx-auto 2xl:max-w-[900px]">
       {/* En-tête */}
       <div className="flex items-center gap-3 rounded-3xl border border-border bg-card p-4 shadow-soft">
-        <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-brand to-teal text-white shadow-brand-glow">
+        <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-brand to-violet text-white shadow-brand-glow">
           <Sparkles className="size-6" />
         </span>
         <div className="min-w-0 flex-1">

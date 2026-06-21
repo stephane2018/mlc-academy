@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import {
   Dumbbell,
@@ -10,13 +11,19 @@ import {
 } from '@/components/icons'
 import { Meter, SoftIcon } from '@/components/student/parts'
 import { PageHero } from '@/components/blocks'
+import {
+  SubjectFilter,
+  type SubjectFilterValue,
+} from '@/components/student/subject-filter'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import {
   assignmentsForStudent,
   submissions,
-  domainLabels,
+  getSubject,
+  subjectLabel,
+  themeLabel,
   student,
   type Assignment,
   type Submission,
@@ -40,10 +47,21 @@ function isEval(a: Assignment) {
 }
 
 function DevoirsListPage() {
+  const [subject, setSubject] = useState<SubjectFilterValue>('all')
+
   const all = assignmentsForStudent(STUDENT_GROUP, student.pseudo)
 
-  const todo = all.filter((a) => submissionFor(a.id)?.status !== 'rendu')
-  const done = all
+  const subjectCounts: Partial<Record<SubjectFilterValue, number>> = {
+    all: all.length,
+  }
+  for (const a of all) {
+    subjectCounts[a.subject] = (subjectCounts[a.subject] ?? 0) + 1
+  }
+
+  const filtered = all.filter((a) => subject === 'all' || a.subject === subject)
+
+  const todo = filtered.filter((a) => submissionFor(a.id)?.status !== 'rendu')
+  const done = filtered
     .map((a) => ({ assignment: a, submission: submissionFor(a.id) }))
     .filter((x) => x.submission?.status === 'rendu')
 
@@ -62,6 +80,9 @@ function DevoirsListPage() {
           </Button>
         }
       />
+
+      {/* Filtre par matière */}
+      <SubjectFilter value={subject} onChange={setSubject} counts={subjectCounts} />
 
       {/* À faire */}
       <section className="space-y-3">
@@ -127,7 +148,8 @@ function TodoCard({ assignment: a }: { assignment: Assignment }) {
             ) : (
               <Badge variant="secondary">Devoir maison</Badge>
             )}
-            <Badge variant="outline">{domainLabels[a.domain]}</Badge>
+            <SubjectBadge subject={a.subject} />
+            <Badge variant="outline">{themeLabel(a.theme, a.subject)}</Badge>
           </div>
 
           <h3 className="mt-2 font-heading text-base font-bold leading-snug">{a.title}</h3>
@@ -180,7 +202,8 @@ function DoneCard({
             <Badge variant="secondary">
               {a.type === 'evaluation' ? 'Évaluation' : 'Devoir maison'}
             </Badge>
-            <Badge variant="outline">{domainLabels[a.domain]}</Badge>
+            <SubjectBadge subject={a.subject} />
+            <Badge variant="outline">{themeLabel(a.theme, a.subject)}</Badge>
             <span className="text-xs text-muted-foreground">rendu le {s.submittedAt}</span>
           </div>
 
@@ -201,6 +224,20 @@ function DoneCard({
         </div>
       </div>
     </div>
+  )
+}
+
+function SubjectBadge({ subject }: { subject: Assignment['subject'] }) {
+  const s = getSubject(subject)
+  return (
+    <Badge
+      variant="outline"
+      className="gap-1.5 border-transparent"
+      style={{ backgroundColor: `${s.color}1a`, color: s.color }}
+    >
+      <span className="size-1.5 rounded-full" style={{ backgroundColor: s.color }} />
+      {subjectLabel(subject)}
+    </Badge>
   )
 }
 

@@ -1,8 +1,13 @@
+import { useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { Trophy, Zap, Check, Percent, CheckCircle2 } from '@/components/icons'
 import { Math as Maths } from '@/components/math'
 import { Meter, SoftIcon } from '@/components/student/parts'
 import { PageHero } from '@/components/blocks'
+import {
+  SubjectFilter,
+  type SubjectFilterValue,
+} from '@/components/student/subject-filter'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -16,7 +21,9 @@ import {
 import { cn } from '@/lib/utils'
 import {
   studentHistory,
-  domainLabels,
+  getSubject,
+  subjectLabel,
+  themeLabel,
   type Assignment,
   type Submission,
 } from '@/lib/mock'
@@ -29,7 +36,21 @@ const STUDENT_ID = 's1'
 const PASS_THRESHOLD = 50
 
 function HistoriquePage() {
-  const history = studentHistory(STUDENT_ID).filter((h) => h.submission.status === 'rendu')
+  const [subject, setSubject] = useState<SubjectFilterValue>('all')
+
+  const all = studentHistory(STUDENT_ID).filter((h) => h.submission.status === 'rendu')
+
+  const subjectCounts: Partial<Record<SubjectFilterValue, number>> = {
+    all: all.length,
+  }
+  for (const h of all) {
+    subjectCounts[h.assignment.subject] =
+      (subjectCounts[h.assignment.subject] ?? 0) + 1
+  }
+
+  const history = all.filter(
+    (h) => subject === 'all' || h.assignment.subject === subject,
+  )
 
   const count = history.length
   const avg =
@@ -51,6 +72,9 @@ function HistoriquePage() {
         subtitle="Tes devoirs et évaluations rendus, avec la correction détaillée."
       />
 
+      {/* Filtre par matière */}
+      <SubjectFilter value={subject} onChange={setSubject} counts={subjectCounts} />
+
       {/* Récap */}
       <section className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <RecapTile
@@ -60,7 +84,7 @@ function HistoriquePage() {
           value={`${count}`}
         />
         <RecapTile
-          tone="teal"
+          tone="info"
           icon={<Percent className="size-5" />}
           label="Score moyen"
           value={`${avg}%`}
@@ -98,7 +122,7 @@ function RecapTile({
   label,
   value,
 }: {
-  tone: 'brand' | 'teal' | 'amber'
+  tone: 'brand' | 'info' | 'amber'
   icon: React.ReactNode
   label: string
   value: string
@@ -131,7 +155,15 @@ function HistoryCard({
         <Badge variant="secondary">
           {a.type === 'evaluation' ? 'Évaluation' : 'Devoir maison'}
         </Badge>
-        <Badge variant="outline">{domainLabels[a.domain]}</Badge>
+        <Badge
+          variant="outline"
+          className="gap-1.5 border-transparent"
+          style={{ backgroundColor: `${getSubject(a.subject).color}1a`, color: getSubject(a.subject).color }}
+        >
+          <span className="size-1.5 rounded-full" style={{ backgroundColor: getSubject(a.subject).color }} />
+          {subjectLabel(a.subject)}
+        </Badge>
+        <Badge variant="outline">{themeLabel(a.theme, a.subject)}</Badge>
         <span className="text-xs text-muted-foreground">rendu le {s.submittedAt}</span>
       </div>
 
@@ -164,7 +196,8 @@ function HistoryCard({
             <DialogHeader>
               <DialogTitle className="font-heading">{a.title}</DialogTitle>
               <DialogDescription>
-                {domainLabels[a.domain]} · rendu le {s.submittedAt} · score {score}%
+                {subjectLabel(a.subject)} · {themeLabel(a.theme, a.subject)} · rendu le{' '}
+                {s.submittedAt} · score {score}%
               </DialogDescription>
             </DialogHeader>
 

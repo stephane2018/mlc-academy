@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { createFileRoute, Link, useParams } from '@tanstack/react-router'
 import { toast } from 'sonner'
 import {
@@ -15,7 +15,9 @@ import {
 import { Math as Maths } from '@/components/math'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { getExam, quizQuestions, type QuizQuestion } from '@/lib/mock'
+import { useExam, useExamQuestions, useSubmitExam } from '@/hooks/use-exams'
+import { useSubjects } from '@/hooks/use-catalog'
+import type { Exam, ExamQuestion, ExamResult } from '@/services/exams'
 
 export const Route = createFileRoute('/eleve/examens/$id')({
   component: ExamRunner,
@@ -23,10 +25,8 @@ export const Route = createFileRoute('/eleve/examens/$id')({
 
 const PASS_THRESHOLD = 50
 
-/** Construit N questions à partir des 3 disponibles (boucle/répète). */
-function buildQuestions(count: number): QuizQuestion[] {
-  return Array.from({ length: count }, (_, i) => quizQuestions[i % quizQuestions.length])
-}
+/** Question enrichie du libellé de son thème (« domaine » affiché). */
+type QView = ExamQuestion & { domain: string }
 
 function formatTime(totalSeconds: number) {
   const m = Math.floor(totalSeconds / 60)
@@ -34,56 +34,90 @@ function formatTime(totalSeconds: number) {
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
 }
 
+function NotAvailable({ message }: { message: string }) {
+  return (
+    <div className="flex min-h-dvh flex-col items-center justify-center gap-5 px-6 text-center">
+      <div className="grid size-16 place-items-center rounded-full bg-secondary text-2xl">🔍</div>
+      <div className="space-y-1">
+        <h1 className="font-heading text-xl font-bold">Examen indisponible</h1>
+        <p className="text-sm text-muted-foreground">{message}</p>
+      </div>
+      <Button asChild className="rounded-xl">
+        <Link to="/eleve/examens">
+          <ArrowLeft className="size-4" /> Retour aux examens
+        </Link>
+      </Button>
+    </div>
+  )
+}
+
 function ExamRunner() {
   const { id } = useParams({ from: '/eleve/examens/$id' })
-  const exam = getExam(id)
+  const examQ = useExam(id)
+  const questionsQ = useExamQuestions(id)
+  const { data: subjects = [] } = useSubjects()
 
-  if (!exam) {
+  if (examQ.isLoading || questionsQ.isLoading) {
     return (
-      <div className="flex min-h-dvh flex-col items-center justify-center gap-5 px-6 text-center">
-        <div className="grid size-16 place-items-center rounded-full bg-secondary text-2xl">🔍</div>
-        <div className="space-y-1">
-          <h1 className="font-heading text-xl font-bold">Examen introuvable</h1>
-          <p className="text-sm text-muted-foreground">
-            Cet examen blanc n'existe pas ou n'est plus disponible.
-          </p>
-        </div>
-        <Button asChild className="rounded-xl">
-          <Link to="/eleve/examens">
-            <ArrowLeft className="size-4" /> Retour aux examens
-          </Link>
-        </Button>
+      <div className="flex min-h-dvh items-center justify-center px-6 text-sm text-muted-foreground">
+        Chargement de l'examen…
       </div>
     )
   }
 
-  return <ExamSession exam={exam} />
+  const exam = examQ.data
+  const rawQuestions = questionsQ.data ?? []
+  if (!exam) return <NotAvailable message="Cet examen blanc n'existe pas ou n'est plus disponible." />
+  if (rawQuestions.length === 0) return <NotAvailable message="Cet examen n'a pas encore de questions." />
+
+  // Résolution du libellé de thème (id backend → nom) pour l'affichage « domaine ».
+  const themeName = (themeId: string | null) =>
+    (themeId && subjects.flatMap((s) => s.themes).find((t) => t.id === themeId)?.name) || 'Tout le programme'
+  const questions: QView[] = rawQuestions.map((q) => ({ ...q, domain: themeName(q.themeId) }))
+
+  return <ExamSession exam={exam} questions={questions} />
 }
 
-function ExamSession({ exam }: { exam: NonNullable<ReturnType<typeof getExam>> }) {
-  const questions = useMemo(() => buildQuestions(exam.questionCount), [exam.questionCount])
+function ExamSession({ exam, questions }: { exam: Exam; questions: QView[] }) {
   const total = questions.length
+  const submit = useSubmitExam()
 
   const [index, setIndex] = useState(0)
   const [answers, setAnswers] = useState<(string | null)[]>(() => Array(total).fill(null))
-  const [done, setDone] = useState(false)
+  const [result, setResult] = useState<ExamResult | null>(null)
   const [secondsLeft, setSecondsLeft] = useState(exam.durationMin * 60)
+  const done = result !== null
+
+  function finish() {
+    if (submit.isPending || done) return
+    const payload = questions
+      .map((q, i) => (answers[i] ? { questionId: q.id, optionId: answers[i] as string } : null))
+      .filter((a): a is { questionId: string; optionId: string } => a !== null)
+    submit.mutate(
+      { id: exam.id, answers: payload },
+      {
+        onSuccess: (res) => setResult(res),
+        onError: () => toast.error("Échec de l'envoi de tes réponses. Réessaie."),
+      },
+    )
+  }
 
   // Chronomètre décroissant ; soumission auto à 0.
   useEffect(() => {
     if (done) return
     if (secondsLeft <= 0) {
-      setDone(true)
+      finish()
       return
     }
     const t = setInterval(() => setSecondsLeft((s) => s - 1), 1000)
     return () => clearInterval(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [secondsLeft, done])
 
   const answered = answers.filter((a) => a !== null).length
 
-  if (done) {
-    return <ResultScreen exam={exam} questions={questions} answers={answers} />
+  if (result) {
+    return <ResultScreen exam={exam} questions={questions} answers={answers} result={result} />
   }
 
   const q = questions[index]
@@ -199,7 +233,8 @@ function ExamSession({ exam }: { exam: NonNullable<ReturnType<typeof getExam>> }
               type="button"
               size="lg"
               className="flex-1 rounded-xl text-base"
-              onClick={() => setDone(true)}
+              disabled={submit.isPending}
+              onClick={finish}
             >
               <CheckSquare className="size-5" /> Terminer l'examen
             </Button>
@@ -226,18 +261,19 @@ function ResultScreen({
   exam,
   questions,
   answers,
+  result,
 }: {
-  exam: NonNullable<ReturnType<typeof getExam>>
-  questions: QuizQuestion[]
+  exam: Exam
+  questions: QView[]
   answers: (string | null)[]
+  result: ExamResult
 }) {
-  const total = questions.length
-  const correct = questions.reduce(
-    (sum, q, i) => sum + (answers[i] === q.correctId ? 1 : 0),
-    0,
-  )
-  const pct = Math.round((correct / total) * 100)
-  const validated = pct >= PASS_THRESHOLD
+  const total = result.total
+  const correct = result.correct
+  const pct = result.score
+  const validated = result.passed
+  // Correction par question (bonne option + explication) renvoyée par le serveur.
+  const correctionByQuestion = new Map(result.corrections.map((c) => [c.questionId, c]))
 
   function restart() {
     // Recharge la route pour relancer une tentative propre.
@@ -268,7 +304,7 @@ function ResultScreen({
         {validated ? (
           <div className="mt-4 flex items-center gap-2 rounded-2xl bg-brand px-5 py-2.5 text-white">
             <Trophy className="size-5" />
-            <span className="font-heading text-lg font-bold">Validé · +50 XP</span>
+            <span className="font-heading text-lg font-bold">Validé · +{result.xpEarned} XP</span>
             <Zap className="size-4 fill-white" />
           </div>
         ) : (
@@ -300,12 +336,14 @@ function ResultScreen({
         <div className="space-y-3">
           {questions.map((q, i) => {
             const given = answers[i]
-            const ok = given === q.correctId
+            const correction = correctionByQuestion.get(q.id)
+            const correctId = correction?.correctOptionId ?? null
+            const ok = given !== null && given === correctId
             const givenLabel = q.options.find((o) => o.id === given)?.label
-            const correctLabel = q.options.find((o) => o.id === q.correctId)?.label
+            const correctLabel = q.options.find((o) => o.id === correctId)?.label
             return (
               <div
-                key={i}
+                key={q.id}
                 className={cn(
                   'rounded-2xl border p-4',
                   ok ? 'border-success/30 bg-success-soft/50' : 'border-destructive/30 bg-destructive/5',
@@ -334,15 +372,15 @@ function ResultScreen({
                       <p className={cn(ok ? 'text-success' : 'text-destructive')}>
                         Ta réponse : {given ? givenLabel : 'aucune'}
                       </p>
-                      {!ok && (
+                      {!ok && correctLabel && (
                         <p className="font-semibold text-success">Bonne réponse : {correctLabel}</p>
                       )}
                     </div>
-                    {q.explanation && (
+                    {correction?.explanation && (
                       <p className="mt-1.5 text-sm text-foreground/80">
-                        {q.explanation}{' '}
-                        {q.explanationKatex && (
-                          <Maths expr={q.explanationKatex} className="font-medium" />
+                        {correction.explanation}{' '}
+                        {correction.explanationKatex && (
+                          <Maths expr={correction.explanationKatex} className="font-medium" />
                         )}
                       </p>
                     )}

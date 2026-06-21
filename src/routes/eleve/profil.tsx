@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import {
   Flame,
@@ -11,7 +12,11 @@ import {
   Smile,
   Copy,
 } from '@/components/icons'
-import { Meter, SectionHeader, SoftIcon } from '@/components/student/parts'
+import { Meter, SectionHeader, SoftIcon, SUBJECT_COLOR } from '@/components/student/parts'
+import {
+  SubjectFilter,
+  type SubjectFilterValue,
+} from '@/components/student/subject-filter'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import {
@@ -23,7 +28,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { PageHero, SparkBars } from '@/components/blocks'
-import { student, skills, weeklyActivity } from '@/lib/mock'
+import { student, subjectMastery, getSubject, weeklyActivity } from '@/lib/mock'
 
 export const Route = createFileRoute('/eleve/profil')({
   component: ProfilPage,
@@ -32,6 +37,12 @@ export const Route = createFileRoute('/eleve/profil')({
 const PARENT_CODE = 'MLC-7K2'
 
 function ProfilPage() {
+  const [subjectFilter, setSubjectFilter] = useState<SubjectFilterValue>('all')
+  const visibleMastery =
+    subjectFilter === 'all'
+      ? subjectMastery
+      : subjectMastery.filter((sm) => sm.subject === subjectFilter)
+
   return (
     <div className="space-y-5 px-4 pb-6 pt-5 sm:px-6 lg:px-8 2xl:mx-auto 2xl:max-w-[1600px]">
       {/* En-tête */}
@@ -65,7 +76,7 @@ function ProfilPage() {
       <div className="space-y-5 xl:col-span-2">
       {/* Stats */}
       <div className="grid grid-cols-3 gap-3">
-        <StatCard icon={<Zap className="size-5 text-brand" />} value={`${student.xp}`} label="XP total" />
+        <StatCard icon={<Zap className="size-5 text-violet" />} value={`${student.xp}`} label="XP total" />
         <StatCard
           icon={<Trophy className="size-5 text-amber" />}
           value={`${student.rank}ᵉ`}
@@ -78,20 +89,44 @@ function ProfilPage() {
         />
       </div>
 
-      {/* Compétences */}
+      {/* Compétences — par matière */}
       <Card className="p-4 shadow-soft">
         <SectionHeader title="Mes compétences" />
-        <ul className="space-y-3">
-          {skills.map((s) => (
-            <li key={s.key} className="flex items-center gap-3">
-              <span className="w-24 shrink-0 text-sm font-medium">{s.label}</span>
-              <Meter value={s.mastery} color="auto" />
-              <span className="w-9 shrink-0 text-right text-sm font-bold tabular-nums">
-                {s.mastery}%
-              </span>
-            </li>
-          ))}
-        </ul>
+        <SubjectFilter value={subjectFilter} onChange={setSubjectFilter} className="mb-4" />
+        <div className="space-y-5">
+          {visibleMastery.map((sm) => {
+            const subject = getSubject(sm.subject)
+            return (
+              <div key={sm.subject}>
+                <div className="mb-2.5 flex items-center justify-between gap-3">
+                  <span className="flex items-center gap-2 text-sm font-bold">
+                    <span
+                      className="size-2.5 shrink-0 rounded-full"
+                      style={{ backgroundColor: subject.color }}
+                    />
+                    {subject.label}
+                  </span>
+                  <span className="text-sm font-bold tabular-nums text-muted-foreground">
+                    {sm.mastery}%
+                  </span>
+                </div>
+                <ul className="space-y-3">
+                  {sm.themes.map((t) => (
+                    <li key={t.key} className="flex items-center gap-3">
+                      <span className="w-28 shrink-0 truncate text-sm font-medium">
+                        {t.label}
+                      </span>
+                      <Meter value={t.mastery} color={SUBJECT_COLOR[sm.subject]} />
+                      <span className="w-9 shrink-0 text-right text-sm font-bold tabular-nums">
+                        {t.mastery}%
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )
+          })}
+        </div>
       </Card>
       </div>
 
@@ -111,7 +146,7 @@ function ProfilPage() {
 
       {/* Lier un parent */}
       <Card className="flex-row items-center gap-3 p-4 shadow-soft">
-        <SoftIcon tone="teal">
+        <SoftIcon tone="info">
           <Link2 className="size-5" />
         </SoftIcon>
         <div className="min-w-0 flex-1">

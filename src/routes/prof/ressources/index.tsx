@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { PageHero, StatTile } from '@/components/blocks'
+import { SubjectFilter, type SubjectFilterValue } from '@/components/student/subject-filter'
 import { TYPE_META } from '@/components/student/resource-card'
 import { ResourceDialog } from '@/components/prof/resource-dialog'
 import { ProfResourceCover, StatusBadge, targetSummary } from '@/components/prof/resource-bits'
@@ -16,7 +17,7 @@ import {
   Boxes,
 } from '@/components/icons'
 import { cn } from '@/lib/utils'
-import { sharedResources, type ResourceType } from '@/lib/mock'
+import { sharedResources, getSubject, type ResourceType } from '@/lib/mock'
 
 export const Route = createFileRoute('/prof/ressources/')({
   component: ResourcesPage,
@@ -28,9 +29,14 @@ const TYPE_ORDER: ResourceType[] = ['video', 'pdf', 'exercice', 'fiche']
 
 function ResourcesPage() {
   const [filter, setFilter] = useState<Filter>('all')
+  const [subject, setSubject] = useState<SubjectFilterValue>('all')
   const [view, setView] = useState<View>('grid')
 
-  const visible = sharedResources.filter((r) => filter === 'all' || r.type === filter)
+  const visible = sharedResources.filter(
+    (r) =>
+      (filter === 'all' || r.type === filter) &&
+      (subject === 'all' || r.subject === subject),
+  )
 
   const totalViews = sharedResources.reduce((a, r) => a + r.views, 0)
   const totalLikes = sharedResources.reduce((a, r) => a + r.likes, 0)
@@ -79,6 +85,9 @@ function ResourcesPage() {
         <StatTile icon={Eye} tone="teal" label="Vues cumulées" value={totalViews} />
         <StatTile icon={Heart} tone="amber" label="Likes cumulés" value={totalLikes} />
       </div>
+
+      {/* Filtre par matière */}
+      <SubjectFilter value={subject} onChange={setSubject} />
 
       {/* Filtres par type */}
       <div className="flex gap-2 overflow-x-auto no-scrollbar">
@@ -131,6 +140,13 @@ function ResourcesPage() {
                   <p className="line-clamp-2 font-heading text-sm font-bold leading-snug">{r.title}</p>
                   <StatusBadge status={r.status} className="shrink-0" />
                 </div>
+                <span className="mt-1.5 inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
+                  <span
+                    className="size-2 rounded-full"
+                    style={{ backgroundColor: getSubject(r.subject).color }}
+                  />
+                  {getSubject(r.subject).label}
+                </span>
                 <p className="mt-1 truncate text-xs text-muted-foreground">
                   {targetSummary(r.groups, r.students)}
                 </p>
@@ -168,8 +184,12 @@ function ResourcesPage() {
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-heading text-sm font-bold">{r.title}</p>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {targetSummary(r.groups, r.students)} · {r.date}
+                  <p className="flex items-center gap-1.5 truncate text-xs text-muted-foreground">
+                    <span
+                      className="size-2 shrink-0 rounded-full"
+                      style={{ backgroundColor: getSubject(r.subject).color }}
+                    />
+                    {getSubject(r.subject).label} · {targetSummary(r.groups, r.students)} · {r.date}
                   </p>
                 </div>
                 <StatusBadge status={r.status} className="hidden shrink-0 sm:inline-flex" />

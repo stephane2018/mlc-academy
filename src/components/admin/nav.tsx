@@ -6,6 +6,14 @@ import {
   CheckSquare,
   Users,
   MessageSquare,
+  CreditCard,
+  Bell,
+  Settings,
+  GraduationCap,
+  BookOpen,
+  ShieldCheck,
+  Store,
+  UserPlus,
 } from '@/components/icons'
 import type { LucideIcon } from '@/components/icons'
 
@@ -27,8 +35,17 @@ export const navSections: NavSection[] = [
     items: [{ to: '/admin', label: "Vue d'ensemble", icon: LayoutGrid }],
   },
   {
+    title: 'Comptes',
+    items: [
+      { to: '/admin/utilisateurs', label: 'Utilisateurs', icon: Users },
+      { to: '/admin/gestionnaires', label: 'Gestionnaires', icon: UserPlus },
+    ],
+  },
+  {
     title: 'Contenu',
     items: [
+      { to: '/admin/classes', label: 'Classes', icon: GraduationCap },
+      { to: '/admin/matieres', label: 'Matières', icon: BookOpen },
       { to: '/admin/ressources', label: 'Ressources', icon: Video },
       { to: '/admin/questions', label: 'Questions de quiz', icon: CircleHelp },
       { to: '/admin/examens', label: 'Examens blancs', icon: CheckSquare },
@@ -36,7 +53,18 @@ export const navSections: NavSection[] = [
   },
   {
     title: 'Business',
-    items: [{ to: '/admin/abonnements', label: 'Abonnements', icon: Users }],
+    items: [
+      { to: '/admin/abonnements', label: 'Abonnements', icon: CreditCard },
+      { to: '/admin/marketplace', label: 'Marketplace', icon: Store },
+    ],
+  },
+  {
+    title: 'Système',
+    items: [
+      { to: '/admin/permissions', label: 'Permissions', icon: ShieldCheck },
+      { to: '/admin/notifications', label: 'Notifications', icon: Bell },
+      { to: '/admin/parametres', label: 'Paramètres', icon: Settings },
+    ],
   },
   {
     title: 'Support',
@@ -48,10 +76,18 @@ export const navSections: NavSection[] = [
 
 export const pageTitles: Record<string, string> = {
   '/admin': "Vue d'ensemble",
+  '/admin/utilisateurs': 'Utilisateurs',
+  '/admin/gestionnaires': 'Gestionnaires',
+  '/admin/classes': 'Classes',
+  '/admin/matieres': 'Matières',
   '/admin/ressources': 'Ressources',
   '/admin/questions': 'Questions de quiz',
   '/admin/examens': 'Examens blancs',
   '/admin/abonnements': 'Abonnements',
+  '/admin/marketplace': 'Marketplace',
+  '/admin/permissions': 'Permissions',
+  '/admin/notifications': 'Notifications',
+  '/admin/parametres': 'Paramètres',
   '/admin/support': 'Questions / support',
 }
 

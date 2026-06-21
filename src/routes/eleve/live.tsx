@@ -9,7 +9,7 @@ import {
   Play,
   RotateCcw,
 } from '@/components/icons'
-import { SectionHeader } from '@/components/student/parts'
+import { SectionHeader, SoftIcon } from '@/components/student/parts'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
@@ -45,7 +45,7 @@ function LivePage() {
 
       {/* Carte vedette */}
       {featured && (
-        <Card className="gap-0 overflow-hidden border-0 bg-gradient-to-br from-brand to-indigo-500 p-5 text-white shadow-brand-glow">
+        <Card className="gap-0 overflow-hidden border-0 bg-gradient-to-br from-emerald-500 to-green-600 p-5 text-white shadow-soft">
           <div className="flex items-center gap-2">
             <span className="flex items-center gap-1.5 rounded-full bg-white/20 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide">
               <span className="size-1.5 animate-pulse rounded-full bg-white" />
@@ -70,7 +70,7 @@ function LivePage() {
           <Button
             asChild
             size="lg"
-            className="mt-4 w-full rounded-xl bg-white text-brand hover:bg-white/90"
+            className="mt-4 w-full rounded-xl bg-white text-success hover:bg-white/90"
           >
             <Link to="/eleve/salle/$id" params={{ id: featured.id }}>
               <Video className="size-5" /> Rejoindre le cours
@@ -125,7 +125,7 @@ function LivePage() {
             {timeline.map((t, i) => (
               <li key={t.label} className="flex gap-3">
                 <div className="flex flex-col items-center">
-                  <span className="grid size-6 shrink-0 place-items-center rounded-full bg-brand-soft text-[11px] font-bold text-brand">
+                  <span className="grid size-6 shrink-0 place-items-center rounded-full bg-success-soft text-[11px] font-bold text-success">
                     {i + 1}
                   </span>
                   {i < timeline.length - 1 && <span className="my-1 w-px flex-1 bg-border" />}
@@ -150,9 +150,9 @@ function UpcomingRow({ session }: { session: LiveSession }) {
   return (
     <Card className="gap-3 p-3.5 shadow-soft">
       <div className="flex items-start gap-3">
-        <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-brand-soft text-brand">
+        <SoftIcon tone="success">
           <Video className="size-5" />
-        </span>
+        </SoftIcon>
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold">{session.title}</p>
           <p className="text-xs text-muted-foreground">

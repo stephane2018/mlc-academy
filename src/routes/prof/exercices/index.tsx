@@ -11,6 +11,7 @@ import {
   TrendingUp,
 } from '@/components/icons'
 import { Meter } from '@/components/student/parts'
+import { SubjectFilter, type SubjectFilterValue } from '@/components/student/subject-filter'
 import { PageHero, StatTile } from '@/components/blocks'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -19,7 +20,8 @@ import { cn } from '@/lib/utils'
 import {
   assignments,
   submissionsForAssignment,
-  domainLabels,
+  getSubject,
+  themeLabel,
   type Assignment,
   type AssignmentType,
 } from '@/lib/mock'
@@ -59,6 +61,7 @@ function rendusOf(a: Assignment) {
 
 function ExercicesList() {
   const [filter, setFilter] = useState<FilterKey>('tout')
+  const [subject, setSubject] = useState<SubjectFilterValue>('all')
 
   const stats = useMemo(() => {
     let pending = 0
@@ -75,7 +78,11 @@ function ExercicesList() {
     return { total: assignments.length, pending, avg }
   }, [])
 
-  const visible = assignments.filter((a) => filter === 'tout' || a.type === filter)
+  const visible = assignments.filter(
+    (a) =>
+      (filter === 'tout' || a.type === filter) &&
+      (subject === 'all' || a.subject === subject),
+  )
 
   return (
     <div className="space-y-6 2xl:mx-auto 2xl:max-w-[1700px]">
@@ -110,6 +117,9 @@ function ExercicesList() {
         />
       </div>
 
+      {/* Filtre par matière */}
+      <SubjectFilter value={subject} onChange={setSubject} />
+
       {/* Filtres par type */}
       <div className="flex flex-wrap gap-2">
         {filters.map((f) => {
@@ -138,6 +148,7 @@ function ExercicesList() {
           const { total, rendus } = rendusOf(a)
           const pct = total > 0 ? Math.round((rendus / total) * 100) : 0
           const isEval = a.type === 'evaluation'
+          const subj = getSubject(a.subject)
           const target =
             a.groups.length > 0
               ? a.groups.join(', ')
@@ -172,8 +183,17 @@ function ExercicesList() {
 
                 <p className="mt-3 font-heading text-base font-bold leading-snug">{a.title}</p>
 
-                <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                  <span className="font-medium text-foreground">{domainLabels[a.domain]}</span>
+                <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-muted-foreground">
+                  <Badge
+                    variant="secondary"
+                    className="border-transparent text-white"
+                    style={{ backgroundColor: subj.color }}
+                  >
+                    {subj.label}
+                  </Badge>
+                  <span className="font-medium text-foreground">
+                    {themeLabel(a.theme, a.subject)}
+                  </span>
                   <span className={cn('font-semibold capitalize', difficultyMeta[a.difficulty])}>
                     {a.difficulty}
                   </span>

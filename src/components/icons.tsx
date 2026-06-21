@@ -11,8 +11,10 @@ import {
   Activity01Icon,
   Alert02Icon,
   ArrowDownRight01Icon,
+  ArrowDown01Icon,
   ArrowLeft01Icon,
   ArrowRight01Icon,
+  ArrowUp01Icon,
   ArrowUpRight01Icon,
   ArrowReloadHorizontalIcon,
   Award01Icon,
@@ -100,6 +102,9 @@ import {
   Moon02Icon,
   Mail01Icon,
   SmartPhone01Icon,
+  Store01Icon,
+  ShoppingBag03Icon,
+  Tag01Icon,
 } from '@hugeicons/core-free-icons'
 
 type HIProps = ComponentProps<typeof HugeiconsIcon>
@@ -119,8 +124,10 @@ function make(icon: HIProps['icon']) {
 export const Activity = make(Activity01Icon)
 export const AlertCircle = make(Alert02Icon)
 export const ArrowDownRight = make(ArrowDownRight01Icon)
+export const ArrowDown = make(ArrowDown01Icon)
 export const ArrowLeft = make(ArrowLeft01Icon)
 export const ArrowRight = make(ArrowRight01Icon)
+export const ArrowUp = make(ArrowUp01Icon)
 export const ArrowUpRight = make(ArrowUpRight01Icon)
 export const Award = make(Award01Icon)
 export const Bell = make(Notification03Icon)
@@ -209,3 +216,6 @@ export const Sun = make(Sun03Icon)
 export const Moon = make(Moon02Icon)
 export const Mail = make(Mail01Icon)
 export const Smartphone = make(SmartPhone01Icon)
+export const Store = make(Store01Icon)
+export const ShoppingBag = make(ShoppingBag03Icon)
+export const Tag = make(Tag01Icon)

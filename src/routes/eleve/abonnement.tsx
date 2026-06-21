@@ -50,11 +50,11 @@ function AbonnementPage() {
       </div>
 
       {/* Argument parent */}
-      <Card className="flex-row items-center gap-3 border-0 bg-teal-soft p-4 shadow-soft">
-        <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-card text-teal">
+      <Card className="flex-row items-center gap-3 border-0 bg-violet-soft p-4 shadow-soft">
+        <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-card text-violet">
           <Coffee className="size-5" />
         </span>
-        <p className="text-sm text-teal-foreground">
+        <p className="text-sm text-foreground">
           <span className="font-semibold">Pour le prix d'un café par semaine</span>, votre enfant
           révise les maths toute l'année, à son rythme.
         </p>

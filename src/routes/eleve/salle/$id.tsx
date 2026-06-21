@@ -107,7 +107,7 @@ function Stage() {
         </div>
         {/* Badge "parle" */}
         <span className="absolute left-3 top-3 flex items-center gap-1.5 rounded-full bg-black/40 px-2.5 py-1 text-xs font-semibold backdrop-blur">
-          <Volume2 className="size-3.5 text-teal" /> M. Minko parle
+          <Volume2 className="size-3.5 text-success" /> M. Minko parle
         </span>
         {/* Contrôles vidéo factices */}
         <div className="absolute bottom-3 right-3 flex items-center gap-1.5">
@@ -150,17 +150,17 @@ function Thumbnail({
     <div
       className={cn(
         'relative flex aspect-video items-center justify-center overflow-hidden rounded-xl bg-slate-800 ring-1',
-        speaking ? 'ring-2 ring-teal' : 'ring-white/10',
+        speaking ? 'ring-2 ring-success' : 'ring-white/10',
       )}
     >
       <span className="text-2xl">{avatar}</span>
       <div className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-1 bg-gradient-to-t from-black/70 to-transparent px-1.5 py-1">
         <span className="truncate text-[10px] font-medium text-white/90">
-          {teacher && <GraduationCap className="mr-0.5 inline size-3 text-teal" />}
+          {teacher && <GraduationCap className="mr-0.5 inline size-3 text-success" />}
           {pseudo}
         </span>
         {speaking ? (
-          <Mic className="size-3 shrink-0 text-teal" />
+          <Mic className="size-3 shrink-0 text-success" />
         ) : muted ? (
           <MicOff className="size-3 shrink-0 text-white/50" />
         ) : null}
@@ -252,7 +252,7 @@ function ChatPanel() {
               </span>
               <div className="min-w-0 flex-1">
                 <p className="flex items-baseline gap-2">
-                  <span className={cn('truncate text-xs font-semibold', isMe ? 'text-teal' : 'text-white/90')}>
+                  <span className={cn('truncate text-xs font-semibold', isMe ? 'text-success' : 'text-white/90')}>
                     {m.pseudo}
                   </span>
                   <span className="shrink-0 text-[10px] text-white/40">{m.time}</span>
@@ -289,7 +289,7 @@ function QuizPanel() {
   return (
     <div className="flex min-h-[22rem] flex-1 flex-col gap-3 overflow-y-auto p-3.5 xl:min-h-0">
       <div className="rounded-xl bg-white/5 p-3">
-        <p className="text-[11px] font-bold uppercase tracking-widest text-teal">
+        <p className="text-[11px] font-bold uppercase tracking-widest text-success">
           Quiz en direct · {q.domain}
         </p>
         <p className="mt-2 text-sm font-medium leading-relaxed">{q.prompt}</p>
@@ -312,14 +312,14 @@ function QuizPanel() {
               onClick={() => setSelected(opt.id)}
               className={cn(
                 'flex w-full items-center gap-3 rounded-xl border-2 p-2.5 text-left text-sm transition',
-                isSel ? 'border-teal bg-teal/10' : 'border-white/10 hover:border-white/30',
+                isSel ? 'border-success bg-success/10' : 'border-white/10 hover:border-white/30',
                 sent && !isSel && 'opacity-50',
               )}
             >
               <span
                 className={cn(
                   'grid size-7 shrink-0 place-items-center rounded-lg text-xs font-bold',
-                  isSel ? 'bg-teal text-white' : 'bg-white/10 text-white/60',
+                  isSel ? 'bg-success text-white' : 'bg-white/10 text-white/60',
                 )}
               >
                 {letter}
@@ -331,7 +331,7 @@ function QuizPanel() {
       </div>
 
       {sent ? (
-        <div className="flex items-center gap-2 rounded-xl bg-teal/15 px-3 py-2.5 text-sm font-semibold text-teal">
+        <div className="flex items-center gap-2 rounded-xl bg-success/15 px-3 py-2.5 text-sm font-semibold text-success">
           <Check className="size-4" /> Réponse envoyée — le prof la voit en direct.
         </div>
       ) : (

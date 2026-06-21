@@ -16,7 +16,8 @@ import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import {
   getAssignment,
-  domainLabels,
+  subjectLabel,
+  themeLabel,
   type Assignment,
   type AssignmentQuestion,
 } from '@/lib/mock'
@@ -117,7 +118,7 @@ function DevoirSession({ assignment }: { assignment: Assignment }) {
             <p className="truncate font-heading text-sm font-bold">{assignment.title}</p>
             <p className="text-xs text-muted-foreground">
               {timed ? 'Éval. surprise' : 'Devoir maison'} · Question {index + 1}/{total} ·{' '}
-              {domainLabels[assignment.domain]}
+              {subjectLabel(assignment.subject)} · {themeLabel(assignment.theme, assignment.subject)}
             </p>
           </div>
           {timed && (
@@ -146,7 +147,7 @@ function DevoirSession({ assignment }: { assignment: Assignment }) {
       <div className="flex-1 px-4 pt-5">
         <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
           <p className="text-xs font-bold uppercase tracking-widest text-brand">
-            {domainLabels[assignment.domain]}
+            {themeLabel(assignment.theme, assignment.subject)}
           </p>
           <p className="mt-3 text-base font-medium leading-relaxed">{q.prompt}</p>
           {q.katex && (

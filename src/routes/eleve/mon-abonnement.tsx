@@ -102,7 +102,7 @@ function MonAbonnementPage() {
               value={subscription.method}
             />
             <InfoCell
-              icon={<CalendarDays className="size-4 text-teal" />}
+              icon={<CalendarDays className="size-4 text-info" />}
               label="Membre depuis"
               value={subscription.since}
             />

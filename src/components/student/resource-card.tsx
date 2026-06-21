@@ -13,7 +13,8 @@ import { cn } from '@/lib/utils'
 import {
   type LibraryItem,
   type ResourceType,
-  domainLabels,
+  getSubject,
+  themeLabel,
 } from '@/lib/mock'
 
 export const TYPE_META: Record<
@@ -37,9 +38,9 @@ export const TYPE_META: Record<
   exercice: {
     label: 'Exercice',
     Icon: Dumbbell,
-    cover: 'from-teal-500 to-emerald-600',
-    chip: 'bg-teal-soft text-teal',
-    ring: 'group-hover:ring-teal/30',
+    cover: 'from-emerald-500 to-green-600',
+    chip: 'bg-success-soft text-success',
+    ring: 'group-hover:ring-success/30',
   },
   fiche: {
     label: 'Fiche',
@@ -132,8 +133,12 @@ export function ResourceCard({ item }: { item: LibraryItem }) {
       <ResourceCover item={item} className="aspect-video" />
       <div className="px-1.5 pb-1 pt-2.5">
         <p className="line-clamp-2 font-heading text-sm font-bold leading-snug">{item.title}</p>
-        <p className="mt-1 text-xs text-muted-foreground">
-          {domainLabels[item.domain]} · {item.chapter}
+        <p className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
+          <span
+            className="size-2 shrink-0 rounded-full"
+            style={{ backgroundColor: getSubject(item.subject).color }}
+          />
+          {themeLabel(item.theme, item.subject)} · {item.chapter}
         </p>
       </div>
     </Link>

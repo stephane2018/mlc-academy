@@ -14,6 +14,7 @@ import {
   Sparkles,
   Dumbbell,
   Bell,
+  Store,
 } from '@/components/icons'
 import { cn } from '@/lib/utils'
 import { ThemeToggle } from '@/components/theme'
@@ -26,6 +27,7 @@ const items = [
   { href: '/eleve/examens', label: 'Examens blancs', icon: CheckSquare },
   { href: '/eleve/live', label: 'Cours live', icon: Video },
   { href: '/eleve/bibliotheque', label: 'Bibliothèque', icon: Library },
+  { href: '/eleve/boutique', label: 'Boutique', icon: Store },
   { href: '/eleve/classement', label: 'Classement', icon: Award },
   { href: '/eleve/coach', label: 'Coach IA', icon: Sparkles },
   { href: '/eleve/messages', label: 'Messages', icon: MessageSquare },

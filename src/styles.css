@@ -7,6 +7,13 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Radix expose l'état via data-state="checked|unchecked" (Switch, Checkbox…).
+ * On mappe les variantes courtes data-checked/data-unchecked dessus, sinon les
+ * classes data-checked:bg-primary / data-unchecked:bg-input ne s'appliquent pas
+ * et le composant n'a aucun fond (invisible). */
+@custom-variant data-checked (&[data-state="checked"]);
+@custom-variant data-unchecked (&[data-state="unchecked"]);
+
 /* ------------------------------------------------------------------ *
  * MLC Academy — Direction artistique
  * Indigo primaire · Teal secondaire · Ambre (badges/streak) · Slate
@@ -52,7 +59,11 @@
   --color-success-foreground: var(--success-foreground);
   --color-success-soft: var(--success-soft);
   --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
   --color-info-soft: var(--info-soft);
+  --color-violet: var(--violet);
+  --color-violet-foreground: var(--violet-foreground);
+  --color-violet-soft: var(--violet-soft);
   --color-locked: var(--locked);
 
   --color-chart-1: var(--chart-1);
@@ -103,24 +114,28 @@
   --brand: #4f46e5;
   --brand-foreground: #ffffff;
   --brand-soft: #eef2ff;
-  --teal: #0d9488;
+  --teal: #14b8a6;
   --teal-foreground: #ffffff;
   --teal-soft: #ccfbf1;
-  --amber: #f59e0b;
-  --amber-foreground: #78350f;
-  --amber-soft: #fef3c7;
-  --success: #16a34a;
+  --amber: #f97316; /* Streak / XP — orange vif */
+  --amber-foreground: #9a3412;
+  --amber-soft: #ffedd5;
+  --success: #22c55e; /* vert vif */
   --success-foreground: #ffffff;
   --success-soft: #dcfce7;
-  --info: #2563eb;
+  --info: #3b82f6;
+  --info-foreground: #ffffff;
   --info-soft: #dbeafe;
+  --violet: #7c3aed;
+  --violet-foreground: #ffffff;
+  --violet-soft: #ede9fe;
   --locked: #94a3b8;
 
   --chart-1: #4f46e5;
-  --chart-2: #0d9488;
-  --chart-3: #f59e0b;
-  --chart-4: #16a34a;
-  --chart-5: #64748b;
+  --chart-2: #14b8a6;
+  --chart-3: #f97316;
+  --chart-4: #22c55e;
+  --chart-5: #7c3aed;
 
   --sidebar: #0f172a;
   --sidebar-foreground: #cbd5e1;
@@ -154,12 +169,17 @@
 
   --brand: #6366f1;
   --brand-soft: #312e81;
+  --teal: #2dd4bf;
   --teal-soft: #134e4a;
-  --amber: #fbbf24;
-  --amber-soft: #422006;
-  --amber-foreground: #fde68a;
+  --amber: #fb923c;
+  --amber-soft: #431407;
+  --amber-foreground: #fed7aa;
+  --success: #4ade80;
   --success-soft: #14532d;
+  --info: #60a5fa;
   --info-soft: #1e3a8a;
+  --violet: #a78bfa;
+  --violet-soft: #2e1065;
 
   --sidebar: #020617;
   --sidebar-foreground: #cbd5e1;

@@ -33,7 +33,8 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import {
-  domainLabels,
+  getSubject,
+  themeLabel,
   getAssignment,
   submissionsForAssignment,
   type Assignment,
@@ -208,6 +209,7 @@ function AssignmentResults() {
 
   const tMeta = typeMeta[assignment.type]
   const aStatus = assignmentStatusMeta[assignment.status]
+  const subj = getSubject(assignment.subject)
 
   return (
     <div className="space-y-6 2xl:mx-auto 2xl:max-w-[1700px]">
@@ -230,8 +232,15 @@ function AssignmentResults() {
             <Badge variant="secondary" className={tMeta.cls}>
               {tMeta.label}
             </Badge>
+            <Badge
+              variant="secondary"
+              className="border-transparent text-white"
+              style={{ backgroundColor: subj.color }}
+            >
+              {subj.label}
+            </Badge>
             <Badge variant="secondary" className="bg-secondary text-foreground">
-              {domainLabels[assignment.domain]}
+              {themeLabel(assignment.theme, assignment.subject)}
             </Badge>
             <span className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground">
               <Clock className="size-4" />
