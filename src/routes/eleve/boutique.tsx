@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { toast } from 'sonner'
-import { ShoppingBag, Download, Check, FileIcon, Sparkles } from '@/components/icons'
+import { ShoppingBag, Check, Sparkles } from '@/components/icons'
 import { PageHero } from '@/components/blocks'
 import { SubjectFilter, type SubjectFilterValue } from '@/components/student/subject-filter'
 import { Card } from '@/components/ui/card'
@@ -17,39 +17,68 @@ import {
   DialogClose,
 } from '@/components/ui/dialog'
 import {
-  products,
   productKindLabels,
-  subjects,
   getSubject,
-  classes,
   formatPrice,
-  type MarketProduct,
+  type SubjectKey,
+  type ProductKind,
 } from '@/lib/mock'
+import { useProducts } from '@/hooks/use-marketplace'
+import { useCheckout } from '@/hooks/use-billing'
+import { useSubjects, useClasses } from '@/hooks/use-catalog'
 
 export const Route = createFileRoute('/eleve/boutique')({
   component: BoutiquePage,
 })
 
-/** Catalogue = produits publiés uniquement. */
-const catalogue = products.filter((p) => p.status === 'publie')
+/** Produit prêt pour le rendu (libellés/visuel résolus depuis le BFF). */
+type BoutiqueView = {
+  id: string
+  title: string
+  sellerName: string
+  description: string
+  kind: ProductKind
+  subject: SubjectKey | null
+  classCode: string | null
+  priceCents: number
+  emoji: string
+}
+
+const KIND_EMOJI: Record<string, string> = { ebook: '📘', fiche: '📄', pack: '📦', video: '🎬', autre: '🧩' }
 
 function BoutiquePage() {
   const [subject, setSubject] = useState<SubjectFilterValue>('all')
-  const [owned, setOwned] = useState<Set<string>>(new Set())
-  const [buying, setBuying] = useState<MarketProduct | null>(null)
+  const [buying, setBuying] = useState<BoutiqueView | null>(null)
+  const { data: products = [], isLoading } = useProducts()
+  const { data: subjects = [] } = useSubjects()
+  const { data: classes = [] } = useClasses()
+  const checkout = useCheckout()
+
+  const subjectById = new Map(subjects.map((s) => [s.id, s]))
+  const classById = new Map(classes.map((c) => [c.id, c]))
+
+  const catalogue: BoutiqueView[] = products.map((p) => ({
+    id: p.id,
+    title: p.title,
+    sellerName: p.sellerName ?? 'MLC Academy',
+    description: p.description ?? '',
+    kind: p.kind as ProductKind,
+    subject: (p.subjectId ? subjectById.get(p.subjectId)?.code : null) as SubjectKey | null,
+    classCode: p.classId ? (classById.get(p.classId)?.code ?? null) : null,
+    priceCents: p.priceCents,
+    emoji: KIND_EMOJI[p.kind] ?? '🧩',
+  }))
 
   const visible = catalogue.filter((p) => subject === 'all' || p.subject === subject)
 
   const subjectCounts: Partial<Record<SubjectFilterValue, number>> = { all: catalogue.length }
-  for (const s of subjects) {
-    subjectCounts[s.key] = catalogue.filter((p) => p.subject === s.key).length
+  for (const p of catalogue) {
+    if (p.subject) subjectCounts[p.subject] = (subjectCounts[p.subject] ?? 0) + 1
   }
 
-  const confirmPurchase = (p: MarketProduct) => {
-    setOwned((prev) => new Set(prev).add(p.id))
-    setBuying(null)
-    toast.success('Achat confirmé', {
-      description: `« ${p.title} » est maintenant disponible dans ta bibliothèque.`,
+  const confirmPurchase = (p: BoutiqueView) => {
+    checkout.mutate(p.id, {
+      onError: () => toast.error("Le paiement n'a pas pu démarrer. Réessaie."),
     })
   }
 
@@ -63,19 +92,16 @@ function BoutiquePage() {
 
       <SubjectFilter value={subject} onChange={setSubject} counts={subjectCounts} />
 
-      {visible.length === 0 ? (
+      {isLoading ? (
+        <p className="py-12 text-center text-sm text-muted-foreground">Chargement de la boutique…</p>
+      ) : visible.length === 0 ? (
         <p className="rounded-2xl border border-dashed border-border bg-card py-12 text-center text-sm text-muted-foreground">
           Aucun produit disponible dans cette matière pour l'instant.
         </p>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {visible.map((p) => (
-            <BoutiqueCard
-              key={p.id}
-              product={p}
-              owned={owned.has(p.id)}
-              onBuy={() => setBuying(p)}
-            />
+            <BoutiqueCard key={p.id} product={p} onBuy={() => setBuying(p)} />
           ))}
         </div>
       )}
@@ -91,17 +117,13 @@ function BoutiquePage() {
 
 function BoutiqueCard({
   product: p,
-  owned,
   onBuy,
 }: {
-  product: MarketProduct
-  owned: boolean
+  product: BoutiqueView
   onBuy: () => void
 }) {
   const subject = p.subject ? getSubject(p.subject) : null
-  const classLabel = p.classCode
-    ? (classes.find((c) => c.code === p.classCode)?.label ?? p.classCode)
-    : 'Toutes classes'
+  const classLabel = p.classCode ?? 'Toutes classes'
 
   return (
     <Card className="card-hover gap-0 p-5">
@@ -140,25 +162,10 @@ function BoutiqueCard({
         </Badge>
       </div>
 
-      <p className="mt-2 text-xs text-muted-foreground">
-        {p.files.length} fichier(s) · {p.sales} achat(s)
-      </p>
-
-      {owned ? (
-        <Button
-          variant="secondary"
-          className="mt-4 w-full bg-teal-soft text-teal-foreground hover:bg-teal-soft/80"
-          onClick={() => toast.success('Téléchargement', { description: p.title })}
-        >
-          <Download className="size-4" />
-          Télécharger
-        </Button>
-      ) : (
-        <Button className="mt-4 w-full" onClick={onBuy}>
-          <ShoppingBag className="size-4" />
-          {p.priceCents > 0 ? 'Acheter' : 'Obtenir'}
-        </Button>
-      )}
+      <Button className="mt-4 w-full" onClick={onBuy}>
+        <ShoppingBag className="size-4" />
+        {p.priceCents > 0 ? 'Acheter' : 'Obtenir'}
+      </Button>
     </Card>
   )
 }
@@ -168,9 +175,9 @@ function PurchaseDialog({
   onClose,
   onConfirm,
 }: {
-  product: MarketProduct | null
+  product: BoutiqueView | null
   onClose: () => void
-  onConfirm: (p: MarketProduct) => void
+  onConfirm: (p: BoutiqueView) => void
 }) {
   const subject = p?.subject ? getSubject(p.subject) : null
 
@@ -211,16 +218,6 @@ function PurchaseDialog({
                 {p.priceCents > 0 ? formatPrice(p.priceCents) : 'Gratuit'}
               </span>
             </div>
-
-            <ul className="space-y-1.5">
-              {p.files.map((f) => (
-                <li key={f.name} className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <FileIcon className="size-4 shrink-0" />
-                  <span className="flex-1 truncate">{f.name}</span>
-                  <span className="shrink-0 text-xs">{f.size}</span>
-                </li>
-              ))}
-            </ul>
 
             <p className="flex items-center gap-1.5 rounded-lg bg-brand-soft px-3 py-2 text-xs text-brand">
               <Sparkles className="size-3.5 shrink-0" />
