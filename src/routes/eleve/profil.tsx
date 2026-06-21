@@ -1,5 +1,7 @@
 import { useState } from 'react'
+import { useMutation } from '@tanstack/react-query'
 import { createFileRoute, Link } from '@tanstack/react-router'
+import { toast } from 'sonner'
 import {
   Flame,
   Trophy,
@@ -27,21 +29,60 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import { PageHero, SparkBars } from '@/components/blocks'
-import { student, subjectMastery, getSubject, weeklyActivity } from '@/lib/mock'
+import { PageHero } from '@/components/blocks'
+import { useStudentMe, useStudentSkills } from '@/hooks/use-student'
+import { useWeeklyLeaderboard } from '@/hooks/use-gamification'
+import { useSubjects } from '@/hooks/use-catalog'
+import { useAuth } from '@/lib/auth'
+import { authService } from '@/services/auth'
+import type { MeterColor } from '@/components/student/parts'
 
 export const Route = createFileRoute('/eleve/profil')({
   component: ProfilPage,
 })
 
-const PARENT_CODE = 'MLC-7K2'
+/** Compétence par matière prête pour le rendu (libellés/couleurs résolus). */
+type MasteryView = {
+  subject: string
+  label: string
+  colorHex: string
+  meterColor: Exclude<MeterColor, 'auto'>
+  mastery: number
+  themes: { key: string; label: string; mastery: number }[]
+}
 
 function ProfilPage() {
   const [subjectFilter, setSubjectFilter] = useState<SubjectFilterValue>('all')
+  const { data: me } = useStudentMe()
+  const { data: skills = [] } = useStudentSkills()
+  const { data: weekly = [] } = useWeeklyLeaderboard()
+  const { data: subjects = [] } = useSubjects()
+  const { signOut } = useAuth()
+
+  const codeMutation = useMutation({ mutationFn: () => authService.issueParentCode() })
+
+  const subjectById = new Map(subjects.map((s) => [s.id, s]))
+  const mastery: MasteryView[] = skills.map((sk) => {
+    const code = subjectById.get(sk.subjectId)?.code ?? sk.subjectId
+    return {
+      subject: code,
+      label: sk.subjectName,
+      colorHex: sk.color ?? 'var(--brand)',
+      meterColor: SUBJECT_COLOR[code] ?? 'brand',
+      mastery: sk.mastery,
+      themes: sk.themes.map((t) => ({ key: t.themeId, label: t.name, mastery: t.mastery })),
+    }
+  })
   const visibleMastery =
-    subjectFilter === 'all'
-      ? subjectMastery
-      : subjectMastery.filter((sm) => sm.subject === subjectFilter)
+    subjectFilter === 'all' ? mastery : mastery.filter((sm) => sm.subject === subjectFilter)
+
+  const avatar = me?.avatar ?? '🙂'
+  const pseudo = me?.pseudo ?? '…'
+  const level = me?.level ?? 1
+  const streak = me?.streak ?? 0
+  const xp = me?.xp ?? 0
+  const rank = me?.weekRank ?? null
+  const rankTotal = weekly.length
 
   return (
     <div className="space-y-5 px-4 pb-6 pt-5 sm:px-6 lg:px-8 2xl:mx-auto 2xl:max-w-[1600px]">
@@ -52,19 +93,19 @@ function ProfilPage() {
         title={
           <span className="flex items-center gap-3">
             <span className="grid size-12 place-items-center rounded-2xl bg-brand-soft text-3xl">
-              {student.avatar}
+              {avatar}
             </span>
-            {student.pseudo}
+            {pseudo}
           </span>
         }
         subtitle="Suis ta progression, tes compétences et tes récompenses."
         actions={
           <>
             <span className="rounded-full bg-amber-soft px-3 py-1 text-xs font-bold text-amber-foreground">
-              Niv. {student.level}
+              Niv. {level}
             </span>
             <span className="flex items-center gap-1 rounded-full bg-amber-soft px-3 py-1 text-xs font-bold text-amber-foreground">
-              <Flame className="size-3.5 text-amber" /> {student.streak} jours
+              <Flame className="size-3.5 text-amber" /> {streak} jours
             </span>
           </>
         }
@@ -76,15 +117,15 @@ function ProfilPage() {
       <div className="space-y-5 xl:col-span-2">
       {/* Stats */}
       <div className="grid grid-cols-3 gap-3">
-        <StatCard icon={<Zap className="size-5 text-violet" />} value={`${student.xp}`} label="XP total" />
+        <StatCard icon={<Zap className="size-5 text-violet" />} value={`${xp}`} label="XP total" />
         <StatCard
           icon={<Trophy className="size-5 text-amber" />}
-          value={`${student.rank}ᵉ`}
-          label={`/ ${student.rankTotal}`}
+          value={rank ? `${rank}ᵉ` : '—'}
+          label={rankTotal ? `/ ${rankTotal}` : 'cette semaine'}
         />
         <StatCard
           icon={<Flame className="size-5 text-amber" />}
-          value={`${student.streak}`}
+          value={`${streak}`}
           label="jours"
         />
       </div>
@@ -93,18 +134,21 @@ function ProfilPage() {
       <Card className="p-4 shadow-soft">
         <SectionHeader title="Mes compétences" />
         <SubjectFilter value={subjectFilter} onChange={setSubjectFilter} className="mb-4" />
+        {visibleMastery.length === 0 ? (
+          <p className="py-6 text-center text-sm text-muted-foreground">
+            Joue et fais tes devoirs pour révéler tes compétences.
+          </p>
+        ) : (
         <div className="space-y-5">
-          {visibleMastery.map((sm) => {
-            const subject = getSubject(sm.subject)
-            return (
+          {visibleMastery.map((sm) => (
               <div key={sm.subject}>
                 <div className="mb-2.5 flex items-center justify-between gap-3">
                   <span className="flex items-center gap-2 text-sm font-bold">
                     <span
                       className="size-2.5 shrink-0 rounded-full"
-                      style={{ backgroundColor: subject.color }}
+                      style={{ backgroundColor: sm.colorHex }}
                     />
-                    {subject.label}
+                    {sm.label}
                   </span>
                   <span className="text-sm font-bold tabular-nums text-muted-foreground">
                     {sm.mastery}%
@@ -116,7 +160,7 @@ function ProfilPage() {
                       <span className="w-28 shrink-0 truncate text-sm font-medium">
                         {t.label}
                       </span>
-                      <Meter value={t.mastery} color={SUBJECT_COLOR[sm.subject]} />
+                      <Meter value={t.mastery} color={sm.meterColor} />
                       <span className="w-9 shrink-0 text-right text-sm font-bold tabular-nums">
                         {t.mastery}%
                       </span>
@@ -124,26 +168,14 @@ function ProfilPage() {
                   ))}
                 </ul>
               </div>
-            )
-          })}
+          ))}
         </div>
+        )}
       </Card>
       </div>
 
-      {/* Colonne droite : activité + badges/abonnement + code parent + paramètres */}
+      {/* Colonne droite : badges/abonnement + code parent + paramètres */}
       <div className="space-y-5 xl:col-span-1">
-      {/* Activité de la semaine */}
-      <Card className="p-4 shadow-soft">
-        <SectionHeader title="Activité de la semaine" />
-        <SparkBars
-          data={weeklyActivity.map((d) => d.minutes)}
-          labels={weeklyActivity.map((d) => d.label)}
-          height={96}
-          color="var(--brand)"
-        />
-        <p className="mt-3 text-center text-xs text-muted-foreground">Minutes par jour</p>
-      </Card>
-
       {/* Lier un parent */}
       <Card className="flex-row items-center gap-3 p-4 shadow-soft">
         <SoftIcon tone="info">
@@ -155,7 +187,7 @@ function ProfilPage() {
             Partage un code pour qu'il suive tes progrès.
           </p>
         </div>
-        <Dialog>
+        <Dialog onOpenChange={(open) => { if (open && !codeMutation.data) codeMutation.mutate() }}>
           <DialogTrigger asChild>
             <Button size="sm" variant="outline" className="rounded-full">
               Générer
@@ -169,14 +201,23 @@ function ProfilPage() {
                 activité.
               </DialogDescription>
             </DialogHeader>
-            <div className="flex items-center justify-center gap-2 rounded-2xl bg-brand-soft py-6">
+            <button
+              type="button"
+              onClick={() => {
+                if (codeMutation.data) {
+                  navigator.clipboard?.writeText(codeMutation.data.code)
+                  toast.success('Code copié')
+                }
+              }}
+              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-brand-soft py-6"
+            >
               <span className="font-heading text-3xl font-extrabold tracking-widest text-brand">
-                {PARENT_CODE}
+                {codeMutation.isPending ? '…' : codeMutation.isError ? 'Erreur' : (codeMutation.data?.code ?? '…')}
               </span>
               <Copy className="size-5 text-brand/70" />
-            </div>
+            </button>
             <p className="text-center text-xs text-muted-foreground">
-              Ce code expire dans 24 heures.
+              Ce code expire dans 1 heure.
             </p>
           </DialogContent>
         </Dialog>
@@ -208,6 +249,7 @@ function ProfilPage() {
         </button>
         <button
           type="button"
+          onClick={() => void signOut()}
           className="flex items-center gap-3 rounded-xl px-3 py-3 text-left text-destructive transition-colors hover:bg-destructive/5"
         >
           <LogOut className="size-5" />
