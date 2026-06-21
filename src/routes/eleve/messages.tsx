@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { toast } from 'sonner'
 import { Send, Clock } from '@/components/icons'
@@ -7,26 +7,28 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { PageHero } from '@/components/blocks'
 import { cn } from '@/lib/utils'
-import { conversations, type Message } from '@/lib/mock'
+import { useConversations, useMessages, useSendMessage, useMarkConversationRead } from '@/hooks/use-messaging'
 
 export const Route = createFileRoute('/eleve/messages')({
   component: EleveMessages,
 })
 
-const PROF_NAME = 'M. Minko'
-const PROF_AVATAR = '👨‍🏫'
+const DEFAULT_PROF_AVATAR = '👨‍🏫'
 
-/** L'élève n'a qu'un fil : sa conversation avec le professeur. */
-const baseThread = conversations[0].messages
+/** Message affiché dans le fil. */
+type Msg = { id: string; from: 'eleve' | 'prof'; text: string; time: string }
 
-function Bubble({ message }: { message: Message }) {
+const hourMin = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' })
+const formatTime = (iso: string) => hourMin.format(new Date(iso))
+
+function Bubble({ message, profAvatar }: { message: Msg; profAvatar: string }) {
   // Côté élève : l'élève est à droite (brand), le prof à gauche.
   const fromEleve = message.from === 'eleve'
   return (
     <div className={cn('flex items-end gap-2', fromEleve ? 'flex-row-reverse' : 'flex-row')}>
       {!fromEleve && (
         <span className="grid size-8 shrink-0 place-items-center rounded-full bg-secondary text-base">
-          {PROF_AVATAR}
+          {profAvatar}
         </span>
       )}
       <div className={cn('flex flex-col', fromEleve ? 'items-end' : 'items-start')}>
@@ -47,20 +49,35 @@ function Bubble({ message }: { message: Message }) {
 }
 
 function EleveMessages() {
-  const [extra, setExtra] = useState<Message[]>([])
+  const convQ = useConversations()
+  const conv = convQ.data?.[0]
+  const messagesQ = useMessages(conv?.id ?? '')
+  const sendMsg = useSendMessage(conv?.id ?? '')
+  const markRead = useMarkConversationRead()
   const [input, setInput] = useState('')
-  const thread = [...baseThread, ...extra]
+
+  const profName = conv?.peer?.name ?? 'Ton professeur'
+  const profAvatar = conv?.peer?.avatar ?? DEFAULT_PROF_AVATAR
+
+  // Marque les messages reçus comme lus à l'ouverture (une fois).
+  useEffect(() => {
+    if (conv && conv.unreadCount > 0) markRead.mutate(conv.id)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [conv?.id])
+
+  const thread: Msg[] = (messagesQ.data ?? []).map((m) => ({
+    id: m.id,
+    from: m.sender,
+    text: m.body,
+    time: formatTime(m.createdAt),
+  }))
 
   function send() {
     const text = input.trim()
-    if (!text) return
-    setExtra((m) => [
-      ...m,
-      { id: `local-${Date.now()}`, from: 'eleve', text, time: 'maintenant' },
-    ])
-    setInput('')
-    toast.success('Message envoyé', {
-      description: `${PROF_NAME} te répondra bientôt.`,
+    if (!text || !conv || sendMsg.isPending) return
+    sendMsg.mutate(text, {
+      onSuccess: () => setInput(''),
+      onError: () => toast.error("Échec de l'envoi. Réessaie."),
     })
   }
 
@@ -70,7 +87,7 @@ function EleveMessages() {
         variant="surface"
         eyebrow="Messagerie"
         title="Messages"
-        subtitle={`Pose tes questions à ${PROF_NAME}.`}
+        subtitle={`Pose tes questions à ${profName}.`}
         actions={
           <span className="flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1.5 text-sm font-semibold text-muted-foreground">
             <Clock className="size-4 text-brand" />
@@ -79,14 +96,23 @@ function EleveMessages() {
         }
       />
 
+      {convQ.isLoading ? (
+        <p className="py-10 text-center text-sm text-muted-foreground">Chargement de ta messagerie…</p>
+      ) : !conv ? (
+        <Card className="flex flex-col items-center gap-2 p-10 text-center shadow-soft">
+          <span className="grid size-12 place-items-center rounded-full bg-brand-soft text-2xl">{DEFAULT_PROF_AVATAR}</span>
+          <p className="font-heading font-bold">Aucune conversation pour l'instant</p>
+          <p className="text-sm text-muted-foreground">Ton professeur t'écrira ici dès qu'il aura un message pour toi.</p>
+        </Card>
+      ) : (
       <Card className="gap-0 overflow-hidden p-0 shadow-soft">
         {/* En-tête du fil */}
         <div className="flex items-center gap-3 border-b border-border p-4">
           <span className="grid size-11 shrink-0 place-items-center rounded-full bg-brand-soft text-xl">
-            {PROF_AVATAR}
+            {profAvatar}
           </span>
           <div className="min-w-0">
-            <p className="truncate text-sm font-bold">{PROF_NAME}</p>
+            <p className="truncate text-sm font-bold">{profName}</p>
             <p className="truncate text-xs text-muted-foreground">Ton professeur de maths</p>
           </div>
         </div>
@@ -94,7 +120,7 @@ function EleveMessages() {
         {/* Bulles */}
         <div className="flex flex-col gap-3 p-4 sm:p-5">
           {thread.map((m) => (
-            <Bubble key={m.id} message={m} />
+            <Bubble key={m.id} message={m} profAvatar={profAvatar} />
           ))}
           <p className="mx-auto mt-1 flex items-center gap-1.5 text-[11px] text-muted-foreground">
             <Clock className="size-3.5" /> Il te répond généralement sous 24–48 h.
@@ -120,7 +146,7 @@ function EleveMessages() {
             <Button
               type="button"
               onClick={send}
-              disabled={!input.trim()}
+              disabled={!input.trim() || sendMsg.isPending}
               className="h-10 shrink-0 rounded-xl px-4"
             >
               <Send className="size-5" />
@@ -129,6 +155,7 @@ function EleveMessages() {
           </div>
         </div>
       </Card>
+      )}
     </div>
   )
 }

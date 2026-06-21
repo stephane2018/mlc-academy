@@ -1,11 +1,14 @@
 import { api } from '@/lib/api-client'
 
+export type Peer = { id: string; name: string; avatar: string | null; role: 'prof' | 'eleve' }
+
 export type Conversation = {
   id: string
   teacherId: string
   studentId: string
   createdAt: string
   unreadCount: number
+  peer: Peer | null
 }
 
 export type Message = {
