@@ -4,16 +4,37 @@ import { Card } from '@/components/ui/card'
 import { PageHero } from '@/components/blocks'
 import { avatarTint } from '@/components/student/parts'
 import { cn } from '@/lib/utils'
-import { badges, student } from '@/lib/mock'
+import { useBadges } from '@/hooks/use-gamification'
+import { useStudentMe } from '@/hooks/use-student'
+import type { Badge } from '@/services/gamification'
 
 export const Route = createFileRoute('/eleve/badges')({
   component: BadgesPage,
 })
 
+/** Badge enrichi du statut dérivé (unlocked) pour le rendu. */
+type BadgeView = Badge & { unlocked: boolean }
+
 function BadgesPage() {
-  const xpPct = Math.round((student.xp / student.xpForNextLevel) * 100)
+  const { data: badgesData = [], isLoading } = useBadges()
+  const { data: me } = useStudentMe()
+
+  const level = me?.level ?? 1
+  const xp = me?.xp ?? 0
+  const xpForNextLevel = me?.xpForNextLevel ?? null
+  const xpPct = xpForNextLevel && xpForNextLevel > 0 ? Math.min(100, Math.round((xp / xpForNextLevel) * 100)) : 100
+
+  const badges: BadgeView[] = badgesData.map((b) => ({ ...b, unlocked: b.unlockedAt !== null }))
   const unlocked = badges.filter((b) => b.unlocked)
   const locked = badges.filter((b) => !b.unlocked)
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center px-6 text-sm text-muted-foreground">
+        Chargement de tes badges…
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-5 px-4 pb-6 pt-5 sm:px-6 lg:px-8 2xl:mx-auto 2xl:max-w-[1600px]">
@@ -38,11 +59,11 @@ function BadgesPage() {
               Niveau actuel
             </p>
             <p className="font-heading text-3xl font-extrabold leading-tight">
-              Niveau {student.level}
+              Niveau {level}
             </p>
           </div>
           <span className="grid size-14 place-items-center rounded-2xl bg-white/15 font-heading text-2xl font-extrabold">
-            {student.level}
+            {level}
           </span>
         </div>
         <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/25">
@@ -52,8 +73,8 @@ function BadgesPage() {
           />
         </div>
         <div className="mt-1.5 flex items-center justify-between text-xs font-medium text-white/80">
-          <span>{student.xp} XP</span>
-          <span>{student.xpForNextLevel} XP — niveau {student.level + 1}</span>
+          <span>{xp} XP</span>
+          <span>{xpForNextLevel ?? xp} XP — niveau {level + 1}</span>
         </div>
       </Card>
 
@@ -82,7 +103,7 @@ function BadgesPage() {
   )
 }
 
-function BadgeCard({ badge }: { badge: (typeof badges)[number] }) {
+function BadgeCard({ badge }: { badge: BadgeView }) {
   if (!badge.unlocked) {
     return (
       <div className="relative flex flex-col items-center gap-2 rounded-2xl border border-dashed border-border bg-secondary/40 p-4 text-center">
@@ -93,9 +114,11 @@ function BadgeCard({ badge }: { badge: (typeof badges)[number] }) {
           {badge.emoji}
         </span>
         <span className="text-sm font-semibold text-locked">{badge.name}</span>
-        <span className="text-[11px] leading-tight text-muted-foreground">
-          {badge.description}
-        </span>
+        {badge.description && (
+          <span className="text-[11px] leading-tight text-muted-foreground">
+            {badge.description}
+          </span>
+        )}
       </div>
     )
   }
@@ -111,9 +134,11 @@ function BadgeCard({ badge }: { badge: (typeof badges)[number] }) {
         {badge.emoji}
       </span>
       <span className="text-sm font-bold text-foreground">{badge.name}</span>
-      <span className="text-[11px] leading-tight text-muted-foreground">
-        {badge.description}
-      </span>
+      {badge.description && (
+        <span className="text-[11px] leading-tight text-muted-foreground">
+          {badge.description}
+        </span>
+      )}
       <span className="mt-0.5 rounded-full bg-card px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber">
         {badge.tier}
       </span>

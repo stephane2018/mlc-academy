@@ -24,7 +24,7 @@ export type GlobalRank = {
   rankClass: number
 }
 
-export type Badge = { id: string; emoji: string; name: string; tier: 'bronze' | 'argent' | 'or'; unlockedAt: string }
+export type Badge = { id: string; emoji: string; name: string; description: string | null; tier: 'bronze' | 'argent' | 'or'; unlockedAt: string | null }
 export type XpRule = { action: string; baseXp: number; dailyCap: number; enabled: boolean }
 export type Level = { level: number; xpRequired: number; title: string }
 export type Rules = { xpRules: XpRule[]; levels: Level[] }
