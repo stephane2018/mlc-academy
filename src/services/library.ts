@@ -13,6 +13,15 @@ export type Resource = {
   premium: boolean
   duration: string | null
   pages: number | null
+  /** Progression de l'élève courant (0–100). */
+  progress: number
+}
+
+export type ResourceDetail = Resource & {
+  description: string | null
+  questionCount: number | null
+  videoUrl: string | null
+  fileUrl: string | null
 }
 
 export type LibraryFilters = Pagination & { subjectId?: string; type?: ResourceType }
@@ -20,6 +29,7 @@ export type LibraryFilters = Pagination & { subjectId?: string; type?: ResourceT
 /** Service library — `/library/*`. */
 export const libraryService = {
   list: (filters?: LibraryFilters) => api.get<Resource[]>('/library', { query: filters }),
+  get: (id: string) => api.get<ResourceDetail>(`/library/${id}`),
   updateProgress: (id: string, progress: number) =>
     api.put<{ ok: true }>(`/library/${id}/progress`, { progress }),
 }

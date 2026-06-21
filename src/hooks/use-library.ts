@@ -8,6 +8,14 @@ export function useResources(filters?: LibraryFilters) {
   })
 }
 
+export function useResource(id: string) {
+  return useQuery({
+    queryKey: ['library', 'detail', id],
+    queryFn: () => libraryService.get(id),
+    enabled: !!id,
+  })
+}
+
 export function useUpdateProgress() {
   const qc = useQueryClient()
   return useMutation({
