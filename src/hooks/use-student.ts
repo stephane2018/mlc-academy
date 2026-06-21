@@ -33,3 +33,15 @@ export function useSubmitGame() {
     },
   })
 }
+
+/** Rejoint le groupe d'un prof via son code ; rafraîchit live & messagerie. */
+export function useJoinGroup() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (code: string) => studentService.joinGroup(code),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['live'] })
+      qc.invalidateQueries({ queryKey: ['messaging'] })
+    },
+  })
+}

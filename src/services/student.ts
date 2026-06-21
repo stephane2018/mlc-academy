@@ -54,4 +54,6 @@ export const studentService = {
     api.get<QuizQuestion[]>('/student/questions', { query: { subjectId, limit } }),
   submitGame: (input: { subjectId: string; answers: GameAnswer[]; durationSec?: number }) =>
     api.post<GameResult>('/student/game', input),
+  joinGroup: (code: string) =>
+    api.post<{ groupId: string; groupName: string; alreadyMember: boolean }>('/student/join-group', { code }),
 }

@@ -7,6 +7,7 @@ import {
   Trophy,
   Zap,
   Link2,
+  Users,
   Crown,
   Award,
   ChevronRight,
@@ -30,7 +31,8 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { PageHero } from '@/components/blocks'
-import { useStudentMe, useStudentSkills } from '@/hooks/use-student'
+import { Input } from '@/components/ui/input'
+import { useStudentMe, useStudentSkills, useJoinGroup } from '@/hooks/use-student'
 import { useWeeklyLeaderboard } from '@/hooks/use-gamification'
 import { useSubjects } from '@/hooks/use-catalog'
 import { useAuth } from '@/lib/auth'
@@ -60,6 +62,19 @@ function ProfilPage() {
   const { signOut } = useAuth()
 
   const codeMutation = useMutation({ mutationFn: () => authService.issueParentCode() })
+  const joinGroup = useJoinGroup()
+  const [groupCodeInput, setGroupCodeInput] = useState('')
+
+  function submitJoinGroup() {
+    const code = groupCodeInput.trim()
+    if (!code) return
+    joinGroup.mutate(code, {
+      onSuccess: (r) =>
+        toast.success(r.alreadyMember ? `Tu es déjà dans « ${r.groupName} »` : `Tu as rejoint « ${r.groupName} » 🎉`),
+      onError: () => toast.error('Code de groupe invalide.'),
+    })
+    setGroupCodeInput('')
+  }
 
   const subjectById = new Map(subjects.map((s) => [s.id, s]))
   const mastery: MasteryView[] = skills.map((sk) => {
@@ -219,6 +234,48 @@ function ProfilPage() {
             <p className="text-center text-xs text-muted-foreground">
               Ce code expire dans 1 heure.
             </p>
+          </DialogContent>
+        </Dialog>
+      </Card>
+
+      {/* Rejoindre un groupe (code prof) */}
+      <Card className="flex-row items-center gap-3 p-4 shadow-soft">
+        <SoftIcon tone="brand">
+          <Users className="size-5" />
+        </SoftIcon>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold">Rejoindre un groupe</p>
+          <p className="text-xs text-muted-foreground">
+            Saisis le code donné par ton prof pour rejoindre sa classe.
+          </p>
+        </div>
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button size="sm" variant="outline" className="rounded-full">
+              Rejoindre
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Rejoindre un groupe</DialogTitle>
+              <DialogDescription>
+                Entre le code d'invitation (ex. MLC-AB12) communiqué par ton professeur.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex items-center gap-2">
+              <Input
+                value={groupCodeInput}
+                onChange={(e) => setGroupCodeInput(e.target.value.toUpperCase())}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') submitJoinGroup()
+                }}
+                placeholder="MLC-XXXX"
+                className="flex-1 text-center font-heading text-lg font-bold tracking-widest"
+              />
+              <Button onClick={submitJoinGroup} disabled={!groupCodeInput.trim() || joinGroup.isPending}>
+                Valider
+              </Button>
+            </div>
           </DialogContent>
         </Dialog>
       </Card>
