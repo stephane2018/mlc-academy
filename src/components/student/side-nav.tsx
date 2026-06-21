@@ -18,7 +18,8 @@ import {
 } from '@/components/icons'
 import { cn } from '@/lib/utils'
 import { ThemeToggle } from '@/components/theme'
-import { student, unreadCount } from '@/lib/mock'
+import { useStudentMe } from '@/hooks/use-student'
+import { useNotifications } from '@/hooks/use-notifications'
 
 const items = [
   { href: '/eleve/dashboard', label: 'Accueil', icon: Home },
@@ -40,8 +41,17 @@ const items = [
 /** Navigation latérale — affichée uniquement sur grand écran (lg+). */
 export function StudentSideNav() {
   const { pathname } = useLocation()
-  const xpPct = Math.round((student.xp / student.xpForNextLevel) * 100)
-  const eleveUnread = unreadCount('eleve')
+  const { data: me } = useStudentMe()
+  const { data: notifs = [] } = useNotifications()
+
+  const pseudo = me?.pseudo ?? '…'
+  const avatar = me?.avatar ?? '🙂'
+  const level = me?.level ?? 1
+  const xp = me?.xp ?? 0
+  const streak = me?.streak ?? 0
+  const xpForNextLevel = me?.xpForNextLevel ?? null
+  const xpPct = xpForNextLevel && xpForNextLevel > 0 ? Math.min(100, Math.round((xp / xpForNextLevel) * 100)) : 100
+  const eleveUnread = notifs.filter((n) => !n.read).length
 
   return (
     <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col border-r border-border bg-card px-4 py-5 lg:flex">
@@ -59,22 +69,22 @@ export function StudentSideNav() {
       >
         <div className="flex items-center gap-2.5">
           <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-white/15 text-xl">
-            {student.avatar}
+            {avatar}
           </span>
           <div className="min-w-0 flex-1">
-            <p className="truncate font-heading text-sm font-bold">{student.pseudo}</p>
-            <p className="text-[11px] text-white/70">Niveau {student.level}</p>
+            <p className="truncate font-heading text-sm font-bold">{pseudo}</p>
+            <p className="text-[11px] text-white/70">Niveau {level}</p>
           </div>
           <span className="flex shrink-0 items-center gap-1 rounded-full bg-white/15 px-2 py-0.5 text-xs font-bold">
             <Flame className="size-3.5 text-amber-200" />
-            {student.streak}
+            {streak}
           </span>
         </div>
         <div className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-white/20">
           <div className="h-full rounded-full bg-white" style={{ width: `${xpPct}%` }} />
         </div>
         <p className="mt-1 text-[10px] font-medium text-white/70">
-          {student.xp} / {student.xpForNextLevel} XP
+          {xp} / {xpForNextLevel ?? xp} XP
         </p>
       </Link>
 
@@ -117,11 +127,11 @@ export function StudentSideNav() {
         className="mt-3 flex items-center gap-3 rounded-xl border border-border p-2.5 transition-colors hover:bg-secondary"
       >
         <span className="grid size-9 place-items-center rounded-lg bg-brand-soft text-lg">
-          {student.avatar}
+          {avatar}
         </span>
         <div className="min-w-0">
-          <p className="truncate text-sm font-semibold">{student.pseudo}</p>
-          <p className="text-xs text-muted-foreground">Niv. {student.level}</p>
+          <p className="truncate text-sm font-semibold">{pseudo}</p>
+          <p className="text-xs text-muted-foreground">Niv. {level}</p>
         </div>
       </Link>
     </aside>
