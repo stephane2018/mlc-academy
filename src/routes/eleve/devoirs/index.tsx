@@ -18,38 +18,58 @@ import {
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
-import {
-  assignmentsForStudent,
-  submissions,
-  getSubject,
-  subjectLabel,
-  themeLabel,
-  student,
-  type Assignment,
-  type Submission,
-} from '@/lib/mock'
+import { getSubject, subjectLabel, type SubjectKey } from '@/lib/mock'
+import { useAssignments } from '@/hooks/use-assignments'
+import { useSubjects } from '@/hooks/use-catalog'
+import type { AssignmentListItem, AssignmentSubmission } from '@/services/assignments'
 
 export const Route = createFileRoute('/eleve/devoirs/')({
   component: DevoirsListPage,
 })
 
-const STUDENT_ID = 's1'
-const STUDENT_GROUP = 'Groupe A'
-
-function submissionFor(assignmentId: string): Submission | undefined {
-  return submissions.find(
-    (s) => s.assignmentId === assignmentId && s.studentId === STUDENT_ID,
-  )
+/** Vue d'un devoir prête pour le rendu (données backend + libellés résolus). */
+type AView = {
+  id: string
+  title: string
+  subject: SubjectKey
+  theme: string
+  type: string
+  durationMin: number | null
+  questionCount: number
+  xpReward: number
+  dueDate: string | null
+  submission: AssignmentSubmission | null
 }
 
-function isEval(a: Assignment) {
+const dayMonth = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long' })
+const formatDay = (iso: string | null) => (iso ? dayMonth.format(new Date(iso)) : '—')
+
+function isEval(a: AView) {
   return a.type === 'evaluation' && typeof a.durationMin === 'number'
 }
 
 function DevoirsListPage() {
   const [subject, setSubject] = useState<SubjectFilterValue>('all')
+  const { data: assignments = [], isLoading } = useAssignments()
+  const { data: subjects = [] } = useSubjects()
 
-  const all = assignmentsForStudent(STUDENT_GROUP, student.pseudo)
+  const subjectById = new Map(subjects.map((s) => [s.id, s]))
+  const themeName = (id: string | null) =>
+    (id && subjects.flatMap((s) => s.themes).find((t) => t.id === id)?.name) || 'Tout le programme'
+
+  // On ne montre à l'élève que les devoirs publiés qui le ciblent (RLS le garantit déjà).
+  const all: AView[] = assignments.map((a: AssignmentListItem) => ({
+    id: a.id,
+    title: a.title,
+    subject: (subjectById.get(a.subjectId)?.code ?? 'maths') as SubjectKey,
+    theme: themeName(a.themeId),
+    type: a.type,
+    durationMin: a.durationMin,
+    questionCount: a.questionCount,
+    xpReward: a.xpReward,
+    dueDate: a.dueDate,
+    submission: a.submission,
+  }))
 
   const subjectCounts: Partial<Record<SubjectFilterValue, number>> = {
     all: all.length,
@@ -60,9 +80,9 @@ function DevoirsListPage() {
 
   const filtered = all.filter((a) => subject === 'all' || a.subject === subject)
 
-  const todo = filtered.filter((a) => submissionFor(a.id)?.status !== 'rendu')
+  const todo = filtered.filter((a) => a.submission?.status !== 'rendu')
   const done = filtered
-    .map((a) => ({ assignment: a, submission: submissionFor(a.id) }))
+    .map((a) => ({ assignment: a, submission: a.submission }))
     .filter((x) => x.submission?.status === 'rendu')
 
   return (
@@ -84,7 +104,12 @@ function DevoirsListPage() {
       {/* Filtre par matière */}
       <SubjectFilter value={subject} onChange={setSubject} counts={subjectCounts} />
 
+      {isLoading && (
+        <p className="py-10 text-center text-sm text-muted-foreground">Chargement de tes devoirs…</p>
+      )}
+
       {/* À faire */}
+      {!isLoading && (
       <section className="space-y-3">
         <div className="flex items-center gap-2">
           <h2 className="font-heading text-lg font-bold tracking-tight">À faire</h2>
@@ -105,9 +130,10 @@ function DevoirsListPage() {
           </div>
         )}
       </section>
+      )}
 
       {/* Terminés */}
-      {done.length > 0 && (
+      {!isLoading && done.length > 0 && (
         <section className="space-y-3">
           <div className="flex items-center gap-2">
             <h2 className="font-heading text-lg font-bold tracking-tight">Terminés</h2>
@@ -124,7 +150,7 @@ function DevoirsListPage() {
   )
 }
 
-function TodoCard({ assignment: a }: { assignment: Assignment }) {
+function TodoCard({ assignment: a }: { assignment: AView }) {
   const evaluation = isEval(a)
 
   return (
@@ -149,17 +175,17 @@ function TodoCard({ assignment: a }: { assignment: Assignment }) {
               <Badge variant="secondary">Devoir maison</Badge>
             )}
             <SubjectBadge subject={a.subject} />
-            <Badge variant="outline">{themeLabel(a.theme, a.subject)}</Badge>
+            <Badge variant="outline">{a.theme}</Badge>
           </div>
 
           <h3 className="mt-2 font-heading text-base font-bold leading-snug">{a.title}</h3>
 
           <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
             <span className="flex items-center gap-1.5">
-              <CalendarDays className="size-4" /> à rendre pour {a.dueDate}
+              <CalendarDays className="size-4" /> à rendre pour {formatDay(a.dueDate)}
             </span>
             <span>
-              {a.questions.length} question{a.questions.length > 1 ? 's' : ''}
+              {a.questionCount} question{a.questionCount > 1 ? 's' : ''}
             </span>
             {evaluation && (
               <span className="flex items-center gap-1 font-semibold text-amber-foreground">
@@ -186,8 +212,8 @@ function DoneCard({
   assignment: a,
   submission: s,
 }: {
-  assignment: Assignment
-  submission: Submission
+  assignment: AView
+  submission: AssignmentSubmission
 }) {
   const score = s.score ?? 0
   return (
@@ -203,8 +229,8 @@ function DoneCard({
               {a.type === 'evaluation' ? 'Évaluation' : 'Devoir maison'}
             </Badge>
             <SubjectBadge subject={a.subject} />
-            <Badge variant="outline">{themeLabel(a.theme, a.subject)}</Badge>
-            <span className="text-xs text-muted-foreground">rendu le {s.submittedAt}</span>
+            <Badge variant="outline">{a.theme}</Badge>
+            <span className="text-xs text-muted-foreground">rendu le {formatDay(s.submittedAt)}</span>
           </div>
 
           <h3 className="mt-2 font-heading text-base font-bold leading-snug">{a.title}</h3>
@@ -227,7 +253,7 @@ function DoneCard({
   )
 }
 
-function SubjectBadge({ subject }: { subject: Assignment['subject'] }) {
+function SubjectBadge({ subject }: { subject: SubjectKey }) {
   const s = getSubject(subject)
   return (
     <Badge

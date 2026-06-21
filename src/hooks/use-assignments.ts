@@ -5,11 +5,13 @@ import {
   type CreateAssignmentInput,
   type Pagination,
 } from '@/services/assignments'
+import type { GameAnswer } from '@/services/student'
 
 const keys = {
   all: ['assignments'] as const,
   list: (p?: Pagination) => ['assignments', 'list', p ?? {}] as const,
   detail: (id: string) => ['assignments', 'detail', id] as const,
+  questions: (id: string) => ['assignments', 'questions', id] as const,
 }
 
 export function useAssignments(pagination?: Pagination) {
@@ -47,10 +49,22 @@ export function useUpdateAssignmentStatus() {
   })
 }
 
+export function useAssignmentQuestions(id: string) {
+  return useQuery({
+    queryKey: keys.questions(id),
+    queryFn: () => assignmentsService.questions(id),
+    enabled: !!id,
+  })
+}
+
 export function useSubmitAssignment() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (id: string) => assignmentsService.submit(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: keys.all }),
+    mutationFn: ({ id, answers }: { id: string; answers: GameAnswer[] }) =>
+      assignmentsService.submit(id, answers),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: keys.all })
+      qc.invalidateQueries({ queryKey: ['student', 'me'] })
+    },
   })
 }

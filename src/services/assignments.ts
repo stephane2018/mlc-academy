@@ -1,24 +1,64 @@
 import { api } from '@/lib/api-client'
+import type { QuizOption, GameAnswer } from './student'
 
 export type AssignmentType = 'devoir' | 'evaluation'
 export type AssignmentDifficulty = 'facile' | 'moyen' | 'difficile'
 export type AssignmentStatus = 'brouillon' | 'publie' | 'cloture'
+
+/** Soumission de l'élève courant (null s'il n'a pas rendu). */
+export type AssignmentSubmission = {
+  status: string
+  score: number | null
+  submittedAt: string | null
+}
 
 export type AssignmentListItem = {
   id: string
   title: string
   type: string
   subjectId: string
+  themeId: string | null
   difficulty: string
+  durationMin: number | null
   dueDate: string | null
   status: string
+  xpReward: number
+  questionCount: number
+  submission: AssignmentSubmission | null
+}
+
+/** Question de devoir — SANS la bonne réponse (correction 100% serveur). */
+export type AssignmentQuestion = {
+  id: string
+  type: string
+  prompt: string
+  katex: string | null
+  themeId: string | null
+  options: QuizOption[]
+}
+
+/** Correction d'une question, renvoyée APRÈS remise. */
+export type AssignmentCorrection = {
+  questionId: string
+  correctOptionId: string | null
+  explanation: string | null
+  explanationKatex: string | null
+}
+
+export type AssignmentResult = {
+  correct: number
+  total: number
+  score: number | null
+  passed: boolean
+  xpEarned: number
+  newXp: number
+  newLevel: number
+  leveledUp: boolean
+  corrections: AssignmentCorrection[]
 }
 
 export type Assignment = AssignmentListItem & {
   teacherId: string
-  themeId: string | null
-  durationMin: number | null
-  xpReward: number
   message: string | null
   createdAt: string
 }
@@ -44,5 +84,7 @@ export const assignmentsService = {
   create: (input: CreateAssignmentInput) => api.post<Assignment>('/assignments', input),
   updateStatus: (id: string, status: AssignmentStatus) =>
     api.put<Assignment>(`/assignments/${id}/status`, { status }),
-  submit: (id: string) => api.post<{ ok: true }>(`/assignments/${id}/submit`),
+  questions: (id: string) => api.get<AssignmentQuestion[]>(`/assignments/${id}/questions`),
+  submit: (id: string, answers: GameAnswer[]) =>
+    api.post<AssignmentResult>(`/assignments/${id}/submit`, { answers }),
 }

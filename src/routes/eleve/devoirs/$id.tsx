@@ -14,17 +14,19 @@ import {
 import { Math as Maths } from '@/components/math'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import {
-  getAssignment,
-  subjectLabel,
-  themeLabel,
-  type Assignment,
-  type AssignmentQuestion,
-} from '@/lib/mock'
+import { subjectLabel, type SubjectKey } from '@/lib/mock'
+import { useAssignment, useAssignmentQuestions, useSubmitAssignment } from '@/hooks/use-assignments'
+import { useSubjects } from '@/hooks/use-catalog'
+import type { Assignment, AssignmentQuestion, AssignmentResult } from '@/services/assignments'
 
 export const Route = createFileRoute('/eleve/devoirs/$id')({
   component: DevoirRunner,
 })
+
+const PASS_THRESHOLD = 50
+
+/** Question enrichie de son thème (affiché en libellé). */
+type QView = AssignmentQuestion & { domain: string }
 
 function formatTime(totalSeconds: number) {
   const m = Math.floor(totalSeconds / 60)
@@ -32,57 +34,99 @@ function formatTime(totalSeconds: number) {
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
 }
 
+function NotAvailable({ message }: { message: string }) {
+  return (
+    <div className="flex min-h-dvh flex-col items-center justify-center gap-5 px-6 text-center">
+      <div className="grid size-16 place-items-center rounded-full bg-secondary text-2xl">🔍</div>
+      <div className="space-y-1">
+        <h1 className="font-heading text-xl font-bold">Devoir indisponible</h1>
+        <p className="text-sm text-muted-foreground">{message}</p>
+      </div>
+      <Button asChild className="rounded-xl">
+        <Link to="/eleve/devoirs">
+          <ArrowLeft className="size-4" /> Retour à mes devoirs
+        </Link>
+      </Button>
+    </div>
+  )
+}
+
 function DevoirRunner() {
   const { id } = useParams({ from: '/eleve/devoirs/$id' })
-  const assignment = getAssignment(id)
+  const assignmentQ = useAssignment(id)
+  const questionsQ = useAssignmentQuestions(id)
+  const { data: subjects = [] } = useSubjects()
 
-  if (!assignment) {
+  if (assignmentQ.isLoading || questionsQ.isLoading) {
     return (
-      <div className="flex min-h-dvh flex-col items-center justify-center gap-5 px-6 text-center">
-        <div className="grid size-16 place-items-center rounded-full bg-secondary text-2xl">🔍</div>
-        <div className="space-y-1">
-          <h1 className="font-heading text-xl font-bold">Devoir introuvable</h1>
-          <p className="text-sm text-muted-foreground">
-            Ce devoir n'existe pas ou n'est plus disponible.
-          </p>
-        </div>
-        <Button asChild className="rounded-xl">
-          <Link to="/eleve/devoirs">
-            <ArrowLeft className="size-4" /> Retour à mes devoirs
-          </Link>
-        </Button>
+      <div className="flex min-h-dvh items-center justify-center px-6 text-sm text-muted-foreground">
+        Chargement du devoir…
       </div>
     )
   }
 
-  return <DevoirSession assignment={assignment} />
+  const assignment = assignmentQ.data
+  const rawQuestions = questionsQ.data ?? []
+  if (!assignment) return <NotAvailable message="Ce devoir n'existe pas ou n'est plus disponible." />
+  if (rawQuestions.length === 0) return <NotAvailable message="Ce devoir n'a pas encore de questions." />
+
+  const subjectCode = (subjects.find((s) => s.id === assignment.subjectId)?.code ?? 'maths') as SubjectKey
+  const themeName = (themeId: string | null) =>
+    (themeId && subjects.flatMap((s) => s.themes).find((t) => t.id === themeId)?.name) || 'Tout le programme'
+  const questions: QView[] = rawQuestions.map((q) => ({ ...q, domain: themeName(q.themeId) }))
+
+  return <DevoirSession assignment={assignment} questions={questions} subjectCode={subjectCode} />
 }
 
-function DevoirSession({ assignment }: { assignment: Assignment }) {
-  const questions = assignment.questions
+function DevoirSession({
+  assignment,
+  questions,
+  subjectCode,
+}: {
+  assignment: Assignment
+  questions: QView[]
+  subjectCode: SubjectKey
+}) {
   const total = questions.length
   const timed = assignment.type === 'evaluation' && typeof assignment.durationMin === 'number'
+  const submit = useSubmitAssignment()
 
   const [index, setIndex] = useState(0)
   const [answers, setAnswers] = useState<(string | null)[]>(() => Array(total).fill(null))
-  const [done, setDone] = useState(false)
+  const [result, setResult] = useState<AssignmentResult | null>(null)
   const [secondsLeft, setSecondsLeft] = useState((assignment.durationMin ?? 0) * 60)
+  const done = result !== null
+
+  function finish() {
+    if (submit.isPending || done) return
+    const payload = questions
+      .map((q, i) => (answers[i] ? { questionId: q.id, optionId: answers[i] as string } : null))
+      .filter((a): a is { questionId: string; optionId: string } => a !== null)
+    submit.mutate(
+      { id: assignment.id, answers: payload },
+      {
+        onSuccess: (res) => setResult(res),
+        onError: () => toast.error("Échec de l'envoi de tes réponses. Réessaie."),
+      },
+    )
+  }
 
   // Chronomètre décroissant (évaluations) ; soumission auto à 0.
   useEffect(() => {
     if (!timed || done) return
     if (secondsLeft <= 0) {
-      setDone(true)
+      finish()
       return
     }
     const t = setInterval(() => setSecondsLeft((s) => s - 1), 1000)
     return () => clearInterval(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [secondsLeft, done, timed])
 
   const answered = answers.filter((a) => a !== null).length
 
-  if (done) {
-    return <ResultScreen assignment={assignment} questions={questions} answers={answers} />
+  if (result) {
+    return <ResultScreen assignment={assignment} questions={questions} answers={answers} result={result} />
   }
 
   const q = questions[index]
@@ -95,11 +139,6 @@ function DevoirSession({ assignment }: { assignment: Assignment }) {
       next[index] = optId
       return next
     })
-  }
-
-  function submit() {
-    setDone(true)
-    toast.success('Devoir rendu (démo)')
   }
 
   return (
@@ -118,7 +157,7 @@ function DevoirSession({ assignment }: { assignment: Assignment }) {
             <p className="truncate font-heading text-sm font-bold">{assignment.title}</p>
             <p className="text-xs text-muted-foreground">
               {timed ? 'Éval. surprise' : 'Devoir maison'} · Question {index + 1}/{total} ·{' '}
-              {subjectLabel(assignment.subject)} · {themeLabel(assignment.theme, assignment.subject)}
+              {subjectLabel(subjectCode)} · {q.domain}
             </p>
           </div>
           {timed && (
@@ -146,9 +185,7 @@ function DevoirSession({ assignment }: { assignment: Assignment }) {
       {/* Carte question */}
       <div className="flex-1 px-4 pt-5">
         <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
-          <p className="text-xs font-bold uppercase tracking-widest text-brand">
-            {themeLabel(assignment.theme, assignment.subject)}
-          </p>
+          <p className="text-xs font-bold uppercase tracking-widest text-brand">{q.domain}</p>
           <p className="mt-3 text-base font-medium leading-relaxed">{q.prompt}</p>
           {q.katex && (
             <div className="mt-4 rounded-xl bg-secondary/60 py-4 text-xl">
@@ -202,7 +239,13 @@ function DevoirSession({ assignment }: { assignment: Assignment }) {
           </Button>
 
           {index + 1 >= total ? (
-            <Button type="button" size="lg" className="flex-1 rounded-xl text-base" onClick={submit}>
+            <Button
+              type="button"
+              size="lg"
+              className="flex-1 rounded-xl text-base"
+              disabled={submit.isPending}
+              onClick={finish}
+            >
               <CheckSquare className="size-5" /> Rendre le devoir
             </Button>
           ) : (
@@ -224,21 +267,22 @@ function DevoirSession({ assignment }: { assignment: Assignment }) {
   )
 }
 
-const PASS_THRESHOLD = 50
-
 function ResultScreen({
   assignment,
   questions,
   answers,
+  result,
 }: {
   assignment: Assignment
-  questions: AssignmentQuestion[]
+  questions: QView[]
   answers: (string | null)[]
+  result: AssignmentResult
 }) {
-  const total = questions.length
-  const correct = questions.reduce((sum, q, i) => sum + (answers[i] === q.correctId ? 1 : 0), 0)
-  const pct = Math.round((correct / total) * 100)
+  const total = result.total
+  const correct = result.correct
+  const pct = result.score ?? 0
   const validated = pct >= PASS_THRESHOLD
+  const correctionByQuestion = new Map(result.corrections.map((c) => [c.questionId, c]))
 
   return (
     <div className="mx-auto w-full max-w-2xl px-4 py-6">
@@ -261,11 +305,13 @@ function ResultScreen({
 
         <p className="mt-4 font-heading text-5xl font-extrabold tabular-nums">{pct}%</p>
 
-        <div className="mt-4 flex items-center gap-2 rounded-2xl bg-brand px-5 py-2.5 text-white">
-          <Trophy className="size-5" />
-          <span className="font-heading text-lg font-bold">+{assignment.xpReward} XP gagnés</span>
-          <Zap className="size-4 fill-white" />
-        </div>
+        {result.xpEarned > 0 && (
+          <div className="mt-4 flex items-center gap-2 rounded-2xl bg-brand px-5 py-2.5 text-white">
+            <Trophy className="size-5" />
+            <span className="font-heading text-lg font-bold">+{result.xpEarned} XP gagnés</span>
+            <Zap className="size-4 fill-white" />
+          </div>
+        )}
         <p className="mt-2 text-sm text-muted-foreground">
           Ton classement va évoluer dans les prochaines minutes.
         </p>
@@ -286,9 +332,11 @@ function ResultScreen({
         <div className="space-y-3">
           {questions.map((q, i) => {
             const given = answers[i]
-            const ok = given === q.correctId
+            const correction = correctionByQuestion.get(q.id)
+            const correctId = correction?.correctOptionId ?? null
+            const ok = given !== null && given === correctId
             const givenLabel = q.options.find((o) => o.id === given)?.label
-            const correctLabel = q.options.find((o) => o.id === q.correctId)?.label
+            const correctLabel = q.options.find((o) => o.id === correctId)?.label
             return (
               <div
                 key={q.id}
@@ -322,17 +370,17 @@ function ResultScreen({
                       <p className={cn(ok ? 'text-success' : 'text-destructive')}>
                         Ta réponse : {given ? givenLabel : 'aucune'}
                       </p>
-                      {!ok && (
+                      {!ok && correctLabel && (
                         <p className="font-semibold text-success">
                           Bonne réponse : {correctLabel}
                         </p>
                       )}
                     </div>
-                    {q.explanation && (
+                    {correction?.explanation && (
                       <p className="mt-1.5 text-sm text-foreground/80">
-                        {q.explanation}{' '}
-                        {q.explanationKatex && (
-                          <Maths expr={q.explanationKatex} className="font-medium" />
+                        {correction.explanation}{' '}
+                        {correction.explanationKatex && (
+                          <Maths expr={correction.explanationKatex} className="font-medium" />
                         )}
                       </p>
                     )}
