@@ -12,7 +12,16 @@ const CHANNEL_META: Record<PrefChannel, { label: string; Icon: IconComponent }> 
   email: { label: 'E-mail', Icon: Mail },
 }
 
-export function NotificationPreferences({ prefs }: { prefs: NotifPref[] }) {
+export function NotificationPreferences({
+  prefs,
+  onSave,
+  saving,
+}: {
+  prefs: NotifPref[]
+  /** Persiste l'état (sinon : démo locale + toast). Reçoit la matrice complète. */
+  onSave?: (state: Record<string, Record<string, boolean>>) => void
+  saving?: boolean
+}) {
   const channels = prefChannels.filter((c) => prefs.some((p) => p.channels.includes(c.key)))
 
   const [state, setState] = useState<Record<string, Record<string, boolean>>>(() => {
@@ -111,7 +120,13 @@ export function NotificationPreferences({ prefs }: { prefs: NotifPref[] }) {
             ? 'Les e-mails sont envoyés au parent lié au compte.'
             : 'Les rappels arrivent dans l’app et en push si elle est installée.'}
         </p>
-        <Button onClick={() => toast.success('Préférences enregistrées')}>
+        <Button
+          disabled={saving}
+          onClick={() => {
+            if (onSave) onSave(state)
+            else toast.success('Préférences enregistrées')
+          }}
+        >
           <Check className="size-4" /> Enregistrer
         </Button>
       </div>
