@@ -22,8 +22,36 @@ export type SubjectSkill = {
   themes: { themeId: string; name: string; mastery: number }[]
 }
 
+export type QuizOption = { id: string; label: string }
+export type QuizQuestion = {
+  id: string
+  type: string
+  prompt: string
+  katex: string | null
+  themeId: string | null
+  explanation: string | null
+  explanationKatex: string | null
+  correctId: string | null
+  options: QuizOption[]
+}
+
+export type GameAnswer = { questionId: string; optionId: string }
+export type GameResult = {
+  correct: number
+  total: number
+  score: number
+  xpEarned: number
+  newXp: number
+  newLevel: number
+  leveledUp: boolean
+}
+
 /** Service espace élève — `/student/*`. */
 export const studentService = {
   me: () => api.get<StudentMe>('/student/me'),
   skills: () => api.get<SubjectSkill[]>('/student/skills'),
+  questions: (subjectId: string, limit = 10) =>
+    api.get<QuizQuestion[]>('/student/questions', { query: { subjectId, limit } }),
+  submitGame: (input: { subjectId: string; answers: GameAnswer[]; durationSec?: number }) =>
+    api.post<GameResult>('/student/game', input),
 }
