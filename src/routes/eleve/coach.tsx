@@ -1,32 +1,22 @@
 import { useEffect, useRef, useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
+import { toast } from 'sonner'
 import { Sparkles, Send, AlertCircle } from '@/components/icons'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
-import { coachMessages, coachSuggestions, type CoachMessage } from '@/lib/mock'
+import { coachSuggestions } from '@/lib/mock'
+import { useCoachHistory, useAskCoach } from '@/hooks/use-coach'
 
 export const Route = createFileRoute('/eleve/coach')({
   component: CoachPage,
 })
 
-/** Réponses canned génériques mais crédibles. */
-const CANNED_REPLIES = [
-  "Bonne question ! Reprenons étape par étape : commence par identifier ce que tu cherches, puis applique la règle correspondante. Tu veux un exemple concret ?",
-  "Je vois ! L'astuce ici, c'est de bien poser le calcul avant de te lancer. Essaie de l'écrire, et je te dis si c'est juste 👍",
-  "Excellent réflexe de demander. En général, on commence par simplifier, puis on isole l'inconnue. Tu veux que je te montre sur un exemple ?",
-  "Pas de souci, c'est un classique ! Souviens-toi : même dénominateur d'abord, ensuite on additionne les numérateurs. Je te prépare un petit exercice ?",
-]
+/** Message affiché dans le fil (issu du BFF ou ajouté en optimiste). */
+type Msg = { id: string; from: 'eleve' | 'coach'; text: string }
 
-let replyIndex = 0
-function nextReply() {
-  const reply = CANNED_REPLIES[replyIndex % CANNED_REPLIES.length]
-  replyIndex += 1
-  return reply
-}
-
-function Bubble({ message }: { message: CoachMessage }) {
+function Bubble({ message }: { message: Msg }) {
   const fromCoach = message.from === 'coach'
   return (
     <div className={cn('flex items-end gap-2', fromCoach ? 'flex-row' : 'flex-row-reverse')}>
@@ -66,33 +56,35 @@ function TypingBubble() {
 }
 
 function CoachPage() {
-  const [thread, setThread] = useState<CoachMessage[]>(coachMessages)
+  const historyQ = useCoachHistory()
+  const askCoach = useAskCoach()
+  const [thread, setThread] = useState<Msg[]>([])
   const [input, setInput] = useState('')
-  const [typing, setTyping] = useState(false)
+  const typing = askCoach.isPending
   const scrollRef = useRef<HTMLDivElement>(null)
-  const timers = useRef<ReturnType<typeof setTimeout>[]>([])
+  const seeded = useRef(false)
+
+  // Seed unique du fil depuis l'historique (les ajouts locaux ne sont pas écrasés).
+  useEffect(() => {
+    if (!seeded.current && historyQ.data) {
+      setThread(historyQ.data.map((m, i) => ({ id: `h-${i}`, from: m.role, text: m.body })))
+      seeded.current = true
+    }
+  }, [historyQ.data])
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
   }, [thread, typing])
-
-  // Nettoyage des timers au démontage.
-  useEffect(() => {
-    const pending = timers.current
-    return () => pending.forEach(clearTimeout)
-  }, [])
 
   function ask(text: string) {
     const question = text.trim()
     if (!question || typing) return
     setThread((t) => [...t, { id: `me-${Date.now()}`, from: 'eleve', text: question }])
     setInput('')
-    setTyping(true)
-    const timer = setTimeout(() => {
-      setThread((t) => [...t, { id: `coach-${Date.now()}`, from: 'coach', text: nextReply() }])
-      setTyping(false)
-    }, 1100)
-    timers.current.push(timer)
+    askCoach.mutate(question, {
+      onSuccess: (res) => setThread((t) => [...t, { id: `coach-${Date.now()}`, from: 'coach', text: res.reply }]),
+      onError: () => toast.error('Le coach est très sollicité. Réessaie dans un instant.'),
+    })
   }
 
   return (
