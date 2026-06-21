@@ -14,7 +14,8 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
 import { PageHero } from '@/components/blocks'
-import { liveSessions, type LiveSession } from '@/lib/mock'
+import { useLiveSessions, useConfirmAttendance } from '@/hooks/use-live'
+import type { LiveSession } from '@/services/live'
 
 export const Route = createFileRoute('/eleve/live')({
   component: LivePage,
@@ -28,11 +29,52 @@ const timeline = [
   { label: 'Clôture', min: '55–60 min' },
 ]
 
+/** Session live prête pour le rendu (libellés résolus depuis le BFF). */
+type LiveView = {
+  id: string
+  title: string
+  status: string
+  date: string
+  time: string
+  durationMin: number
+  group: string
+  teacher: string
+  confirmed: boolean
+}
+
+const dateFmt = new Intl.DateTimeFormat('fr-FR', { weekday: 'short', day: 'numeric', month: 'long' })
+const timeFmt = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' })
+
+function toView(s: LiveSession): LiveView {
+  const d = new Date(s.scheduledAt)
+  return {
+    id: s.id,
+    title: s.title,
+    status: s.status,
+    date: dateFmt.format(d),
+    time: timeFmt.format(d),
+    durationMin: s.durationMin,
+    group: s.groupName ?? 'Ton groupe',
+    teacher: s.teacherName ?? 'Ton professeur',
+    confirmed: s.confirmed,
+  }
+}
+
 function LivePage() {
-  const upcoming = liveSessions.filter((s) => s.status === 'upcoming')
-  const replays = liveSessions.filter((s) => s.status === 'replay')
+  const { data: sessions = [], isLoading } = useLiveSessions()
+  const views = sessions.map(toView)
+  const upcoming = views.filter((s) => s.status === 'upcoming' || s.status === 'live')
+  const replays = views.filter((s) => s.status === 'replay')
   const featured = upcoming[0]
   const others = upcoming.slice(1)
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center px-6 text-sm text-muted-foreground">
+        Chargement des cours live…
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-5 px-4 pb-6 pt-5 sm:px-6 lg:px-8 2xl:mx-auto 2xl:max-w-[1600px]">
@@ -144,8 +186,17 @@ function LivePage() {
   )
 }
 
-function UpcomingRow({ session }: { session: LiveSession }) {
+function UpcomingRow({ session }: { session: LiveView }) {
+  const confirmAttendance = useConfirmAttendance()
   const [confirmed, setConfirmed] = useState(session.confirmed)
+
+  function toggle(v: boolean) {
+    setConfirmed(v)
+    // Le backend ne gère que la confirmation (pas l'annulation).
+    if (v && !session.confirmed) {
+      confirmAttendance.mutate(session.id, { onError: () => setConfirmed(false) })
+    }
+  }
 
   return (
     <Card className="gap-3 p-3.5 shadow-soft">
@@ -165,7 +216,7 @@ function UpcomingRow({ session }: { session: LiveSession }) {
         <span className="text-sm font-medium">
           {confirmed ? 'Je serai là 👍' : 'Je serai là'}
         </span>
-        <Switch checked={confirmed} onCheckedChange={setConfirmed} />
+        <Switch checked={confirmed} onCheckedChange={toggle} />
       </label>
     </Card>
   )

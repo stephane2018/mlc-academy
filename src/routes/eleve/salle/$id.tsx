@@ -20,7 +20,9 @@ import {
 import { Math as Maths } from '@/components/math'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { liveSessions, liveChat, profStudents, quizQuestions, type LiveChatMsg } from '@/lib/mock'
+import { liveChat, profStudents, quizQuestions, type LiveChatMsg } from '@/lib/mock'
+import { useLiveSessions } from '@/hooks/use-live'
+import { useStudentMe } from '@/hooks/use-student'
 
 export const Route = createFileRoute('/eleve/salle/$id')({
   component: SallePage,
@@ -29,11 +31,23 @@ export const Route = createFileRoute('/eleve/salle/$id')({
 type Tab = 'chat' | 'quiz'
 
 const ELAPSED = '12:34'
-const STUDENT_PSEUDO = 'MaxLeBg'
 
 function SallePage() {
   const { id } = useParams({ from: '/eleve/salle/$id' })
-  const session = liveSessions.find((s) => s.id === id)
+  const { data: sessions = [], isLoading } = useLiveSessions()
+  const { data: me } = useStudentMe()
+  const session = sessions.find((s) => s.id === id)
+  const teacher = session?.teacherName ?? 'Ton professeur'
+  const group = session?.groupName ?? 'Ton groupe'
+  const myPseudo = me?.pseudo ?? 'Moi'
+
+  if (isLoading) {
+    return (
+      <div className="grid min-h-dvh place-items-center bg-slate-950 px-6 text-center text-white">
+        <p className="text-sm text-white/60">Chargement de la salle…</p>
+      </div>
+    )
+  }
 
   if (!session) {
     return (
@@ -55,7 +69,7 @@ function SallePage() {
       <header className="flex items-center gap-3 border-b border-white/10 px-4 py-3 sm:px-6">
         <div className="min-w-0 flex-1">
           <h1 className="truncate font-heading text-sm font-bold sm:text-base">{session.title}</h1>
-          <p className="truncate text-xs text-white/50">{session.group} · {session.teacher}</p>
+          <p className="truncate text-xs text-white/50">{group} · {teacher}</p>
         </div>
         <span className="flex shrink-0 items-center gap-1.5 rounded-full bg-red-500/15 px-2.5 py-1 text-xs font-bold text-red-400">
           <span className="size-1.5 animate-pulse rounded-full bg-red-500" />
@@ -75,8 +89,8 @@ function SallePage() {
 
       {/* Corps : scène + panneau */}
       <div className="flex flex-1 flex-col gap-4 p-4 sm:p-6 xl:flex-row">
-        <Stage />
-        <SidePanel />
+        <Stage teacher={teacher} />
+        <SidePanel myPseudo={myPseudo} />
       </div>
 
       {/* Barre de contrôle bas */}
@@ -87,7 +101,7 @@ function SallePage() {
 
 /* ----------------------------- Scène vidéo ----------------------------- */
 
-function Stage() {
+function Stage({ teacher }: { teacher: string }) {
   const participants = profStudents
 
   return (
@@ -100,14 +114,14 @@ function Stage() {
               <ScreenShare className="size-7 text-white" />
             </span>
             <div>
-              <p className="font-heading text-lg font-bold">M. Minko</p>
+              <p className="font-heading text-lg font-bold">{teacher}</p>
               <p className="text-sm text-white/70">partage son écran</p>
             </div>
           </div>
         </div>
         {/* Badge "parle" */}
         <span className="absolute left-3 top-3 flex items-center gap-1.5 rounded-full bg-black/40 px-2.5 py-1 text-xs font-semibold backdrop-blur">
-          <Volume2 className="size-3.5 text-success" /> M. Minko parle
+          <Volume2 className="size-3.5 text-success" /> {teacher} parle
         </span>
         {/* Contrôles vidéo factices */}
         <div className="absolute bottom-3 right-3 flex items-center gap-1.5">
@@ -124,7 +138,7 @@ function Stage() {
       {/* Vignettes participants */}
       <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5 xl:grid-cols-4">
         {/* Le prof, en train de parler */}
-        <Thumbnail avatar="👨‍🏫" pseudo="M. Minko" speaking teacher />
+        <Thumbnail avatar="👨‍🏫" pseudo={teacher} speaking teacher />
         {participants.map((p) => (
           <Thumbnail key={p.id} avatar={p.avatar} pseudo={p.pseudo} muted />
         ))}
@@ -171,7 +185,7 @@ function Thumbnail({
 
 /* --------------------------- Panneau latéral --------------------------- */
 
-function SidePanel() {
+function SidePanel({ myPseudo }: { myPseudo: string }) {
   const [tab, setTab] = useState<Tab>('chat')
 
   return (
@@ -186,7 +200,7 @@ function SidePanel() {
         </TabButton>
       </div>
 
-      {tab === 'chat' ? <ChatPanel /> : <QuizPanel />}
+      {tab === 'chat' ? <ChatPanel myPseudo={myPseudo} /> : <QuizPanel />}
     </div>
   )
 }
@@ -219,7 +233,7 @@ function TabButton({
 
 /* ------------------------------- Chat ---------------------------------- */
 
-function ChatPanel() {
+function ChatPanel({ myPseudo }: { myPseudo: string }) {
   const [messages, setMessages] = useState<LiveChatMsg[]>(liveChat)
   const [draft, setDraft] = useState('')
 
@@ -231,7 +245,7 @@ function ChatPanel() {
       ...m,
       {
         id: `me-${m.length}`,
-        pseudo: STUDENT_PSEUDO,
+        pseudo: myPseudo,
         avatar: '🤖',
         text,
         time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
@@ -244,7 +258,7 @@ function ChatPanel() {
     <div className="flex min-h-[22rem] flex-1 flex-col xl:min-h-0">
       <div className="flex-1 space-y-3 overflow-y-auto p-3.5">
         {messages.map((m) => {
-          const isMe = m.pseudo === STUDENT_PSEUDO
+          const isMe = m.pseudo === myPseudo
           return (
             <div key={m.id} className="flex gap-2.5">
               <span className="grid size-8 shrink-0 place-items-center rounded-full bg-white/10 text-base">

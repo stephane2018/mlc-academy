@@ -4,11 +4,14 @@ export type LiveSession = {
   id: string
   title: string
   groupId: string | null
+  groupName: string | null
+  teacherName: string | null
   scheduledAt: string
   durationMin: number
   status: string
   meetUrl: string | null
   replayUrl: string | null
+  confirmed: boolean
 }
 
 export type CreateSessionInput = {
