@@ -9,6 +9,8 @@ export type Conversation = {
   createdAt: string
   unreadCount: number
   peer: Peer | null
+  lastMessage: string | null
+  lastAt: string | null
 }
 
 export type Message = {
