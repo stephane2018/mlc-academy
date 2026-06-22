@@ -5,6 +5,9 @@ import type { Pagination } from '@/services/assignments'
 export function useProducts(pagination?: Pagination) {
   return useQuery({ queryKey: ['marketplace', 'list', pagination ?? {}], queryFn: () => marketplaceService.list(pagination) })
 }
+export function useMyProducts() {
+  return useQuery({ queryKey: ['marketplace', 'mine'], queryFn: () => marketplaceService.mine() })
+}
 export function usePublishProduct() {
   const qc = useQueryClient()
   return useMutation({

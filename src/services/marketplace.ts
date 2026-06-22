@@ -11,6 +11,8 @@ export type Product = {
   sellerName: string | null
   priceCents: number
   status: string
+  reviewNote: string | null
+  createdAt: string | null
 }
 
 export type PublishProductInput = {
@@ -25,5 +27,6 @@ export type PublishProductInput = {
 /** Service marketplace — `/marketplace/*`. */
 export const marketplaceService = {
   list: (pagination?: Pagination) => api.get<Product[]>('/marketplace/products', { query: pagination }),
+  mine: () => api.get<Product[]>('/marketplace/products/mine'),
   publish: (input: PublishProductInput) => api.post<Product>('/marketplace/products', input),
 }
