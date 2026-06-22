@@ -19,47 +19,43 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
-import {
-  studentHistory,
-  getSubject,
-  subjectLabel,
-  themeLabel,
-  type Assignment,
-  type Submission,
-} from '@/lib/mock'
+import { getSubject, subjectLabel, themeLabel, type SubjectKey } from '@/lib/mock'
+import { useStudentHistory } from '@/hooks/use-student'
+import type { HistoryEntry } from '@/services/student'
 
 export const Route = createFileRoute('/eleve/historique')({
   component: HistoriquePage,
 })
 
-const STUDENT_ID = 's1'
 const PASS_THRESHOLD = 50
 
+/** Formate une date ISO en français (ou chaîne brute si non parsable). */
+function formatDate(iso: string): string {
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return iso
+  return d.toLocaleDateString('fr-BE', { day: 'numeric', month: 'long', year: 'numeric' })
+}
+
 function HistoriquePage() {
+  const { data: entries = [], isLoading } = useStudentHistory()
   const [subject, setSubject] = useState<SubjectFilterValue>('all')
 
-  const all = studentHistory(STUDENT_ID).filter((h) => h.submission.status === 'rendu')
-
   const subjectCounts: Partial<Record<SubjectFilterValue, number>> = {
-    all: all.length,
+    all: entries.length,
   }
-  for (const h of all) {
-    subjectCounts[h.assignment.subject] =
-      (subjectCounts[h.assignment.subject] ?? 0) + 1
+  for (const e of entries) {
+    const key = e.subject as SubjectFilterValue
+    subjectCounts[key] = (subjectCounts[key] ?? 0) + 1
   }
 
-  const history = all.filter(
-    (h) => subject === 'all' || h.assignment.subject === subject,
-  )
+  const history = entries.filter((e) => subject === 'all' || e.subject === subject)
 
   const count = history.length
   const avg =
-    count > 0
-      ? Math.round(history.reduce((s, h) => s + (h.submission.score ?? 0), 0) / count)
-      : 0
-  // XP indicatif : XP du devoir si validé (≥ 50 %).
+    count > 0 ? Math.round(history.reduce((s, e) => s + (e.score ?? 0), 0) / count) : 0
+  // XP indicatif : XP de l'évaluation si validée (≥ 50 %).
   const totalXp = history.reduce(
-    (s, h) => s + ((h.submission.score ?? 0) >= PASS_THRESHOLD ? h.assignment.xpReward : 0),
+    (s, e) => s + ((e.score ?? 0) >= PASS_THRESHOLD ? e.xpReward : 0),
     0,
   )
 
@@ -101,14 +97,18 @@ function HistoriquePage() {
       </p>
 
       {/* Liste */}
-      {count === 0 ? (
+      {isLoading ? (
+        <div className="rounded-2xl border border-dashed border-border bg-card/50 py-10 text-center text-sm text-muted-foreground">
+          Chargement de ton historique…
+        </div>
+      ) : count === 0 ? (
         <div className="rounded-2xl border border-dashed border-border bg-card/50 py-10 text-center text-sm text-muted-foreground">
           Tu n'as encore rien rendu.
         </div>
       ) : (
         <section className="space-y-3">
-          {history.map(({ submission, assignment }) => (
-            <HistoryCard key={submission.id} submission={submission} assignment={assignment} />
+          {history.map((entry) => (
+            <HistoryCard key={entry.id} entry={entry} />
           ))}
         </section>
       )}
@@ -138,36 +138,33 @@ function RecapTile({
   )
 }
 
-function HistoryCard({
-  submission: s,
-  assignment: a,
-}: {
-  submission: Submission
-  assignment: Assignment
-}) {
-  const score = s.score ?? 0
+function HistoryCard({ entry: e }: { entry: HistoryEntry }) {
+  const subjectKey = e.subject as SubjectKey
+  const subjectColor = getSubject(subjectKey).color
+  const score = e.score ?? 0
   const validated = score >= PASS_THRESHOLD
-  const xp = validated ? a.xpReward : 0
+  const xp = validated ? e.xpReward : 0
+  const submittedAt = formatDate(e.submittedAt)
 
   return (
     <div className="rounded-2xl border border-border bg-card p-4 shadow-soft sm:p-5">
       <div className="flex flex-wrap items-center gap-2">
         <Badge variant="secondary">
-          {a.type === 'evaluation' ? 'Évaluation' : 'Devoir maison'}
+          {e.type === 'evaluation' ? 'Évaluation' : 'Devoir maison'}
         </Badge>
         <Badge
           variant="outline"
           className="gap-1.5 border-transparent"
-          style={{ backgroundColor: `${getSubject(a.subject).color}1a`, color: getSubject(a.subject).color }}
+          style={{ backgroundColor: `${subjectColor}1a`, color: subjectColor }}
         >
-          <span className="size-1.5 rounded-full" style={{ backgroundColor: getSubject(a.subject).color }} />
-          {subjectLabel(a.subject)}
+          <span className="size-1.5 rounded-full" style={{ backgroundColor: subjectColor }} />
+          {subjectLabel(subjectKey)}
         </Badge>
-        <Badge variant="outline">{themeLabel(a.theme, a.subject)}</Badge>
-        <span className="text-xs text-muted-foreground">rendu le {s.submittedAt}</span>
+        {e.theme && <Badge variant="outline">{themeLabel(e.theme, subjectKey)}</Badge>}
+        <span className="text-xs text-muted-foreground">rendu le {submittedAt}</span>
       </div>
 
-      <h3 className="mt-2 font-heading text-base font-bold leading-snug">{a.title}</h3>
+      <h3 className="mt-2 font-heading text-base font-bold leading-snug">{e.title}</h3>
 
       <div className="mt-3 flex items-center gap-3">
         <Meter value={score} color="auto" className="flex-1" />
@@ -194,10 +191,11 @@ function HistoryCard({
           </DialogTrigger>
           <DialogContent className="max-h-[85dvh] overflow-y-auto sm:max-w-lg">
             <DialogHeader>
-              <DialogTitle className="font-heading">{a.title}</DialogTitle>
+              <DialogTitle className="font-heading">{e.title}</DialogTitle>
               <DialogDescription>
-                {subjectLabel(a.subject)} · {themeLabel(a.theme, a.subject)} · rendu le{' '}
-                {s.submittedAt} · score {score}%
+                {subjectLabel(subjectKey)}
+                {e.theme ? ` · ${themeLabel(e.theme, subjectKey)}` : ''} · rendu le {submittedAt} ·
+                score {score}%
               </DialogDescription>
             </DialogHeader>
 
@@ -209,12 +207,12 @@ function HistoryCard({
             </div>
 
             <div className="space-y-3">
-              {a.questions.map((q, i) => {
+              {e.questions.map((q, i) => {
                 const correctLabel = q.options.find((o) => o.id === q.correctId)?.label
                 return (
                   <div key={q.id} className="rounded-2xl border border-border p-3">
                     <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
-                      Question {i + 1}/{a.questions.length}
+                      Question {i + 1}/{e.questions.length}
                     </p>
                     <p className="mt-1 text-sm font-medium">{q.prompt}</p>
                     {q.katex && (
@@ -222,16 +220,13 @@ function HistoryCard({
                         <Maths expr={q.katex} display />
                       </div>
                     )}
-                    <p className="mt-2 flex items-center gap-1.5 text-sm font-semibold text-success">
-                      <Check className="size-4" /> Bonne réponse : {correctLabel}
-                    </p>
-                    {q.explanation && (
-                      <p className="mt-1 text-sm text-foreground/80">
-                        {q.explanation}{' '}
-                        {q.explanationKatex && (
-                          <Maths expr={q.explanationKatex} className="font-medium" />
-                        )}
+                    {correctLabel && (
+                      <p className="mt-2 flex items-center gap-1.5 text-sm font-semibold text-success">
+                        <Check className="size-4" /> Bonne réponse : {correctLabel}
                       </p>
+                    )}
+                    {q.explanation && (
+                      <p className="mt-1 text-sm text-foreground/80">{q.explanation}</p>
                     )}
                   </div>
                 )

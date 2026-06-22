@@ -34,6 +34,11 @@ export function useSubmitGame() {
   })
 }
 
+/** Historique des évaluations rendues de l'élève (devoirs + examens). */
+export function useStudentHistory() {
+  return useQuery({ queryKey: ['student', 'history'], queryFn: () => studentService.history() })
+}
+
 /** Rejoint le groupe d'un prof via son code ; rafraîchit live & messagerie. */
 export function useJoinGroup() {
   const qc = useQueryClient()

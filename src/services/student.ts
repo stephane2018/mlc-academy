@@ -35,6 +35,30 @@ export type QuizQuestion = {
   options: QuizOption[]
 }
 
+/** Une question telle que renvoyée dans l'historique élève (correction). */
+export type HistoryQuestion = {
+  id: string
+  prompt: string
+  katex: string | null
+  options: { id: string; label: string }[]
+  correctId: string
+  explanation: string | null
+}
+
+/** Une entrée d'historique (devoir ou examen rendu). */
+export type HistoryEntry = {
+  id: string
+  source: 'devoir' | 'examen'
+  title: string
+  subject: string
+  theme: string | null
+  type: 'devoir' | 'evaluation'
+  score: number
+  submittedAt: string
+  xpReward: number
+  questions: HistoryQuestion[]
+}
+
 export type GameAnswer = { questionId: string; optionId: string }
 export type GameResult = {
   correct: number
@@ -56,4 +80,5 @@ export const studentService = {
     api.post<GameResult>('/student/game', input),
   joinGroup: (code: string) =>
     api.post<{ groupId: string; groupName: string; alreadyMember: boolean }>('/student/join-group', { code }),
+  history: () => api.get<HistoryEntry[]>('/student/history'),
 }

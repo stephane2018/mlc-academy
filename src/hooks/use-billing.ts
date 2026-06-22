@@ -26,3 +26,23 @@ export function useSubscribe() {
     },
   })
 }
+
+/** Lance une souscription de l'élève pour lui-même puis redirige vers Stripe. */
+export function useSubscribeSelf() {
+  return useMutation({
+    mutationFn: ({ planId }: { planId: string }) => billingService.subscribeSelf(planId),
+    onSuccess: ({ url }) => {
+      if (url) window.location.href = url
+    },
+  })
+}
+
+/** Abonnement courant de l'élève. */
+export function useMySubscription() {
+  return useQuery({ queryKey: ['billing', 'subscription'], queryFn: () => billingService.mySubscription() })
+}
+
+/** Factures de l'élève. */
+export function useInvoices() {
+  return useQuery({ queryKey: ['billing', 'invoices'], queryFn: () => billingService.invoices() })
+}
