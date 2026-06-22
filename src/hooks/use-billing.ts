@@ -1,5 +1,10 @@
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import { billingService } from '@/services/billing'
+
+/** Catalogue des formules d'abonnement (boutique parent). */
+export function usePlans() {
+  return useQuery({ queryKey: ['billing', 'plans'], queryFn: () => billingService.plans(), staleTime: 5 * 60_000 })
+}
 
 /** Lance un checkout produit puis redirige vers Stripe. */
 export function useCheckout() {
