@@ -87,4 +87,28 @@ export const assignmentsService = {
   questions: (id: string) => api.get<AssignmentQuestion[]>(`/assignments/${id}/questions`),
   submit: (id: string, answers: GameAnswer[]) =>
     api.post<AssignmentResult>(`/assignments/${id}/submit`, { answers }),
+  attachQuestions: (id: string, questions: ComposedQuestion[]) =>
+    api.post<{ attached: number }>(`/assignments/${id}/questions`, { questions }),
+  setTargets: (id: string, input: { groupIds?: string[]; studentIds?: string[] }) =>
+    api.post<{ targeted: number }>(`/assignments/${id}/targets`, input),
+  submissions: (id: string) => api.get<AssignmentSubmissionRow[]>(`/assignments/${id}/submissions`),
+}
+
+/** Copie d'élève dans la vue résultats du prof. */
+export type AssignmentSubmissionRow = {
+  studentId: string
+  pseudo: string
+  avatar: string
+  status: string
+  score: number | null
+  submittedAt: string | null
+}
+
+/** Question composée par le prof (entrée d'attache). */
+export type ComposedQuestion = {
+  prompt: string
+  katex?: string | null
+  themeId?: string | null
+  explanation?: string | null
+  options: { label: string; isCorrect: boolean }[]
 }

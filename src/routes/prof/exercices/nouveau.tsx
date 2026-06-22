@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
+import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import {
   ArrowLeft,
@@ -29,17 +30,10 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
-import {
-  profGroups,
-  profStudents,
-  subjects,
-  getSubject,
-  themesFor,
-  themeLabel,
-  type AssignmentType,
-  type AssignmentQuestion,
-  type SubjectKey,
-} from '@/lib/mock'
+import { useSubjects } from '@/hooks/use-catalog'
+import { useGroups } from '@/hooks/use-groups'
+import { useTeacherStudents } from '@/hooks/use-teacher'
+import { assignmentsService, type AssignmentType } from '@/services/assignments'
 
 export const Route = createFileRoute('/prof/exercices/nouveau')({
   component: ExerciceBuilder,
@@ -51,8 +45,18 @@ const difficulties: { value: 'facile' | 'moyen' | 'difficile'; label: string }[]
   { value: 'difficile', label: 'Difficile' },
 ]
 
+/** Brouillon de question composé dans le builder. */
+type QDraft = {
+  id: string
+  prompt: string
+  katex: string
+  options: { id: string; label: string }[]
+  correctId: string
+  explanation: string
+}
+
 let qCounter = 1
-function emptyQuestion(): AssignmentQuestion {
+function emptyQuestion(): QDraft {
   qCounter += 1
   return {
     id: `nq${qCounter}`,
@@ -71,61 +75,59 @@ function emptyQuestion(): AssignmentQuestion {
 
 function ExerciceBuilder() {
   const navigate = useNavigate()
+  const qc = useQueryClient()
+  const { data: subjects = [] } = useSubjects()
+  const { data: groups = [] } = useGroups()
+  const { data: students = [] } = useTeacherStudents()
 
   // Infos
   const [title, setTitle] = useState('')
   const [type, setType] = useState<AssignmentType>('devoir')
   const [durationMin, setDurationMin] = useState('15')
-  const [subject, setSubject] = useState<SubjectKey>('maths')
-  const [theme, setTheme] = useState<string>(themesFor('maths')[0].key)
+  const [subjectId, setSubjectId] = useState('')
+  const [themeId, setThemeId] = useState('')
   const [difficulty, setDifficulty] = useState<'facile' | 'moyen' | 'difficile'>('moyen')
   const [dueDate, setDueDate] = useState('')
 
   // Questions
-  const [questions, setQuestions] = useState<AssignmentQuestion[]>([emptyQuestion()])
+  const [questions, setQuestions] = useState<QDraft[]>([emptyQuestion()])
   const [activeIdx, setActiveIdx] = useState(0)
 
   // Assignation
   const [selGroups, setSelGroups] = useState<string[]>([])
   const [selStudents, setSelStudents] = useState<string[]>([])
   const [message, setMessage] = useState('')
+  const [busy, setBusy] = useState(false)
 
-  function changeSubject(next: SubjectKey) {
-    setSubject(next)
-    setTheme(themesFor(next)[0].key)
+  const subject = subjects.find((s) => s.id === subjectId)
+  const themes = subject?.themes ?? []
+
+  function changeSubject(next: string) {
+    setSubjectId(next)
+    setThemeId('')
   }
 
-  function patchQuestion(idx: number, patch: Partial<AssignmentQuestion>) {
+  function patchQuestion(idx: number, patch: Partial<QDraft>) {
     setQuestions((qs) => qs.map((q, i) => (i === idx ? { ...q, ...patch } : q)))
   }
-
   function patchOption(idx: number, optIdx: number, label: string) {
     setQuestions((qs) =>
       qs.map((q, i) =>
-        i === idx
-          ? { ...q, options: q.options.map((o, oi) => (oi === optIdx ? { ...o, label } : o)) }
-          : q,
+        i === idx ? { ...q, options: q.options.map((o, oi) => (oi === optIdx ? { ...o, label } : o)) } : q,
       ),
     )
   }
-
   function addQuestion() {
     setQuestions((qs) => [...qs, emptyQuestion()])
     setActiveIdx(questions.length)
   }
-
   function duplicateQuestion(idx: number) {
     const src = questions[idx]
     qCounter += 1
-    const copy: AssignmentQuestion = {
-      ...src,
-      id: `nq${qCounter}`,
-      options: src.options.map((o) => ({ ...o })),
-    }
+    const copy: QDraft = { ...src, id: `nq${qCounter}`, options: src.options.map((o) => ({ ...o })) }
     setQuestions((qs) => [...qs.slice(0, idx + 1), copy, ...qs.slice(idx + 1)])
     setActiveIdx(idx + 1)
   }
-
   function removeQuestion(idx: number) {
     if (questions.length <= 1) return
     setQuestions((qs) => qs.filter((_, i) => i !== idx))
@@ -140,33 +142,73 @@ function ExerciceBuilder() {
 
   function describeTarget() {
     const parts: string[] = []
-    if (selGroups.length) parts.push(selGroups.join(', '))
-    if (selStudents.length)
-      parts.push(`${selStudents.length} élève${selStudents.length > 1 ? 's' : ''}`)
+    if (selGroups.length) parts.push(`${selGroups.length} groupe${selGroups.length > 1 ? 's' : ''}`)
+    if (selStudents.length) parts.push(`${selStudents.length} élève${selStudents.length > 1 ? 's' : ''}`)
     return parts.length ? parts.join(' · ') : 'aucune cible'
   }
 
-  function saveDraft() {
-    toast.info('Brouillon enregistré', {
-      description: `« ${title || 'Sans titre'} » · ${questions.length} question${
-        questions.length > 1 ? 's' : ''
-      }.`,
+  /** Valide + transforme les questions du builder pour l'API (filtre options vides). */
+  function buildPayloadQuestions() {
+    return questions.map((q) => {
+      const kept = q.options.filter((o) => o.label.trim())
+      return {
+        prompt: q.prompt.trim(),
+        katex: q.katex.trim() || null,
+        themeId: themeId || null,
+        explanation: q.explanation.trim() || null,
+        options: kept.map((o) => ({ label: o.label.trim(), isCorrect: o.id === q.correctId })),
+      }
     })
-    navigate({ to: '/prof/exercices' })
   }
 
-  function publish() {
-    if (totalTargets === 0) {
-      toast.error('Sélectionne au moins un groupe ou un élève à assigner.')
+  function validate(requireTargets: boolean): string | null {
+    if (!title.trim()) return 'Donne un titre au devoir.'
+    if (!subjectId) return 'Choisis une matière.'
+    for (const q of questions) {
+      if (!q.prompt.trim()) return 'Chaque question doit avoir un énoncé.'
+      const kept = q.options.filter((o) => o.label.trim())
+      if (kept.length < 2) return 'Chaque question doit avoir au moins 2 options.'
+      if (!kept.some((o) => o.id === q.correctId)) return 'Désigne une bonne réponse parmi les options remplies.'
+    }
+    if (requireTargets && totalTargets === 0) return 'Sélectionne au moins un groupe ou un élève à assigner.'
+    return null
+  }
+
+  async function run(asDraft: boolean) {
+    const err = validate(!asDraft)
+    if (err) {
+      toast.error(err)
       return
     }
-    const label = type === 'evaluation' ? 'Évaluation surprise' : 'Devoir maison'
-    toast.success(`${label} publié`, {
-      description: `« ${title || 'Sans titre'} » assigné à ${describeTarget()}${
-        type === 'evaluation' ? ` · ${durationMin} min` : ''
-      }.`,
-    })
-    navigate({ to: '/prof/exercices' })
+    setBusy(true)
+    try {
+      const created = await assignmentsService.create({
+        title: title.trim(),
+        type,
+        subjectId,
+        themeId: themeId || null,
+        difficulty,
+        durationMin: type === 'evaluation' ? Number(durationMin) || undefined : undefined,
+        dueDate: dueDate || undefined,
+        xpReward: 20,
+        message: message.trim() || undefined,
+      })
+      await assignmentsService.attachQuestions(created.id, buildPayloadQuestions())
+      if (!asDraft) {
+        await assignmentsService.setTargets(created.id, { groupIds: selGroups, studentIds: selStudents })
+        await assignmentsService.updateStatus(created.id, 'publie')
+      }
+      qc.invalidateQueries({ queryKey: ['assignments'] })
+      const label = type === 'evaluation' ? 'Évaluation' : 'Devoir'
+      toast.success(asDraft ? 'Brouillon enregistré' : `${label} publié`, {
+        description: asDraft ? `« ${title} »` : `« ${title} » assigné à ${describeTarget()}.`,
+      })
+      navigate({ to: '/prof/exercices' })
+    } catch {
+      toast.error("Échec de l'enregistrement. Réessaie.")
+    } finally {
+      setBusy(false)
+    }
   }
 
   const current = questions[activeIdx] ?? questions[0]
@@ -199,11 +241,9 @@ function ExerciceBuilder() {
               </p>
 
               <div className="mt-4 rounded-2xl border border-border bg-card p-4 shadow-sm">
-                <p
-                  className="text-xs font-bold uppercase tracking-widest"
-                  style={{ color: getSubject(subject).color }}
-                >
-                  {getSubject(subject).label} · {themeLabel(theme, subject)}
+                <p className="text-xs font-bold uppercase tracking-widest" style={{ color: subject?.color ?? 'var(--brand)' }}>
+                  {subject?.name ?? 'Matière'}
+                  {themes.find((t) => t.id === themeId)?.name ? ` · ${themes.find((t) => t.id === themeId)?.name}` : ''}
                 </p>
                 <p className="mt-2 text-sm font-medium leading-relaxed">
                   {current.prompt || 'Saisis un énoncé…'}
@@ -253,18 +293,17 @@ function ExerciceBuilder() {
                   <Users className="size-3.5" /> Groupes
                 </Label>
                 <div className="mt-2 flex flex-wrap gap-2">
-                  {profGroups.map((g) => {
-                    const on = selGroups.includes(g.name)
+                  {groups.length === 0 && <p className="text-xs text-muted-foreground">Aucun groupe.</p>}
+                  {groups.map((g) => {
+                    const on = selGroups.includes(g.id)
                     return (
                       <button
                         key={g.id}
                         type="button"
-                        onClick={() => toggle(selGroups, setSelGroups, g.name)}
+                        onClick={() => toggle(selGroups, setSelGroups, g.id)}
                         className={cn(
                           'inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-semibold transition',
-                          on
-                            ? 'border-brand bg-brand text-white'
-                            : 'border-border bg-card text-muted-foreground hover:border-brand/40',
+                          on ? 'border-brand bg-brand text-white' : 'border-border bg-card text-muted-foreground hover:border-brand/40',
                         )}
                       >
                         {on && <Check className="size-3.5" />}
@@ -280,18 +319,17 @@ function ExerciceBuilder() {
                   <GraduationCap className="size-3.5" /> Élèves
                 </Label>
                 <div className="mt-2 flex flex-wrap gap-2">
-                  {profStudents.map((s) => {
-                    const on = selStudents.includes(s.pseudo)
+                  {students.length === 0 && <p className="text-xs text-muted-foreground">Aucun élève.</p>}
+                  {students.map((s) => {
+                    const on = selStudents.includes(s.id)
                     return (
                       <button
                         key={s.id}
                         type="button"
-                        onClick={() => toggle(selStudents, setSelStudents, s.pseudo)}
+                        onClick={() => toggle(selStudents, setSelStudents, s.id)}
                         className={cn(
                           'inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-semibold transition',
-                          on
-                            ? 'border-brand bg-brand text-white'
-                            : 'border-border bg-card text-muted-foreground hover:border-brand/40',
+                          on ? 'border-brand bg-brand text-white' : 'border-border bg-card text-muted-foreground hover:border-brand/40',
                         )}
                       >
                         <span>{s.avatar}</span>
@@ -323,11 +361,11 @@ function ExerciceBuilder() {
             {/* Publication */}
             <Card className="gap-3 p-5">
               <p className="font-heading text-base font-bold">Publication</p>
-              <Button variant="outline" className="w-full justify-start" onClick={saveDraft}>
+              <Button variant="outline" className="w-full justify-start" disabled={busy} onClick={() => run(true)}>
                 <Copy className="size-4" />
                 Enregistrer comme brouillon
               </Button>
-              <Button className="w-full justify-start" onClick={publish}>
+              <Button className="w-full justify-start" disabled={busy} onClick={() => run(false)}>
                 <Send className="size-4" />
                 Publier et assigner
               </Button>
@@ -341,12 +379,7 @@ function ExerciceBuilder() {
 
           <div className="space-y-1.5">
             <Label htmlFor="title">Titre</Label>
-            <Input
-              id="title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Ex : Devoir maison — Les fractions"
-            />
+            <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Ex : Devoir maison — Les fractions" />
           </div>
 
           {/* Type segment */}
@@ -367,9 +400,7 @@ function ExerciceBuilder() {
                     onClick={() => setType(value)}
                     className={cn(
                       'flex items-center justify-center gap-2 rounded-xl border-2 px-4 py-3 text-sm font-semibold transition',
-                      on
-                        ? 'border-brand bg-brand-soft text-brand'
-                        : 'border-border bg-card text-muted-foreground hover:border-brand/40',
+                      on ? 'border-brand bg-brand-soft text-brand' : 'border-border bg-card text-muted-foreground hover:border-brand/40',
                     )}
                   >
                     <Icon className="size-4" />
@@ -385,29 +416,20 @@ function ExerciceBuilder() {
               <Label htmlFor="duration" className="flex items-center gap-1.5">
                 <Clock className="size-4" /> Durée (min)
               </Label>
-              <Input
-                id="duration"
-                type="number"
-                min={1}
-                value={durationMin}
-                onChange={(e) => setDurationMin(e.target.value)}
-                className="max-w-[160px]"
-              />
+              <Input id="duration" type="number" min={1} value={durationMin} onChange={(e) => setDurationMin(e.target.value)} className="max-w-[160px]" />
             </div>
           )}
 
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <div className="space-y-1.5">
               <Label>Matière</Label>
-              <Select value={subject} onValueChange={(v) => changeSubject(v as SubjectKey)}>
+              <Select value={subjectId} onValueChange={changeSubject}>
                 <SelectTrigger className="w-full">
-                  <SelectValue />
+                  <SelectValue placeholder="Choisir" />
                 </SelectTrigger>
                 <SelectContent>
                   {subjects.map((s) => (
-                    <SelectItem key={s.key} value={s.key}>
-                      {s.label}
-                    </SelectItem>
+                    <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -415,15 +437,13 @@ function ExerciceBuilder() {
 
             <div className="space-y-1.5">
               <Label>Thème</Label>
-              <Select value={theme} onValueChange={setTheme}>
+              <Select value={themeId} onValueChange={setThemeId} disabled={!subjectId}>
                 <SelectTrigger className="w-full">
-                  <SelectValue />
+                  <SelectValue placeholder="Optionnel" />
                 </SelectTrigger>
                 <SelectContent>
-                  {themesFor(subject).map((t) => (
-                    <SelectItem key={t.key} value={t.key}>
-                      {t.label}
-                    </SelectItem>
+                  {themes.map((t) => (
+                    <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -431,18 +451,13 @@ function ExerciceBuilder() {
 
             <div className="space-y-1.5">
               <Label>Difficulté</Label>
-              <Select
-                value={difficulty}
-                onValueChange={(v) => setDifficulty(v as typeof difficulty)}
-              >
+              <Select value={difficulty} onValueChange={(v) => setDifficulty(v as typeof difficulty)}>
                 <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   {difficulties.map((d) => (
-                    <SelectItem key={d.value} value={d.value}>
-                      {d.label}
-                    </SelectItem>
+                    <SelectItem key={d.value} value={d.value}>{d.label}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -452,12 +467,7 @@ function ExerciceBuilder() {
               <Label htmlFor="dueDate" className="flex items-center gap-1.5">
                 <CalendarDays className="size-4" /> Date limite
               </Label>
-              <Input
-                id="dueDate"
-                type="date"
-                value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
-              />
+              <Input id="dueDate" type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
             </div>
           </div>
         </Card>
@@ -476,10 +486,7 @@ function ExerciceBuilder() {
                 <div
                   key={q.id}
                   onClick={() => setActiveIdx(idx)}
-                  className={cn(
-                    'cursor-pointer rounded-2xl border-2 p-4 transition',
-                    isActive ? 'border-brand bg-brand-soft/30' : 'border-border bg-card',
-                  )}
+                  className={cn('cursor-pointer rounded-2xl border-2 p-4 transition', isActive ? 'border-brand bg-brand-soft/30' : 'border-border bg-card')}
                 >
                   <div className="flex items-center justify-between">
                     <p className="font-heading text-sm font-bold">Question {idx + 1}</p>
@@ -487,10 +494,7 @@ function ExerciceBuilder() {
                       <button
                         type="button"
                         title="Dupliquer"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          duplicateQuestion(idx)
-                        }}
+                        onClick={(e) => { e.stopPropagation(); duplicateQuestion(idx) }}
                         className="grid size-8 place-items-center rounded-lg text-muted-foreground transition hover:bg-secondary hover:text-foreground"
                       >
                         <Copy className="size-4" />
@@ -499,10 +503,7 @@ function ExerciceBuilder() {
                         type="button"
                         title="Supprimer"
                         disabled={questions.length <= 1}
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          removeQuestion(idx)
-                        }}
+                        onClick={(e) => { e.stopPropagation(); removeQuestion(idx) }}
                         className="grid size-8 place-items-center rounded-lg text-muted-foreground transition hover:bg-destructive/10 hover:text-destructive disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-muted-foreground"
                       >
                         <Trash2 className="size-4" />
@@ -513,24 +514,12 @@ function ExerciceBuilder() {
                   <div className="mt-3 space-y-3">
                     <div className="space-y-1.5">
                       <Label htmlFor={`prompt-${q.id}`}>Énoncé</Label>
-                      <Textarea
-                        id={`prompt-${q.id}`}
-                        value={q.prompt}
-                        onChange={(e) => patchQuestion(idx, { prompt: e.target.value })}
-                        placeholder="Rédige la question…"
-                        rows={2}
-                      />
+                      <Textarea id={`prompt-${q.id}`} value={q.prompt} onChange={(e) => patchQuestion(idx, { prompt: e.target.value })} placeholder="Rédige la question…" rows={2} />
                     </div>
 
                     <div className="space-y-1.5">
                       <Label htmlFor={`katex-${q.id}`}>Formule KaTeX (optionnel)</Label>
-                      <Input
-                        id={`katex-${q.id}`}
-                        value={q.katex ?? ''}
-                        onChange={(e) => patchQuestion(idx, { katex: e.target.value })}
-                        placeholder="Ex : \frac{3}{4} + \frac{1}{2}"
-                        className="font-mono"
-                      />
+                      <Input id={`katex-${q.id}`} value={q.katex} onChange={(e) => patchQuestion(idx, { katex: e.target.value })} placeholder="Ex : \frac{3}{4} + \frac{1}{2}" className="font-mono" />
                       {q.katex && (
                         <div className="rounded-xl bg-secondary/60 py-3 text-center text-lg">
                           <Maths expr={q.katex} display />
@@ -548,27 +537,16 @@ function ExerciceBuilder() {
                             <button
                               type="button"
                               title="Désigner comme bonne réponse"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                patchQuestion(idx, { correctId: opt.id })
-                              }}
+                              onClick={(e) => { e.stopPropagation(); patchQuestion(idx, { correctId: opt.id }) }}
                               className={cn(
                                 'grid size-7 shrink-0 place-items-center rounded-full border-2 transition',
-                                isAnswer
-                                  ? 'border-success bg-success text-white'
-                                  : 'border-border text-transparent hover:border-success/50',
+                                isAnswer ? 'border-success bg-success text-white' : 'border-border text-transparent hover:border-success/50',
                               )}
                             >
                               <Check className="size-4" />
                             </button>
-                            <span className="w-5 text-center text-sm font-bold text-muted-foreground">
-                              {letter}
-                            </span>
-                            <Input
-                              value={opt.label}
-                              onChange={(e) => patchOption(idx, oi, e.target.value)}
-                              placeholder={`Option ${letter}`}
-                            />
+                            <span className="w-5 text-center text-sm font-bold text-muted-foreground">{letter}</span>
+                            <Input value={opt.label} onChange={(e) => patchOption(idx, oi, e.target.value)} placeholder={`Option ${letter}`} />
                           </div>
                         )
                       })}
@@ -576,12 +554,7 @@ function ExerciceBuilder() {
 
                     <div className="space-y-1.5">
                       <Label htmlFor={`expl-${q.id}`}>Explication</Label>
-                      <Input
-                        id={`expl-${q.id}`}
-                        value={q.explanation ?? ''}
-                        onChange={(e) => patchQuestion(idx, { explanation: e.target.value })}
-                        placeholder="Justification affichée à la correction."
-                      />
+                      <Input id={`expl-${q.id}`} value={q.explanation} onChange={(e) => patchQuestion(idx, { explanation: e.target.value })} placeholder="Justification affichée à la correction." />
                     </div>
                   </div>
                 </div>

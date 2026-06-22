@@ -57,6 +57,14 @@ export function useAssignmentQuestions(id: string) {
   })
 }
 
+export function useAssignmentSubmissions(id: string) {
+  return useQuery({
+    queryKey: ['assignments', 'submissions', id],
+    queryFn: () => assignmentsService.submissions(id),
+    enabled: !!id,
+  })
+}
+
 export function useSubmitAssignment() {
   const qc = useQueryClient()
   return useMutation({
