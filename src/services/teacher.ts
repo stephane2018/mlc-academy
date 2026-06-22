@@ -26,4 +26,5 @@ export type TeacherStudentDetail = {
 export const teacherService = {
   students: () => api.get<TeacherStudent[]>('/teacher/students'),
   student: (id: string) => api.get<TeacherStudentDetail>(`/teacher/students/${id}`),
+  resetPin: (id: string, pin: string) => api.post<{ ok: true }>(`/teacher/students/${id}/reset-pin`, { pin }),
 }

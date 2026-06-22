@@ -1,11 +1,25 @@
+import { useState } from 'react'
 import { createFileRoute, Link, useParams } from '@tanstack/react-router'
-import { ArrowLeft, Zap, Flame, Percent, BookOpen, MessageSquare, Pencil, AlertCircle } from '@/components/icons'
+import { toast } from 'sonner'
+import { ArrowLeft, Zap, Flame, Percent, BookOpen, MessageSquare, Pencil, AlertCircle, Lock } from '@/components/icons'
 import { Meter, SectionHeader, SoftIcon } from '@/components/student/parts'
 import { PageHero, RailLayout, StatTile } from '@/components/blocks'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { useTeacherStudent } from '@/hooks/use-teacher'
+import { Label } from '@/components/ui/label'
+import { Input } from '@/components/ui/input'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogClose,
+} from '@/components/ui/dialog'
+import { useTeacherStudent, useResetStudentPin } from '@/hooks/use-teacher'
 
 export const Route = createFileRoute('/prof/eleves/$id')({
   component: ProfStudentDetail,
@@ -103,6 +117,7 @@ function ProfStudentDetail() {
                 Envoyer un message
               </Link>
             </Button>
+            <ResetPinDialog studentId={detail.id} pseudo={detail.pseudo} />
             {detail.lastActive && (
               <p className="text-xs text-muted-foreground">
                 Dernière activité : {dateFmt.format(new Date(detail.lastActive))}
@@ -148,5 +163,62 @@ function ProfStudentDetail() {
         </section>
       </RailLayout>
     </div>
+  )
+}
+
+function ResetPinDialog({ studentId, pseudo }: { studentId: string; pseudo: string }) {
+  const [open, setOpen] = useState(false)
+  const [pin, setPin] = useState('')
+  const reset = useResetStudentPin()
+  const valid = /^\d{6}$/.test(pin)
+
+  function submit() {
+    if (!valid) return
+    reset.mutate(
+      { id: studentId, pin },
+      {
+        onSuccess: () => {
+          setOpen(false)
+          setPin('')
+          toast.success('PIN réinitialisé', { description: `Communique le nouveau code à ${pseudo}.` })
+        },
+        onError: () => toast.error('Échec de la réinitialisation.'),
+      },
+    )
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setPin('') }}>
+      <DialogTrigger asChild>
+        <Button variant="outline" className="w-full justify-start">
+          <Lock className="size-4" />
+          Réinitialiser le PIN
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Réinitialiser le PIN de {pseudo}</DialogTitle>
+          <DialogDescription>Définis un nouveau code à 6 chiffres. Transmets-le à l'élève.</DialogDescription>
+        </DialogHeader>
+        <div className="space-y-1.5 py-1">
+          <Label htmlFor="new-pin">Nouveau PIN</Label>
+          <Input
+            id="new-pin"
+            inputMode="numeric"
+            maxLength={6}
+            value={pin}
+            onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
+            placeholder="123456"
+            className="max-w-[160px] text-center font-heading text-lg tracking-[0.3em]"
+          />
+        </div>
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button variant="ghost">Annuler</Button>
+          </DialogClose>
+          <Button disabled={!valid || reset.isPending} onClick={submit}>Réinitialiser</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }
