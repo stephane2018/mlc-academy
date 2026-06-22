@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { Plus, Users, Copy, RotateCcw, Target, ArrowRight } from '@/components/icons'
+import { Plus, Users, Copy, RotateCcw, ArrowRight } from '@/components/icons'
 import { toast } from 'sonner'
-import { Meter, SoftIcon } from '@/components/student/parts'
+import { SoftIcon } from '@/components/student/parts'
 import { PageHero } from '@/components/blocks'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -26,23 +26,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import {
-  profGroups,
-  getSubject,
-  classes,
-  subjects,
-  type ProfGroup,
-  type SubjectKey,
-} from '@/lib/mock'
+import { useGroups, useCreateGroup, useRegenerateGroupCode } from '@/hooks/use-groups'
+import { useClasses } from '@/hooks/use-catalog'
+import type { Group } from '@/services/groups'
 
 export const Route = createFileRoute('/prof/groupes/')({
   component: ProfGroupes,
 })
 
-/** Classes proposées au prof = celles activées par l'admin (référentiel). */
-const activeClasses = classes.filter((c) => c.active)
-
 function ProfGroupes() {
+  const { data: groups = [], isLoading } = useGroups()
+  const { data: classes = [] } = useClasses()
+  const classLabel = (id: string) => classes.find((c) => c.id === id)?.label ?? '—'
+
   return (
     <div className="space-y-6 2xl:mx-auto 2xl:max-w-[1700px]">
       <PageHero
@@ -52,16 +48,25 @@ function ProfGroupes() {
         actions={<CreateGroupDialog />}
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        {profGroups.map((g) => (
-          <GroupCard key={g.id} group={g} />
-        ))}
-      </div>
+      {isLoading ? (
+        <p className="py-10 text-center text-sm text-muted-foreground">Chargement de tes groupes…</p>
+      ) : groups.length === 0 ? (
+        <p className="rounded-2xl border border-dashed border-border bg-card py-12 text-center text-sm text-muted-foreground">
+          Aucun groupe pour l'instant. Crée ton premier groupe et partage son code.
+        </p>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {groups.map((g) => (
+            <GroupCard key={g.id} group={g} classLabel={classLabel(g.classId)} />
+          ))}
+        </div>
+      )}
     </div>
   )
 }
 
-function GroupCard({ group }: { group: ProfGroup }) {
+function GroupCard({ group, classLabel }: { group: Group; classLabel: string }) {
+  const regenerate = useRegenerateGroupCode()
   const copyCode = () => {
     navigator.clipboard?.writeText(group.code).catch(() => {})
     toast.success('Code copié', { description: group.code })
@@ -80,41 +85,15 @@ function GroupCard({ group }: { group: ProfGroup }) {
           </SoftIcon>
           <div className="leading-tight">
             <p className="font-heading text-base font-bold">{group.name}</p>
-            <p className="text-xs text-muted-foreground">{group.students} élèves</p>
+            <p className="text-xs text-muted-foreground">
+              {group.studentCount} élève{group.studentCount > 1 ? 's' : ''}
+            </p>
           </div>
         </div>
-        <div className="flex shrink-0 flex-col items-end gap-1.5">
-          <Badge variant="secondary" className="bg-amber-soft text-amber-foreground">
-            {group.level}
-          </Badge>
-          <div className="flex flex-wrap justify-end gap-1">
-            {group.subjects.map((k) => {
-              const s = getSubject(k)
-              return (
-                <span
-                  key={k}
-                  title={s.label}
-                  className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold text-white"
-                  style={{ backgroundColor: s.color }}
-                >
-                  {s.label}
-                </span>
-              )
-            })}
-          </div>
-        </div>
+        <Badge variant="secondary" className="bg-amber-soft text-amber-foreground">
+          {classLabel}
+        </Badge>
       </Link>
-
-      <div className="mt-4 flex items-center gap-3">
-        <Meter value={group.avgScore} color="auto" />
-        <span className="shrink-0 text-sm font-bold tabular-nums">{group.avgScore}%</span>
-      </div>
-      <p className="mt-1.5 text-xs text-muted-foreground">Score moyen du groupe</p>
-
-      <p className="mt-3 inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-        <Target className="size-3.5 text-amber" />
-        Point faible : <span className="font-semibold text-foreground">{group.weakSkill}</span>
-      </p>
 
       {/* Code d'invitation */}
       <div className="mt-4 rounded-xl bg-secondary p-3">
@@ -132,7 +111,13 @@ function GroupCard({ group }: { group: ProfGroup }) {
             size="sm"
             variant="outline"
             className="size-8 p-0"
-            onClick={() => toast.success('Code régénéré', { description: "L'ancien code n'est plus valide." })}
+            disabled={regenerate.isPending}
+            onClick={() =>
+              regenerate.mutate(group.id, {
+                onSuccess: (r) => toast.success('Code régénéré', { description: `Nouveau code : ${r.code}` }),
+                onError: () => toast.error('Échec de la régénération.'),
+              })
+            }
             aria-label="Régénérer le code"
           >
             <RotateCcw className="size-4" />
@@ -153,22 +138,28 @@ function GroupCard({ group }: { group: ProfGroup }) {
 function CreateGroupDialog() {
   const [open, setOpen] = useState(false)
   const [name, setName] = useState('')
-  const [level, setLevel] = useState('')
-  const [subs, setSubs] = useState<SubjectKey[]>([])
-
-  const genCode = () =>
-    'MLC-' +
-    Array.from({ length: 4 }, () =>
-      'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'.charAt(Math.floor(Math.random() * 32)),
-    ).join('')
-
-  const toggleSub = (k: SubjectKey) =>
-    setSubs((prev) => (prev.includes(k) ? prev.filter((s) => s !== k) : [...prev, k]))
+  const [classId, setClassId] = useState('')
+  const { data: classes = [] } = useClasses()
+  const createGroup = useCreateGroup()
 
   const reset = () => {
     setName('')
-    setLevel('')
-    setSubs([])
+    setClassId('')
+  }
+
+  function submit() {
+    if (!name.trim() || !classId) return
+    createGroup.mutate(
+      { name: name.trim(), classId },
+      {
+        onSuccess: (g) => {
+          setOpen(false)
+          reset()
+          toast.success('Groupe créé', { description: `Code d'invitation : ${g.code}` })
+        },
+        onError: () => toast.error('Échec de la création du groupe.'),
+      },
+    )
   }
 
   return (
@@ -203,13 +194,13 @@ function CreateGroupDialog() {
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="group-level">Classe</Label>
-            <Select value={level} onValueChange={setLevel}>
+            <Select value={classId} onValueChange={setClassId}>
               <SelectTrigger id="group-level" className="w-full">
                 <SelectValue placeholder="Sélectionner une classe" />
               </SelectTrigger>
               <SelectContent>
-                {activeClasses.map((c) => (
-                  <SelectItem key={c.code} value={c.code}>
+                {classes.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
                     {c.label}
                   </SelectItem>
                 ))}
@@ -219,50 +210,13 @@ function CreateGroupDialog() {
               Seules les classes activées par l'administration sont proposées.
             </p>
           </div>
-
-          <div className="space-y-1.5">
-            <Label>Matières du groupe</Label>
-            <div className="flex flex-wrap gap-2">
-              {subjects.map((s) => {
-                const active = subs.includes(s.key)
-                return (
-                  <button
-                    key={s.key}
-                    type="button"
-                    aria-pressed={active}
-                    onClick={() => toggleSub(s.key)}
-                    style={active ? { backgroundColor: s.color, borderColor: s.color } : undefined}
-                    className={[
-                      'inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors',
-                      active
-                        ? 'border-transparent text-white'
-                        : 'border-border bg-card text-muted-foreground hover:text-foreground',
-                    ].join(' ')}
-                  >
-                    {!active && (
-                      <span className="size-2 rounded-full" style={{ backgroundColor: s.color }} />
-                    )}
-                    {s.label}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
         </div>
 
         <DialogFooter>
           <DialogClose asChild>
             <Button variant="ghost">Annuler</Button>
           </DialogClose>
-          <Button
-            disabled={!name.trim() || !level || subs.length === 0}
-            onClick={() => {
-              const code = genCode()
-              setOpen(false)
-              toast.success('Groupe créé', { description: `Code d'invitation : ${code}` })
-              reset()
-            }}
-          >
+          <Button disabled={!name.trim() || !classId || createGroup.isPending} onClick={submit}>
             Créer le groupe
           </Button>
         </DialogFooter>
