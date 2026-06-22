@@ -1,25 +1,24 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
 import {
   Users,
   Boxes,
-  Activity,
   MessageSquare,
-  Euro,
-  TrendingUp,
-  CheckCircle2,
-  UserPlus,
-  FileText,
-  Plus,
-  CheckSquare,
+  Store,
+  GraduationCap,
+  Library,
   Sparkles,
+  CircleHelp,
+  ArrowRight,
+  Loader,
+  AlertCircle,
 } from '@/components/icons'
-import type { LucideIcon } from '@/components/icons'
-import { toast } from 'sonner'
+import type { IconComponent } from '@/components/icons'
 import { Card } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import { SectionHeader } from '@/components/student/parts'
-import { RailLayout, StatTile, SparkBars, SparkArea } from '@/components/blocks'
-import { adminStats } from '@/lib/mock'
+import { RailLayout, StatTile } from '@/components/blocks'
+import { useManagers, useModerationProducts } from '@/hooks/use-admin'
+import { useSupportTickets } from '@/hooks/use-support'
+import { useClasses, useSubjects } from '@/hooks/use-catalog'
 
 export const Route = createFileRoute('/admin/')({
   component: AdminOverview,
@@ -27,248 +26,364 @@ export const Route = createFileRoute('/admin/')({
 
 type Tone = 'brand' | 'teal' | 'amber' | 'success' | 'info'
 
-/* ----- Données de tendance locales (mockées, ~7 points) ----- */
-const trendActiveStudents = [34, 36, 35, 38, 39, 40, 42]
-const trendWeeklyActivity = [71, 74, 70, 79, 76, 81, 83]
-const trendMrr = [980, 1020, 1010, 1080, 1100, 1140, 1180]
-const signups = [3, 5, 2, 7, 4, 6, 3]
-const signupLabels = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim']
+/* ------------------------------------------------------------------ */
+/* Valeur d'un KPI selon l'état de la requête (chargement / erreur)    */
+/* ------------------------------------------------------------------ */
+function KpiValue({
+  isLoading,
+  isError,
+  value,
+}: {
+  isLoading: boolean
+  isError: boolean
+  value: number
+}) {
+  if (isLoading) {
+    return <Loader className="size-6 animate-spin text-muted-foreground" />
+  }
+  if (isError) {
+    return <span className="text-base font-bold text-destructive">—</span>
+  }
+  return <>{value}</>
+}
 
-type ActivityEvent = {
-  icon: LucideIcon
+/* ------------------------------------------------------------------ */
+/* Raccourcis vers les sections admin                                  */
+/* ------------------------------------------------------------------ */
+type Shortcut = {
+  to: string
+  icon: IconComponent
   tone: Tone
-  text: string
-  time: string
+  label: string
+  description: string
 }
 
-const recentActivity: ActivityEvent[] = [
-  { icon: CheckCircle2, tone: 'success', text: 'NoaMath a terminé un examen blanc (Géométrie)', time: 'il y a 12 min' },
-  { icon: UserPlus, tone: 'brand', text: 'Nouveau compte créé : Zoé★', time: 'il y a 38 min' },
-  { icon: FileText, tone: 'teal', text: 'Vidéo « Théorème de Pythagore » publiée', time: 'il y a 1 h' },
-  { icon: MessageSquare, tone: 'amber', text: 'Nouveau message de support de Léa_2012', time: 'il y a 2 h' },
-  { icon: CheckCircle2, tone: 'success', text: 'TomTom a atteint le niveau 8', time: 'il y a 3 h' },
-  { icon: UserPlus, tone: 'brand', text: 'Abonnement Premium activé pour MaxLeBg', time: 'il y a 5 h' },
+const shortcuts: Shortcut[] = [
+  {
+    to: '/admin/utilisateurs',
+    icon: Users,
+    tone: 'brand',
+    label: 'Utilisateurs',
+    description: 'Comptes élèves, profs et parents',
+  },
+  {
+    to: '/admin/gestionnaires',
+    icon: Boxes,
+    tone: 'teal',
+    label: 'Gestionnaires',
+    description: 'Rôles et permissions',
+  },
+  {
+    to: '/admin/marketplace',
+    icon: Store,
+    tone: 'amber',
+    label: 'Marketplace',
+    description: 'Modération des produits',
+  },
+  {
+    to: '/admin/support',
+    icon: MessageSquare,
+    tone: 'info',
+    label: 'Support',
+    description: 'Tickets et conversations',
+  },
+  {
+    to: '/admin/questions',
+    icon: CircleHelp,
+    tone: 'success',
+    label: 'Questions',
+    description: "Banque d'exercices",
+  },
+  {
+    to: '/admin/classes',
+    icon: GraduationCap,
+    tone: 'brand',
+    label: 'Classes',
+    description: 'Référentiel des niveaux',
+  },
+  {
+    to: '/admin/matieres',
+    icon: Library,
+    tone: 'teal',
+    label: 'Matières',
+    description: 'Référentiel des matières',
+  },
 ]
 
-type AccountRow = {
-  pseudo: string
-  avatar: string
-  plan: string
-  joined: string
-}
-
-const recentAccounts: AccountRow[] = [
-  { pseudo: 'Zoé★', avatar: '🐱', plan: 'Découverte', joined: "Aujourd'hui" },
-  { pseudo: 'NoaMath', avatar: '🚀', plan: 'Premium (essai)', joined: 'Hier' },
-  { pseudo: 'MaxLeBg', avatar: '🤖', plan: 'Premium', joined: 'il y a 2 j' },
-  { pseudo: 'Inès.M', avatar: '🐧', plan: 'Premium', joined: 'il y a 4 j' },
-  { pseudo: 'TomTom', avatar: '🐼', plan: 'Premium', joined: 'il y a 6 j' },
-]
-
-function ActivityTimeline() {
-  return (
-    <ol className="relative space-y-4 pl-5">
-      <span className="absolute left-[7px] top-1 bottom-1 w-px bg-border" aria-hidden />
-      {recentActivity.map((event, i) => {
-        const Icon = event.icon
-        const dot =
-          event.tone === 'success'
-            ? 'bg-success'
-            : event.tone === 'brand'
-              ? 'bg-brand'
-              : event.tone === 'teal'
-                ? 'bg-teal'
-                : 'bg-amber'
-        return (
-          <li key={i} className="relative">
-            <span
-              className={`absolute -left-5 top-1 size-3.5 rounded-full ring-4 ring-card ${dot}`}
-              aria-hidden
-            />
-            <div className="flex items-start gap-2">
-              <Icon className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
-              <div className="min-w-0">
-                <p className="text-sm font-medium leading-snug">{event.text}</p>
-                <p className="text-xs text-muted-foreground">{event.time}</p>
-              </div>
-            </div>
-          </li>
-        )
-      })}
-    </ol>
-  )
-}
-
-function QuickActions() {
+function ShortcutsGrid() {
   return (
     <div className="grid gap-2.5">
-      <Button className="justify-start" onClick={() => toast.success('Ressource ajoutée (démo)')}>
-        <Plus className="size-4" />
-        Ajouter une ressource
-      </Button>
-      <Button
-        variant="outline"
-        className="justify-start"
-        onClick={() => toast.success("Examen blanc créé (démo)")}
-      >
-        <CheckSquare className="size-4" />
-        Créer un examen blanc
-      </Button>
-      <Button
-        variant="secondary"
-        className="justify-start"
-        onClick={() => toast('Invitation envoyée (démo)')}
-      >
-        <UserPlus className="size-4" />
-        Inviter un élève
-      </Button>
+      {shortcuts.map((s) => {
+        const Icon = s.icon
+        const tint =
+          s.tone === 'brand'
+            ? 'bg-brand-soft text-brand'
+            : s.tone === 'teal'
+              ? 'bg-teal-soft text-teal'
+              : s.tone === 'amber'
+                ? 'bg-amber-soft text-amber-foreground'
+                : s.tone === 'success'
+                  ? 'bg-success-soft text-success'
+                  : 'bg-info-soft text-info'
+        return (
+          <Link
+            key={s.to}
+            to={s.to}
+            className="group flex items-center gap-3 rounded-xl border border-border bg-card p-3 transition-colors hover:bg-secondary/50"
+          >
+            <span className={`grid size-9 shrink-0 place-items-center rounded-lg ${tint}`}>
+              <Icon className="size-5" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold leading-snug">{s.label}</p>
+              <p className="truncate text-xs text-muted-foreground">{s.description}</p>
+            </div>
+            <ArrowRight className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+          </Link>
+        )
+      })}
     </div>
   )
 }
 
+/* ------------------------------------------------------------------ */
+/* File de modération marketplace (produits en attente)               */
+/* ------------------------------------------------------------------ */
+function ModerationQueue() {
+  const { data, isLoading, isError } = useModerationProducts('en_attente')
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center gap-2 px-5 py-8 text-sm text-muted-foreground">
+        <Loader className="size-4 animate-spin" />
+        Chargement de la file…
+      </div>
+    )
+  }
+  if (isError) {
+    return (
+      <div className="flex items-center gap-2 px-5 py-8 text-sm text-destructive">
+        <AlertCircle className="size-4" />
+        Impossible de charger la file de modération.
+      </div>
+    )
+  }
+
+  const products = data ?? []
+  if (products.length === 0) {
+    return (
+      <div className="px-5 py-8 text-sm text-muted-foreground">
+        Aucun produit en attente de modération.
+      </div>
+    )
+  }
+
+  return (
+    <ul className="divide-y divide-border">
+      {products.slice(0, 6).map((p) => (
+        <li key={p.id} className="flex items-center justify-between gap-3 px-5 py-3">
+          <div className="flex min-w-0 items-center gap-3">
+            <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-amber-soft text-amber-foreground">
+              <Store className="size-4" />
+            </span>
+            <span className="truncate text-sm font-medium">{p.title}</span>
+          </div>
+          <Link
+            to="/admin/marketplace"
+            className="shrink-0 rounded-lg border border-border px-2.5 py-1 text-xs font-semibold transition-colors hover:bg-secondary/60"
+          >
+            Examiner
+          </Link>
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+/* ------------------------------------------------------------------ */
+/* Tickets de support récents (statut != résolu)                      */
+/* ------------------------------------------------------------------ */
+function SupportQueue() {
+  const { data, isLoading, isError } = useSupportTickets()
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center gap-2 px-5 py-8 text-sm text-muted-foreground">
+        <Loader className="size-4 animate-spin" />
+        Chargement des tickets…
+      </div>
+    )
+  }
+  if (isError) {
+    return (
+      <div className="flex items-center gap-2 px-5 py-8 text-sm text-destructive">
+        <AlertCircle className="size-4" />
+        Impossible de charger les tickets de support.
+      </div>
+    )
+  }
+
+  const open = (data ?? []).filter((t) => t.status !== 'resolu')
+  if (open.length === 0) {
+    return (
+      <div className="px-5 py-8 text-sm text-muted-foreground">
+        Aucun ticket en attente. Tout est traité.
+      </div>
+    )
+  }
+
+  return (
+    <ul className="divide-y divide-border">
+      {open.slice(0, 6).map((t) => (
+        <li key={t.id} className="flex items-center justify-between gap-3 px-5 py-3">
+          <div className="min-w-0">
+            <p className="truncate text-sm font-medium">{t.subject}</p>
+            <p className="text-xs text-muted-foreground">
+              {t.authorName ?? 'Anonyme'}
+              {t.category ? ` · ${t.category}` : ''}
+            </p>
+          </div>
+          <span
+            className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-bold ${
+              t.status === 'ouvert'
+                ? 'bg-amber-soft text-amber-foreground'
+                : 'bg-info-soft text-info'
+            }`}
+          >
+            {t.status === 'ouvert' ? 'Ouvert' : 'En cours'}
+          </span>
+        </li>
+      ))}
+    </ul>
+  )
+}
+
 function AdminOverview() {
-  const totalSignups = signups.reduce((acc, n) => acc + n, 0)
+  const managers = useManagers()
+  const moderation = useModerationProducts('en_attente')
+  const tickets = useSupportTickets()
+  const classes = useClasses()
+  const subjects = useSubjects()
+
+  const openTickets = (tickets.data ?? []).filter((t) => t.status === 'ouvert')
 
   return (
     <div className="space-y-6 2xl:mx-auto 2xl:max-w-[1700px]">
-      {/* Bandeau d'accueil compact (carte, pas un 2e gros header) */}
+      {/* Bandeau d'accueil compact */}
       <Card className="flex flex-col gap-3 rounded-2xl border-brand/15 bg-brand-soft/40 p-5 shadow-soft sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
           <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-brand text-white">
             <Sparkles className="size-5" />
           </span>
           <div>
-            <p className="font-heading text-base font-bold">Bonjour, l'équipe MLC Academy 👋</p>
+            <p className="font-heading text-base font-bold">Tableau de bord administration</p>
             <p className="text-sm text-muted-foreground">
-              Voici l'état de la plateforme aujourd'hui — tout roule.
+              Vue d'ensemble de la plateforme MLC Academy.
             </p>
           </div>
         </div>
-        <Button onClick={() => toast.success('Ressource ajoutée (démo)')}>
-          <Plus className="size-4" />
-          Ajouter une ressource
-        </Button>
       </Card>
 
-      {/* KPI en StatTile avec mini-graphes */}
+      {/* KPI réels */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
         <StatTile
           icon={Users}
           tone="brand"
-          label="Élèves actifs"
-          value={adminStats.activeStudents}
-          delta="+6 cette sem."
-          trend="up"
-          spark={<SparkBars data={trendActiveStudents} color="var(--brand)" height={40} />}
+          label="Gestionnaires"
+          value={
+            <KpiValue
+              isLoading={managers.isLoading}
+              isError={managers.isError}
+              value={managers.data?.length ?? 0}
+            />
+          }
         />
         <StatTile
-          icon={Boxes}
-          tone="teal"
-          label="Groupes"
-          value={adminStats.groups}
-          delta="+1 ce mois"
-          trend="up"
-        />
-        <StatTile
-          icon={Activity}
-          tone="success"
-          label="Activité hebdo"
-          value={`${adminStats.weeklyActivity}%`}
-          delta="+4 pts"
-          trend="up"
-          spark={<SparkArea data={trendWeeklyActivity} color="var(--success)" height={40} />}
+          icon={Store}
+          tone="amber"
+          label="Produits à modérer"
+          value={
+            <KpiValue
+              isLoading={moderation.isLoading}
+              isError={moderation.isError}
+              value={moderation.data?.length ?? 0}
+            />
+          }
         />
         <StatTile
           icon={MessageSquare}
-          tone="amber"
-          label="Support en attente"
-          value={adminStats.pendingSupport}
-          delta="-2 vs hier"
-          trend="down"
+          tone="info"
+          label="Tickets ouverts"
+          value={
+            <KpiValue
+              isLoading={tickets.isLoading}
+              isError={tickets.isError}
+              value={openTickets.length}
+            />
+          }
         />
         <StatTile
-          icon={Euro}
-          tone="brand"
-          label="MRR"
-          value={`${adminStats.mrr.toLocaleString('fr-FR')} €`}
-          delta="+120 € ce mois"
-          trend="up"
-          spark={<SparkArea data={trendMrr} color="var(--brand)" height={40} />}
-          className="border-brand/30 bg-brand-soft/40 ring-1 ring-brand/15 sm:col-span-2 xl:col-span-1"
+          icon={GraduationCap}
+          tone="success"
+          label="Classes"
+          value={
+            <KpiValue
+              isLoading={classes.isLoading}
+              isError={classes.isError}
+              value={classes.data?.length ?? 0}
+            />
+          }
+        />
+        <StatTile
+          icon={Library}
+          tone="teal"
+          label="Matières"
+          value={
+            <KpiValue
+              isLoading={subjects.isLoading}
+              isError={subjects.isError}
+              value={subjects.data?.length ?? 0}
+            />
+          }
         />
       </div>
 
       <RailLayout
         rail={
-          <>
-            <Card className="rounded-2xl p-5 shadow-soft">
-              <SectionHeader title="Activité récente" />
-              <ActivityTimeline />
-            </Card>
-            <Card className="rounded-2xl p-5 shadow-soft">
-              <SectionHeader title="Actions rapides" />
-              <QuickActions />
-            </Card>
-          </>
+          <Card className="rounded-2xl p-5 shadow-soft">
+            <SectionHeader title="Accès rapides" />
+            <ShortcutsGrid />
+          </Card>
         }
       >
-        {/* Grand graphe inscriptions */}
-        <Card className="rounded-2xl p-5 shadow-soft sm:p-6">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-brand">
-                Croissance
-              </p>
-              <h2 className="mt-1 font-heading text-xl font-bold lg:text-2xl">
-                Inscriptions — 7 derniers jours
-              </h2>
-            </div>
-            <span className="flex items-center gap-1.5 rounded-full bg-success-soft px-3 py-1 text-sm font-bold text-success">
-              <TrendingUp className="size-4" />
-              {totalSignups} au total
-            </span>
+        {/* File de modération */}
+        <Card className="overflow-hidden rounded-2xl p-0 shadow-soft">
+          <div className="flex items-center justify-between border-b border-border px-5 py-4">
+            <SectionHeader title="File de modération" />
+            <Link
+              to="/admin/marketplace"
+              className="flex items-center gap-1 text-sm font-semibold text-brand hover:underline"
+            >
+              Tout voir
+              <ArrowRight className="size-4" />
+            </Link>
           </div>
-          <SparkBars
-            data={signups}
-            labels={signupLabels}
-            color="var(--brand)"
-            height={200}
-            className="mt-5"
-          />
+          <ModerationQueue />
         </Card>
 
-        {/* Derniers comptes */}
+        {/* Tickets de support à traiter */}
         <Card className="overflow-hidden rounded-2xl p-0 shadow-soft">
-          <div className="border-b border-border px-5 py-4">
-            <SectionHeader title="Derniers comptes créés" />
+          <div className="flex items-center justify-between border-b border-border px-5 py-4">
+            <SectionHeader title="Support à traiter" />
+            <Link
+              to="/admin/support"
+              className="flex items-center gap-1 text-sm font-semibold text-brand hover:underline"
+            >
+              Tout voir
+              <ArrowRight className="size-4" />
+            </Link>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[480px] text-sm">
-              <thead>
-                <tr className="border-b border-border bg-secondary/60 text-left text-xs uppercase tracking-wide text-muted-foreground">
-                  <th className="px-5 py-3 font-semibold">Élève</th>
-                  <th className="px-5 py-3 font-semibold">Formule</th>
-                  <th className="px-5 py-3 font-semibold text-right">Inscrit</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {recentAccounts.map((acc) => (
-                  <tr key={acc.pseudo} className="transition-colors hover:bg-secondary/40">
-                    <td className="px-5 py-3">
-                      <div className="flex items-center gap-3">
-                        <span className="grid size-8 place-items-center rounded-lg bg-secondary text-lg">
-                          {acc.avatar}
-                        </span>
-                        <span className="font-medium">{acc.pseudo}</span>
-                      </div>
-                    </td>
-                    <td className="px-5 py-3 text-muted-foreground">{acc.plan}</td>
-                    <td className="px-5 py-3 text-right text-muted-foreground">{acc.joined}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <SupportQueue />
         </Card>
       </RailLayout>
     </div>
