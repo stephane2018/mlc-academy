@@ -13,7 +13,8 @@ import {
 import { cn } from '@/lib/utils'
 import { RequireRole } from '@/components/auth/require-role'
 import { ParentChildProvider, useSelectedChild } from '@/lib/parent-child'
-import { unreadCount } from '@/lib/mock'
+import { useRealtimeSync } from '@/hooks/use-realtime'
+import { useNotifications } from '@/hooks/use-notifications'
 
 export const Route = createFileRoute('/parent')({
   component: () => (
@@ -51,8 +52,10 @@ function ChildSelect() {
 }
 
 function ParentLayout() {
+  useRealtimeSync()
   const { pathname } = useLocation()
-  const parentUnread = unreadCount('parent')
+  const { data: notifs = [] } = useNotifications()
+  const parentUnread = notifs.filter((n) => !n.read).length
 
   return (
     <ParentChildProvider>

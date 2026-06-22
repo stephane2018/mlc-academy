@@ -2,6 +2,7 @@ import { Outlet, createFileRoute, useLocation } from '@tanstack/react-router'
 import { BottomNav } from '@/components/student/bottom-nav'
 import { StudentSideNav } from '@/components/student/side-nav'
 import { RequireRole } from '@/components/auth/require-role'
+import { useRealtimeSync } from '@/hooks/use-realtime'
 import { cn } from '@/lib/utils'
 
 export const Route = createFileRoute('/eleve')({
@@ -22,6 +23,7 @@ function isFocusedFlow(pathname: string): boolean {
 }
 
 function EleveLayout() {
+  useRealtimeSync()
   const { pathname } = useLocation()
   const focused = isFocusedFlow(pathname)
 

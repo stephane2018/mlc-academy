@@ -8,7 +8,8 @@ import { Menu } from '@/components/icons'
 import { cn } from '@/lib/utils'
 import { ThemeToggle } from '@/components/theme'
 import { RequireRole } from '@/components/auth/require-role'
-import { unreadCount } from '@/lib/mock'
+import { useRealtimeSync } from '@/hooks/use-realtime'
+import { useNotifications } from '@/hooks/use-notifications'
 
 export const Route = createFileRoute('/prof')({
   component: () => (
@@ -129,9 +130,11 @@ function SidebarContent({
 }
 
 function ProfLayout() {
+  useRealtimeSync()
   const pathname = useLocation().pathname
   const title = pageTitles[pathname] ?? 'Espace Prof'
-  const profUnread = unreadCount('prof')
+  const { data: notifs = [] } = useNotifications()
+  const profUnread = notifs.filter((n) => !n.read).length
 
   return (
     <div className="min-h-dvh bg-background text-foreground">

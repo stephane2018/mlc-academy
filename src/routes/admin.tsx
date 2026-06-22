@@ -1,4 +1,4 @@
-import { Outlet, createFileRoute, useLocation } from '@tanstack/react-router'
+import { Outlet, Link, createFileRoute, useLocation } from '@tanstack/react-router'
 import { useState } from 'react'
 import { Search, Bell, Menu, User, Settings, LogOut } from '@/components/icons'
 import { ThemeToggle } from '@/components/theme'
@@ -18,6 +18,8 @@ import { toast } from 'sonner'
 import { AdminSidebar } from '@/components/admin/sidebar'
 import { pageTitles } from '@/components/admin/nav'
 import { RequireRole } from '@/components/auth/require-role'
+import { useRealtimeSync } from '@/hooks/use-realtime'
+import { useNotifications } from '@/hooks/use-notifications'
 
 export const Route = createFileRoute('/admin')({
   // gestionnaire accède aussi au back-office (droits via permissions admin.*)
@@ -29,9 +31,12 @@ export const Route = createFileRoute('/admin')({
 })
 
 function AdminLayout() {
+  useRealtimeSync()
   const { pathname } = useLocation()
   const [mobileOpen, setMobileOpen] = useState(false)
   const title = pageTitles[pathname] ?? 'Administration'
+  const { data: notifs = [] } = useNotifications()
+  const adminUnread = notifs.filter((n) => !n.read).length
 
   return (
     <div className="flex min-h-dvh bg-background">
@@ -98,14 +103,18 @@ function AdminLayout() {
           <ThemeToggle className="shrink-0 border border-border bg-card" />
 
           {/* Cloche */}
-          <button
-            type="button"
+          <Link
+            to="/admin/notifications"
             className="relative grid size-9 shrink-0 place-items-center rounded-lg border border-border bg-card text-muted-foreground transition-colors hover:text-foreground"
             aria-label="Notifications"
           >
             <Bell className="size-5" />
-            <span className="absolute right-2 top-2 size-2 rounded-full bg-destructive ring-2 ring-card" />
-          </button>
+            {adminUnread > 0 && (
+              <span className="absolute -right-1.5 -top-1.5 grid min-w-4 place-items-center rounded-full bg-destructive px-1 text-[10px] font-bold leading-4 text-white ring-2 ring-card">
+                {adminUnread > 9 ? '9+' : adminUnread}
+              </span>
+            )}
+          </Link>
 
           {/* Menu admin */}
           <DropdownMenu>
