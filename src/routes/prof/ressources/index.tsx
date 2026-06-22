@@ -1,53 +1,62 @@
 import { useState } from 'react'
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-router'
+import { toast } from 'sonner'
+import { Plus, Boxes, Check, FileText, Users, Trash2, Link2 } from '@/components/icons'
 import { PageHero, StatTile } from '@/components/blocks'
-import { SubjectFilter, type SubjectFilterValue } from '@/components/student/subject-filter'
 import { TYPE_META } from '@/components/student/resource-card'
-import { ResourceDialog } from '@/components/prof/resource-dialog'
-import { ProfResourceCover, StatusBadge, targetSummary } from '@/components/prof/resource-bits'
+import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Label } from '@/components/ui/label'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import {
-  Plus,
-  LayoutGrid,
-  ListView,
-  Eye,
-  Heart,
-  MessageSquare,
-  ChevronRight,
-  Boxes,
-} from '@/components/icons'
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogClose,
+} from '@/components/ui/dialog'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { cn } from '@/lib/utils'
-import { sharedResources, getSubject, type ResourceType } from '@/lib/mock'
+import type { ResourceType } from '@/lib/mock'
+import { useResources, useCreateResource, useDeleteResource, useShareResource } from '@/hooks/use-resources'
+import { useGroups } from '@/hooks/use-groups'
+import type { SharedResource, SharedResourceType } from '@/services/resources'
 
 export const Route = createFileRoute('/prof/ressources/')({
   component: ResourcesPage,
 })
 
-type Filter = 'all' | ResourceType
-type View = 'grid' | 'list'
-const TYPE_ORDER: ResourceType[] = ['video', 'pdf', 'exercice', 'fiche']
+type Filter = 'all' | SharedResourceType
+const TYPE_ORDER: SharedResourceType[] = ['video', 'pdf', 'exercice', 'fiche']
+const STATUS_LABEL: Record<string, string> = { publie: 'Publié', planifie: 'Planifié', brouillon: 'Brouillon' }
+const STATUS_TONE: Record<string, string> = {
+  publie: 'bg-teal-soft text-teal-foreground',
+  planifie: 'bg-info-soft text-info',
+  brouillon: 'bg-secondary text-muted-foreground',
+}
 
 function ResourcesPage() {
   const [filter, setFilter] = useState<Filter>('all')
-  const [subject, setSubject] = useState<SubjectFilterValue>('all')
-  const [view, setView] = useState<View>('grid')
+  const { data: resources = [], isLoading } = useResources()
 
-  const visible = sharedResources.filter(
-    (r) =>
-      (filter === 'all' || r.type === filter) &&
-      (subject === 'all' || r.subject === subject),
-  )
-
-  const totalViews = sharedResources.reduce((a, r) => a + r.views, 0)
-  const totalLikes = sharedResources.reduce((a, r) => a + r.likes, 0)
+  const visible = resources.filter((r) => filter === 'all' || r.type === filter)
+  const published = resources.filter((r) => r.status === 'publie').length
+  const drafts = resources.filter((r) => r.status === 'brouillon').length
 
   const tabs: { key: Filter; label: string; count: number }[] = [
-    { key: 'all', label: 'Tout', count: sharedResources.length },
-    ...TYPE_ORDER.map((t) => ({
-      key: t as Filter,
-      label: TYPE_META[t].label,
-      count: sharedResources.filter((r) => r.type === t).length,
-    })),
+    { key: 'all', label: 'Tout', count: resources.length },
+    ...TYPE_ORDER.map((t) => ({ key: t as Filter, label: TYPE_META[t as ResourceType].label, count: resources.filter((r) => r.type === t).length })),
   ]
 
   return (
@@ -56,208 +65,252 @@ function ResourcesPage() {
         variant="surface"
         eyebrow="Partager"
         title="Ressources"
-        subtitle="Distribue vidéos, PDF, exercices et fiches à tes groupes et élèves — et suis leur engagement."
-        actions={
-          <>
-            <div className="flex items-center gap-1 rounded-xl border border-border bg-card p-1">
-              <ViewButton active={view === 'grid'} onClick={() => setView('grid')} label="Vue grille">
-                <LayoutGrid className="size-4" />
-              </ViewButton>
-              <ViewButton active={view === 'list'} onClick={() => setView('list')} label="Vue liste">
-                <ListView className="size-4" />
-              </ViewButton>
-            </div>
-            <ResourceDialog
-              mode="create"
-              trigger={
-                <Button>
-                  <Plus className="size-4" /> Ajouter une ressource
-                </Button>
-              }
-            />
-          </>
-        }
+        subtitle="Distribue vidéos, PDF, exercices et fiches à tes groupes."
+        actions={<CreateResourceDialog />}
       />
 
-      {/* Synthèse */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <StatTile icon={Boxes} tone="brand" label="Ressources partagées" value={sharedResources.length} />
-        <StatTile icon={Eye} tone="teal" label="Vues cumulées" value={totalViews} />
-        <StatTile icon={Heart} tone="amber" label="Likes cumulés" value={totalLikes} />
+        <StatTile icon={Boxes} tone="brand" label="Ressources" value={resources.length} />
+        <StatTile icon={Check} tone="teal" label="Publiées" value={published} />
+        <StatTile icon={FileText} tone="amber" label="Brouillons" value={drafts} />
       </div>
 
-      {/* Filtre par matière */}
-      <SubjectFilter value={subject} onChange={setSubject} />
-
       {/* Filtres par type */}
-      <div className="flex gap-2 overflow-x-auto no-scrollbar">
+      <div className="flex flex-wrap gap-2">
         {tabs.map((t) => {
           const active = filter === t.key
-          const Icon = t.key === 'all' ? LayoutGrid : TYPE_META[t.key as ResourceType].Icon
           return (
             <button
               key={t.key}
               type="button"
               onClick={() => setFilter(t.key)}
               className={cn(
-                'flex shrink-0 items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition-all',
-                active
-                  ? 'border-brand bg-brand text-white shadow-brand-glow'
-                  : 'border-border bg-card text-muted-foreground hover:border-brand/40 hover:text-foreground',
+                'rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-colors',
+                active ? 'border-brand bg-brand text-white' : 'border-border bg-card text-muted-foreground hover:bg-secondary hover:text-foreground',
               )}
             >
-              <Icon className="size-4" />
-              {t.label}
-              <span
-                className={cn(
-                  'rounded-full px-1.5 text-xs',
-                  active ? 'bg-white/20' : 'bg-secondary text-muted-foreground',
-                )}
-              >
-                {t.count}
-              </span>
+              {t.label} <span className="opacity-70">({t.count})</span>
             </button>
           )
         })}
       </div>
 
-      {visible.length === 0 ? (
+      {isLoading ? (
+        <p className="py-12 text-center text-sm text-muted-foreground">Chargement de tes ressources…</p>
+      ) : visible.length === 0 ? (
         <p className="rounded-2xl border border-dashed border-border bg-card py-12 text-center text-sm text-muted-foreground">
-          Aucune ressource de ce type.
+          Aucune ressource. Ajoute ton premier contenu à partager.
         </p>
-      ) : view === 'grid' ? (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      ) : (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {visible.map((r) => (
-            <Link
-              key={r.id}
-              to="/prof/ressources/$id"
-              params={{ id: r.id }}
-              className="group block rounded-3xl border border-border bg-card p-2.5 shadow-soft transition-all card-hover"
-            >
-              <ProfResourceCover type={r.type} className="aspect-video" />
-              <div className="px-1.5 pb-1 pt-2.5">
-                <div className="flex items-start justify-between gap-2">
-                  <p className="line-clamp-2 font-heading text-sm font-bold leading-snug">{r.title}</p>
-                  <StatusBadge status={r.status} className="shrink-0" />
-                </div>
-                <span className="mt-1.5 inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
-                  <span
-                    className="size-2 rounded-full"
-                    style={{ backgroundColor: getSubject(r.subject).color }}
-                  />
-                  {getSubject(r.subject).label}
-                </span>
-                <p className="mt-1 truncate text-xs text-muted-foreground">
-                  {targetSummary(r.groups, r.students)}
-                </p>
-                <Counters
-                  views={r.views}
-                  likes={r.likes}
-                  comments={r.comments.length}
-                  className="mt-2.5 border-t border-border pt-2.5"
-                />
-              </div>
-            </Link>
+            <ResourceCard key={r.id} resource={r} />
           ))}
         </div>
-      ) : (
-        <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-soft">
-          {visible.map((r, i) => {
-            const m = TYPE_META[r.type]
+      )}
+    </div>
+  )
+}
+
+function ResourceCard({ resource: r }: { resource: SharedResource }) {
+  const meta = TYPE_META[r.type as ResourceType]
+  const del = useDeleteResource()
+  return (
+    <Card className="card-hover gap-0 p-5">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <span className={cn('grid size-11 shrink-0 place-items-center rounded-xl', meta.chip)}>
+            <meta.Icon className="size-5" />
+          </span>
+          <div className="leading-tight">
+            <p className="font-heading text-base font-bold">{r.title}</p>
+            <p className="text-xs text-muted-foreground">{meta.label}</p>
+          </div>
+        </div>
+        <Badge variant="secondary" className={cn('shrink-0', STATUS_TONE[r.status])}>
+          {STATUS_LABEL[r.status] ?? r.status}
+        </Badge>
+      </div>
+
+      {r.description && <p className="mt-3 line-clamp-2 text-sm text-muted-foreground">{r.description}</p>}
+
+      <div className="mt-3 flex flex-wrap items-center gap-1.5">
+        {r.groups.length === 0 ? (
+          <span className="text-xs text-muted-foreground">Non partagée</span>
+        ) : (
+          r.groups.map((g) => (
+            <Badge key={g} variant="secondary" className="bg-brand-soft text-brand">
+              <Users className="size-3" /> {g}
+            </Badge>
+          ))
+        )}
+      </div>
+
+      <div className="mt-4 flex items-center gap-2 border-t border-border pt-3">
+        <ShareResourceDialog resource={r} />
+        <Button
+          variant="ghost"
+          size="sm"
+          className="ml-auto text-destructive hover:bg-destructive/10 hover:text-destructive"
+          disabled={del.isPending}
+          onClick={() =>
+            del.mutate(r.id, {
+              onSuccess: () => toast.success('Ressource supprimée'),
+              onError: () => toast.error('Échec de la suppression.'),
+            })
+          }
+        >
+          <Trash2 className="size-4" />
+        </Button>
+      </div>
+    </Card>
+  )
+}
+
+function CreateResourceDialog() {
+  const [open, setOpen] = useState(false)
+  const [title, setTitle] = useState('')
+  const [type, setType] = useState<SharedResourceType>('fiche')
+  const [description, setDescription] = useState('')
+  const [message, setMessage] = useState('')
+  const create = useCreateResource()
+
+  const reset = () => {
+    setTitle('')
+    setType('fiche')
+    setDescription('')
+    setMessage('')
+  }
+
+  function submit() {
+    if (!title.trim()) return
+    create.mutate(
+      { title: title.trim(), type, description: description.trim() || null, message: message.trim() || null, status: 'brouillon' },
+      {
+        onSuccess: () => {
+          setOpen(false)
+          reset()
+          toast.success('Ressource créée', { description: 'Partage-la avec un groupe pour la rendre visible.' })
+        },
+        onError: () => toast.error('Échec de la création.'),
+      },
+    )
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) reset() }}>
+      <DialogTrigger asChild>
+        <Button>
+          <Plus className="size-4" /> Ajouter une ressource
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Ajouter une ressource</DialogTitle>
+          <DialogDescription>Crée la ressource, puis partage-la avec tes groupes.</DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4 py-1">
+          <div className="space-y-1.5">
+            <Label htmlFor="res-title">Titre</Label>
+            <Input id="res-title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Ex : Fiche de révision — fractions" />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="res-type">Type</Label>
+            <Select value={type} onValueChange={(v) => setType(v as SharedResourceType)}>
+              <SelectTrigger id="res-type" className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {TYPE_ORDER.map((t) => (
+                  <SelectItem key={t} value={t}>{TYPE_META[t as ResourceType].label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="res-desc">Description</Label>
+            <Textarea id="res-desc" value={description} onChange={(e) => setDescription(e.target.value)} rows={2} />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="res-msg">Message d'accompagnement</Label>
+            <Textarea id="res-msg" value={message} onChange={(e) => setMessage(e.target.value)} rows={2} placeholder="Ex : À lire avant le prochain cours." />
+          </div>
+        </div>
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button variant="ghost">Annuler</Button>
+          </DialogClose>
+          <Button disabled={!title.trim() || create.isPending} onClick={submit}>Créer</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+function ShareResourceDialog({ resource }: { resource: SharedResource }) {
+  const [open, setOpen] = useState(false)
+  const [sel, setSel] = useState<string[]>([])
+  const { data: groups = [] } = useGroups()
+  const share = useShareResource()
+
+  const toggle = (id: string) => setSel((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]))
+
+  function submit() {
+    if (sel.length === 0) return
+    share.mutate(
+      { id: resource.id, groupIds: sel },
+      {
+        onSuccess: () => {
+          setOpen(false)
+          setSel([])
+          toast.success('Ressource partagée')
+        },
+        onError: () => toast.error('Échec du partage.'),
+      },
+    )
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm">
+          <Link2 className="size-4" /> Partager
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Partager « {resource.title} »</DialogTitle>
+          <DialogDescription>Choisis les groupes qui y auront accès.</DialogDescription>
+        </DialogHeader>
+        <div className="flex flex-wrap gap-2 py-1">
+          {groups.length === 0 && <p className="text-sm text-muted-foreground">Aucun groupe.</p>}
+          {groups.map((g) => {
+            const on = sel.includes(g.id)
+            const already = resource.groups.includes(g.name)
             return (
-              <Link
-                key={r.id}
-                to="/prof/ressources/$id"
-                params={{ id: r.id }}
+              <button
+                key={g.id}
+                type="button"
+                disabled={already}
+                onClick={() => toggle(g.id)}
                 className={cn(
-                  'group flex items-center gap-3 px-3 py-3 transition-colors hover:bg-secondary/60 sm:px-4',
-                  i > 0 && 'border-t border-border',
+                  'inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-semibold transition disabled:opacity-50',
+                  on ? 'border-brand bg-brand text-white' : 'border-border bg-card text-muted-foreground hover:border-brand/40',
                 )}
               >
-                <span
-                  className={cn(
-                    'grid size-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br text-white',
-                    m.cover,
-                  )}
-                >
-                  <m.Icon className="size-5" />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate font-heading text-sm font-bold">{r.title}</p>
-                  <p className="flex items-center gap-1.5 truncate text-xs text-muted-foreground">
-                    <span
-                      className="size-2 shrink-0 rounded-full"
-                      style={{ backgroundColor: getSubject(r.subject).color }}
-                    />
-                    {getSubject(r.subject).label} · {targetSummary(r.groups, r.students)} · {r.date}
-                  </p>
-                </div>
-                <StatusBadge status={r.status} className="hidden shrink-0 sm:inline-flex" />
-                <Counters
-                  views={r.views}
-                  likes={r.likes}
-                  comments={r.comments.length}
-                  className="hidden shrink-0 md:flex"
-                />
-                <ChevronRight className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
-              </Link>
+                {(on || already) && <Check className="size-3.5" />}
+                {g.name}
+              </button>
             )
           })}
         </div>
-      )}
-    </div>
-  )
-}
-
-function ViewButton({
-  active,
-  onClick,
-  label,
-  children,
-}: {
-  active: boolean
-  onClick: () => void
-  label: string
-  children: React.ReactNode
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label={label}
-      aria-pressed={active}
-      className={cn(
-        'grid size-8 place-items-center rounded-lg transition-all',
-        active ? 'bg-brand text-white shadow-sm' : 'text-muted-foreground hover:text-foreground',
-      )}
-    >
-      {children}
-    </button>
-  )
-}
-
-function Counters({
-  views,
-  likes,
-  comments,
-  className,
-}: {
-  views: number
-  likes: number
-  comments: number
-  className?: string
-}) {
-  return (
-    <div className={cn('flex items-center gap-3 text-xs font-semibold text-muted-foreground', className)}>
-      <span className="flex items-center gap-1">
-        <Eye className="size-3.5" /> {views}
-      </span>
-      <span className="flex items-center gap-1">
-        <Heart className="size-3.5" /> {likes}
-      </span>
-      <span className="flex items-center gap-1">
-        <MessageSquare className="size-3.5" /> {comments}
-      </span>
-    </div>
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button variant="ghost">Fermer</Button>
+          </DialogClose>
+          <Button disabled={sel.length === 0 || share.isPending} onClick={submit}>Partager</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }
