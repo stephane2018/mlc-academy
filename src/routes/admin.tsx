@@ -1,4 +1,4 @@
-import { Outlet, Link, createFileRoute, useLocation } from '@tanstack/react-router'
+import { Outlet, Link, createFileRoute, useLocation, useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
 import { Search, Bell, Menu, User, Settings, LogOut } from '@/components/icons'
 import { ThemeToggle } from '@/components/theme'
@@ -18,6 +18,7 @@ import { toast } from 'sonner'
 import { AdminSidebar } from '@/components/admin/sidebar'
 import { pageTitles } from '@/components/admin/nav'
 import { RequireRole } from '@/components/auth/require-role'
+import { useAuth } from '@/lib/auth'
 import { useRealtimeSync } from '@/hooks/use-realtime'
 import { useNotifications } from '@/hooks/use-notifications'
 
@@ -37,6 +38,13 @@ function AdminLayout() {
   const title = pageTitles[pathname] ?? 'Administration'
   const { data: notifs = [] } = useNotifications()
   const adminUnread = notifs.filter((n) => !n.read).length
+  const { signOut } = useAuth()
+  const navigate = useNavigate()
+
+  async function handleLogout() {
+    await signOut()
+    navigate({ to: '/', replace: true })
+  }
 
   return (
     <div className="flex min-h-dvh bg-background">
@@ -143,10 +151,7 @@ function AdminLayout() {
                 Paramètres
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem
-                variant="destructive"
-                onClick={() => toast.success('Déconnexion (démo)')}
-              >
+              <DropdownMenuItem variant="destructive" onClick={handleLogout}>
                 <LogOut className="size-4" />
                 Déconnexion
               </DropdownMenuItem>

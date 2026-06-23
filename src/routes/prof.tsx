@@ -1,5 +1,5 @@
-import { Outlet, Link, useLocation, createFileRoute } from '@tanstack/react-router'
-import { LayoutDashboard, CalendarDays, Users, Search, Bell, GraduationCap, Library, Boxes, MessageSquare, FileText, Dumbbell, Store } from '@/components/icons'
+import { Outlet, Link, useLocation, useNavigate, createFileRoute } from '@tanstack/react-router'
+import { LayoutDashboard, CalendarDays, Users, Search, Bell, GraduationCap, Library, Boxes, MessageSquare, FileText, Dumbbell, Store, LogOut } from '@/components/icons'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -8,6 +8,7 @@ import { Menu } from '@/components/icons'
 import { cn } from '@/lib/utils'
 import { ThemeToggle } from '@/components/theme'
 import { RequireRole } from '@/components/auth/require-role'
+import { useAuth } from '@/lib/auth'
 import { useRealtimeSync } from '@/hooks/use-realtime'
 import { useNotifications } from '@/hooks/use-notifications'
 
@@ -135,6 +136,13 @@ function ProfLayout() {
   const title = pageTitles[pathname] ?? 'Espace Prof'
   const { data: notifs = [] } = useNotifications()
   const profUnread = notifs.filter((n) => !n.read).length
+  const { signOut } = useAuth()
+  const navigate = useNavigate()
+
+  async function handleLogout() {
+    await signOut()
+    navigate({ to: '/', replace: true })
+  }
 
   return (
     <div className="min-h-dvh bg-background text-foreground">
@@ -197,6 +205,16 @@ function ProfLayout() {
                     </span>
                   )}
                 </Link>
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="shrink-0"
+                aria-label="Se déconnecter"
+                title="Se déconnecter"
+                onClick={handleLogout}
+              >
+                <LogOut className="size-5" />
               </Button>
             </div>
           </header>

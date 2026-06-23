@@ -1,5 +1,5 @@
-import { Outlet, Link, useLocation, createFileRoute } from '@tanstack/react-router'
-import { GraduationCap } from '@/components/icons'
+import { Outlet, Link, useLocation, useNavigate, createFileRoute } from '@tanstack/react-router'
+import { GraduationCap, LogOut } from '@/components/icons'
 import { BellBadge } from '@/components/notifications'
 import { ThemeToggle } from '@/components/theme'
 import { Button } from '@/components/ui/button'
@@ -13,6 +13,7 @@ import {
 import { cn } from '@/lib/utils'
 import { RequireRole } from '@/components/auth/require-role'
 import { ParentChildProvider, useSelectedChild } from '@/lib/parent-child'
+import { useAuth } from '@/lib/auth'
 import { useRealtimeSync } from '@/hooks/use-realtime'
 import { useNotifications } from '@/hooks/use-notifications'
 
@@ -56,6 +57,13 @@ function ParentLayout() {
   const { pathname } = useLocation()
   const { data: notifs = [] } = useNotifications()
   const parentUnread = notifs.filter((n) => !n.read).length
+  const { signOut } = useAuth()
+  const navigate = useNavigate()
+
+  async function handleLogout() {
+    await signOut()
+    navigate({ to: '/', replace: true })
+  }
 
   return (
     <ParentChildProvider>
@@ -82,6 +90,16 @@ function ParentLayout() {
               </Link>
             </Button>
             <ChildSelect />
+            <Button
+              variant="ghost"
+              size="sm"
+              className="shrink-0"
+              aria-label="Se déconnecter"
+              title="Se déconnecter"
+              onClick={handleLogout}
+            >
+              <LogOut className="size-5" />
+            </Button>
           </div>
         </div>
 
