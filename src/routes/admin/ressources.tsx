@@ -252,7 +252,7 @@ function ResourceDialog({
             <div className="space-y-2">
               <Label>Thème</Label>
               <Select
-                value={form.themeId || undefined}
+                value={form.themeId}
                 onValueChange={(v) => set('themeId', v)}
                 disabled={themes.length === 0}
               >
@@ -270,7 +270,7 @@ function ResourceDialog({
             </div>
             <div className="space-y-2">
               <Label>Classe</Label>
-              <Select value={form.classId || undefined} onValueChange={(v) => set('classId', v)}>
+              <Select value={form.classId} onValueChange={(v) => set('classId', v)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Choisir" />
                 </SelectTrigger>
