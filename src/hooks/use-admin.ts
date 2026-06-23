@@ -7,6 +7,9 @@ import type { Pagination } from '@/services/assignments'
 export function useManagers() {
   return useQuery({ queryKey: ['admin', 'managers'], queryFn: () => adminService.managers() })
 }
+export function useManagerCapabilities() {
+  return useQuery({ queryKey: ['admin', 'capabilities'], queryFn: () => adminService.capabilities() })
+}
 export function useSetManagerPermissions() {
   const qc = useQueryClient()
   return useMutation({

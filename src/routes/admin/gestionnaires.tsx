@@ -17,7 +17,8 @@ import {
 } from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
 import { avatarTint } from '@/components/student/parts'
-import { useManagers, useSetManagerPermissions } from '@/hooks/use-admin'
+import { useManagers, useManagerCapabilities, useSetManagerPermissions } from '@/hooks/use-admin'
+import type { Capability } from '@/services/admin'
 
 export const Route = createFileRoute('/admin/gestionnaires')({
   component: AdminGestionnaires,
@@ -25,25 +26,11 @@ export const Route = createFileRoute('/admin/gestionnaires')({
 
 type Manager = { id: string; name: string; email: string; caps: string[] }
 
-// Catalogue fixe des capacités back-office assignables à un gestionnaire.
-const ADMIN_CAPS = [
-  { key: 'admin.dashboard', label: "Vue d'ensemble" },
-  { key: 'admin.users', label: 'Utilisateurs' },
-  { key: 'admin.classes', label: 'Classes' },
-  { key: 'admin.subjects', label: 'Matières' },
-  { key: 'admin.resources', label: 'Ressources' },
-  { key: 'admin.questions', label: 'Questions' },
-  { key: 'admin.exams', label: 'Examens' },
-  { key: 'admin.subscriptions', label: 'Abonnements' },
-  { key: 'admin.marketplace', label: 'Marketplace' },
-  { key: 'admin.permissions', label: 'Permissions' },
-  { key: 'admin.notifications', label: 'Notifications' },
-  { key: 'admin.settings', label: 'Paramètres' },
-  { key: 'admin.support', label: 'Support' },
-] as const
-
-const CAP_KEYS = ADMIN_CAPS.map((c) => c.key)
-const CAP_LABEL = new Map<string, string>(ADMIN_CAPS.map((c) => [c.key, c.label]))
+/** Titre de groupe lisible dérivé d'une catégorie BD (ex. 'admin_contenu' → 'Contenu'). */
+function categoryTitle(category: string): string {
+  const base = category.replace(/^admin_?/, '').replace(/_/g, ' ').trim() || 'Général'
+  return base.charAt(0).toUpperCase() + base.slice(1)
+}
 
 const TH = 'px-5 py-3 font-semibold'
 const THEAD =
@@ -51,9 +38,12 @@ const THEAD =
 
 function AdminGestionnaires() {
   const { data, isLoading, isError } = useManagers()
+  const { data: capsData } = useManagerCapabilities()
   const [openId, setOpenId] = useState<string | null>(null)
 
   const managers = data ?? []
+  const catalog = capsData ?? []
+  const labelByKey = useMemo(() => new Map(catalog.map((c) => [c.key, c.label])), [catalog])
   const selected = managers.find((m) => m.id === openId) ?? null
 
   return (
@@ -99,7 +89,7 @@ function AdminGestionnaires() {
                 </StateRow>
               ) : (
                 managers.map((m) => (
-                  <ManagerRow key={m.id} manager={m} onOpen={() => setOpenId(m.id)} />
+                  <ManagerRow key={m.id} manager={m} labelByKey={labelByKey} onOpen={() => setOpenId(m.id)} />
                 ))
               )}
             </tbody>
@@ -107,7 +97,12 @@ function AdminGestionnaires() {
         </div>
       </Card>
 
-      <PermissionsDialog manager={selected} onClose={() => setOpenId(null)} />
+      <PermissionsDialog
+        manager={selected}
+        catalog={catalog}
+        labelByKey={labelByKey}
+        onClose={() => setOpenId(null)}
+      />
     </div>
   )
 }
@@ -122,8 +117,17 @@ function StateRow({ children }: { children: React.ReactNode }) {
   )
 }
 
-function ManagerRow({ manager: m, onOpen }: { manager: Manager; onOpen: () => void }) {
-  const granted = m.caps.filter((c) => CAP_KEYS.includes(c as (typeof CAP_KEYS)[number]))
+function ManagerRow({
+  manager: m,
+  labelByKey,
+  onOpen,
+}: {
+  manager: Manager
+  labelByKey: Map<string, string>
+  onOpen: () => void
+}) {
+  // N'affiche que les caps présentes au catalogue (BD) — ignore les clés obsolètes.
+  const granted = m.caps.filter((c) => labelByKey.has(c))
 
   return (
     <tr className="transition-colors hover:bg-secondary/40">
@@ -153,7 +157,7 @@ function ManagerRow({ manager: m, onOpen }: { manager: Manager; onOpen: () => vo
           </Badge>
           {granted.map((c) => (
             <Badge key={c} variant="secondary" className="bg-secondary text-muted-foreground">
-              {CAP_LABEL.get(c) ?? c}
+              {labelByKey.get(c) ?? c}
             </Badge>
           ))}
         </div>
@@ -172,9 +176,13 @@ function ManagerRow({ manager: m, onOpen }: { manager: Manager; onOpen: () => vo
 
 function PermissionsDialog({
   manager: m,
+  catalog,
+  labelByKey,
   onClose,
 }: {
   manager: Manager | null
+  catalog: Capability[]
+  labelByKey: Map<string, string>
   onClose: () => void
 }) {
   const setPermissions = useSetManagerPermissions()
@@ -182,14 +190,25 @@ function PermissionsDialog({
 
   // Synchronise les cases avec le gestionnaire sélectionné à l'ouverture.
   useEffect(() => {
-    setCaps(m ? m.caps.filter((c) => CAP_KEYS.includes(c as (typeof CAP_KEYS)[number])) : [])
-  }, [m])
+    setCaps(m ? m.caps.filter((c) => labelByKey.has(c)) : [])
+  }, [m, labelByKey])
 
   const dirty = useMemo(() => {
     if (!m) return false
-    const current = m.caps.filter((c) => CAP_KEYS.includes(c as (typeof CAP_KEYS)[number]))
+    const current = m.caps.filter((c) => labelByKey.has(c))
     return current.length !== caps.length || current.some((c) => !caps.includes(c))
-  }, [m, caps])
+  }, [m, caps, labelByKey])
+
+  // Capacités groupées par catégorie (issues du catalogue BD).
+  const grouped = useMemo(() => {
+    const map = new Map<string, Capability[]>()
+    for (const cap of catalog) {
+      const list = map.get(cap.category) ?? []
+      list.push(cap)
+      map.set(cap.category, list)
+    }
+    return [...map.entries()]
+  }, [catalog])
 
   const toggle = (key: string) =>
     setCaps((prev) => (prev.includes(key) ? prev.filter((c) => c !== key) : [...prev, key]))
@@ -220,20 +239,37 @@ function PermissionsDialog({
               </DialogDescription>
             </DialogHeader>
 
-            <ul className="grid gap-2 sm:grid-cols-2">
-              {ADMIN_CAPS.map((cap) => (
-                <li
-                  key={cap.key}
-                  className="flex items-center justify-between gap-2 rounded-xl border border-border px-3 py-2.5"
-                >
-                  <span className="text-sm">{cap.label}</span>
-                  <Switch
-                    checked={caps.includes(cap.key)}
-                    onCheckedChange={() => toggle(cap.key)}
-                  />
-                </li>
-              ))}
-            </ul>
+            {grouped.length === 0 ? (
+              <p className="py-6 text-center text-sm text-muted-foreground">
+                Aucune capacité disponible dans le catalogue.
+              </p>
+            ) : (
+              <div className="space-y-4">
+                {grouped.map(([category, caps_]) => (
+                  <div key={category}>
+                    <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      {categoryTitle(category)}
+                    </p>
+                    <ul className="grid gap-2 sm:grid-cols-2">
+                      {caps_.map((cap) => (
+                        <li
+                          key={cap.key}
+                          className="flex items-center justify-between gap-2 rounded-xl border border-border px-3 py-2.5"
+                        >
+                          <span className="text-sm">
+                            {cap.label}
+                            {cap.description && (
+                              <span className="block text-xs text-muted-foreground">{cap.description}</span>
+                            )}
+                          </span>
+                          <Switch checked={caps.includes(cap.key)} onCheckedChange={() => toggle(cap.key)} />
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            )}
 
             <DialogFooter>
               <Button variant="ghost" onClick={onClose} disabled={setPermissions.isPending}>
