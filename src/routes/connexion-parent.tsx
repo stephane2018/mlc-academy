@@ -9,7 +9,6 @@ import {
   ArrowRight,
   Check,
   GraduationCap,
-  Heart,
   Link2,
   Lock,
   ShieldCheck,
@@ -20,23 +19,50 @@ import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
 
 export const Route = createFileRoute('/connexion-parent')({
-  component: ConnexionParentPage,
+  component: ConnexionPage,
 })
 
+/** Public visé : élève (pseudo + code) vs adulte parent/prof/admin (email + mot de passe). */
+type Audience = 'eleve' | 'autre'
+/** Sous-mode du parcours adulte. */
 type Mode = 'login' | 'signup' | 'link'
 
-const reassurances = [
-  'Suivez la progression de votre enfant en temps réel',
-  'Rapports hebdomadaires par email, sans effort',
-  'Lecture seule : aucune donnée pédagogique modifiable',
-] as const
+/** Contenu du panneau gauche (desktop) selon le public. */
+const ASIDE = {
+  eleve: {
+    Icon: GraduationCap,
+    eyebrow: 'Espace élève',
+    title: "Réviser en s'amusant",
+    intro:
+      'Reprends ta progression, gagne des points et relève des défis — sans aucune donnée personnelle.',
+    points: [
+      'Gagne des points et débloque des badges',
+      'Progresse à ton rythme, matière par matière',
+      'Juste un pseudo et un code : pas d’email',
+    ],
+  },
+  autre: {
+    Icon: ShieldCheck,
+    eyebrow: 'Parent · Professeur · Admin',
+    title: 'Accédez à votre espace',
+    intro:
+      'Connectez-vous avec votre adresse email. Vous êtes redirigé automatiquement vers l’espace correspondant à votre rôle.',
+    points: [
+      'Suivez la progression en temps réel',
+      'Rapports et tableaux de bord clairs',
+      'Accès sécurisé selon votre rôle',
+    ],
+  },
+} as const
 
-function ConnexionParentPage() {
+function ConnexionPage() {
+  const [audience, setAudience] = useState<Audience>('eleve')
   const [mode, setMode] = useState<Mode>('login')
+  const aside = ASIDE[audience]
 
   return (
     <div className="flex min-h-dvh bg-background">
-      {/* Panneau gauche (desktop) : pitch + réassurance */}
+      {/* Panneau gauche (desktop) : pitch adapté au public */}
       <aside className="hidden w-1/2 flex-col justify-between bg-gradient-to-br from-brand to-indigo-600 p-12 text-white lg:flex">
         <div className="flex items-center gap-2">
           <span className="grid size-11 place-items-center rounded-2xl bg-white/15 font-heading text-2xl font-extrabold text-white">
@@ -47,22 +73,17 @@ function ConnexionParentPage() {
 
         <div className="max-w-md">
           <span className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em]">
-            <Heart className="size-4" /> Espace parent
+            <aside.Icon className="size-4" /> {aside.eyebrow}
           </span>
-          <h2 className="mt-4 font-heading text-4xl font-extrabold leading-tight">
-            Suivez la progression de votre enfant
-          </h2>
-          <p className="mt-3 text-lg text-white/80">
-            Un tableau de bord clair pour rester proche de ses apprentissages, sans jamais
-            perturber son travail.
-          </p>
+          <h2 className="mt-4 font-heading text-4xl font-extrabold leading-tight">{aside.title}</h2>
+          <p className="mt-3 text-lg text-white/80">{aside.intro}</p>
           <ul className="mt-7 space-y-3">
-            {reassurances.map((r) => (
-              <li key={r} className="flex items-start gap-3 text-sm text-white/90">
+            {aside.points.map((p) => (
+              <li key={p} className="flex items-start gap-3 text-sm text-white/90">
                 <span className="mt-0.5 grid size-6 shrink-0 place-items-center rounded-full bg-white/15">
                   <Check className="size-4" />
                 </span>
-                {r}
+                {p}
               </li>
             ))}
           </ul>
@@ -71,13 +92,22 @@ function ConnexionParentPage() {
         <div className="flex items-start gap-3 rounded-xl bg-white/10 p-4">
           <Lock className="mt-0.5 size-5 shrink-0 text-white" />
           <p className="text-sm leading-snug text-white/85">
-            Accès en <strong>lecture seule</strong> : vous consultez les résultats et le temps de
-            travail, mais aucune donnée pédagogique n&apos;est modifiable depuis votre compte.
+            {audience === 'eleve' ? (
+              <>
+                Connexion <strong>au pseudo et au code</strong> : aucune donnée personnelle n&apos;est
+                demandée à l&apos;élève (RGPD mineur).
+              </>
+            ) : (
+              <>
+                Accès <strong>sécurisé</strong> : vos droits dépendent de votre rôle (parent en lecture
+                seule, professeur, administrateur).
+              </>
+            )}
           </p>
         </div>
       </aside>
 
-      {/* Panneau droit : formulaire */}
+      {/* Panneau droit : choix du public + formulaire */}
       <div className="flex min-h-dvh w-full flex-col lg:w-1/2 lg:items-center lg:justify-center">
         <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col bg-background sm:border-x sm:border-border lg:min-h-0 lg:border-0">
           {/* Header */}
@@ -86,35 +116,26 @@ function ConnexionParentPage() {
               <span className="grid size-9 place-items-center rounded-xl bg-brand font-heading text-lg font-extrabold text-white">
                 M
               </span>
-              <span className="font-heading text-sm font-bold text-foreground">
-                MLC Academy
-              </span>
-            </Link>
-            <Link
-              to="/onboarding"
-              className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-semibold text-brand hover:underline"
-            >
-              <GraduationCap className="size-4" /> Espace élève
+              <span className="font-heading text-sm font-bold text-foreground">MLC Academy</span>
             </Link>
           </header>
 
           <div className="flex flex-1 flex-col px-5 pb-8 pt-6">
-            {/* Bascule de mode */}
-            <div className="grid grid-cols-3 gap-1 rounded-xl bg-secondary p-1">
+            {/* Choix du public : élève vs autre */}
+            <div className="grid grid-cols-2 gap-1 rounded-xl bg-secondary p-1">
               {(
                 [
-                  ['login', 'Connexion'],
-                  ['signup', 'Créer'],
-                  ['link', 'Lier'],
+                  ['eleve', 'Je suis un élève'],
+                  ['autre', 'Je ne suis pas un élève'],
                 ] as const
               ).map(([value, label]) => (
                 <button
                   key={value}
                   type="button"
-                  onClick={() => setMode(value)}
+                  onClick={() => setAudience(value)}
                   className={cn(
-                    'rounded-lg py-2 text-sm font-semibold transition-colors',
-                    mode === value
+                    'rounded-lg px-2 py-2 text-sm font-semibold transition-colors',
+                    audience === value
                       ? 'bg-card text-foreground shadow-sm'
                       : 'text-muted-foreground hover:text-foreground',
                   )}
@@ -124,28 +145,132 @@ function ConnexionParentPage() {
               ))}
             </div>
 
-            <div className="flex-1 pt-7">
-              {mode === 'login' && <LoginForm />}
-              {mode === 'signup' && <SignupForm />}
-              {mode === 'link' && <LinkChildForm />}
-            </div>
+            {audience === 'eleve' ? (
+              <div className="flex-1 pt-7">
+                <StudentLoginForm />
+              </div>
+            ) : (
+              <>
+                {/* Sous-bascule du parcours adulte */}
+                <div className="mt-4 grid grid-cols-3 gap-1 rounded-xl bg-secondary p-1">
+                  {(
+                    [
+                      ['login', 'Connexion'],
+                      ['signup', 'Créer'],
+                      ['link', 'Lier'],
+                    ] as const
+                  ).map(([value, label]) => (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => setMode(value)}
+                      className={cn(
+                        'rounded-lg py-2 text-sm font-semibold transition-colors',
+                        mode === value
+                          ? 'bg-card text-foreground shadow-sm'
+                          : 'text-muted-foreground hover:text-foreground',
+                      )}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
 
-            {/* Mention email adulte */}
-            <div className="mt-6 flex items-start gap-2 rounded-xl bg-info-soft p-3">
-              <ShieldCheck className="mt-0.5 size-4 shrink-0 text-info" />
-              <p className="text-[11px] leading-snug text-muted-foreground">
-                Le compte parent utilise une adresse email : il s&apos;agit d&apos;une donnée
-                d&apos;adulte, sans la restriction RGPD applicable aux comptes mineurs.{' '}
-                <Link to="/confidentialite" className="font-semibold text-brand hover:underline">
-                  Confidentialité
-                </Link>
-                .
-              </p>
-            </div>
+                <div className="flex-1 pt-7">
+                  {mode === 'login' && <LoginForm />}
+                  {mode === 'signup' && <SignupForm />}
+                  {mode === 'link' && <LinkChildForm />}
+                </div>
+
+                {/* Mention email adulte */}
+                <div className="mt-6 flex items-start gap-2 rounded-xl bg-info-soft p-3">
+                  <ShieldCheck className="mt-0.5 size-4 shrink-0 text-info" />
+                  <p className="text-[11px] leading-snug text-muted-foreground">
+                    Les comptes parent / professeur / administrateur utilisent une adresse email
+                    (donnée d&apos;adulte).{' '}
+                    <Link to="/confidentialite" className="font-semibold text-brand hover:underline">
+                      Confidentialité
+                    </Link>
+                    .
+                  </p>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>
     </div>
+  )
+}
+
+/** Connexion élève : pseudo + code PIN à 6 chiffres. */
+function StudentLoginForm() {
+  const { signInStudent } = useAuth()
+  const navigate = useNavigate()
+  const [pseudo, setPseudo] = useState('')
+  const [pin, setPin] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!/^\d{6}$/.test(pin)) return
+    setLoading(true)
+    try {
+      await signInStudent(pseudo.trim(), pin)
+      await navigate({ to: '/eleve/dashboard' })
+    } catch {
+      toast.error('Pseudo ou code incorrect.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <form onSubmit={onSubmit}>
+      <h1 className="font-heading text-2xl font-extrabold tracking-tight">Se connecter</h1>
+      <p className="mt-1 text-sm text-muted-foreground">
+        Content de te revoir ! Entre ton pseudo et ton code.
+      </p>
+
+      <div className="mt-6 space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="login-pseudo">Pseudo</Label>
+          <Input
+            id="login-pseudo"
+            value={pseudo}
+            onChange={(e) => setPseudo(e.target.value)}
+            placeholder="MaxLeBg"
+            autoComplete="username"
+            required
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="login-pin">Code secret</Label>
+          <Input
+            id="login-pin"
+            inputMode="numeric"
+            maxLength={6}
+            value={pin}
+            onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
+            placeholder="••••••"
+            autoComplete="off"
+            className="text-center text-2xl font-bold tracking-[0.5em]"
+            required
+          />
+        </div>
+      </div>
+
+      <Button type="submit" size="lg" disabled={loading} className="mt-6 w-full rounded-xl text-base">
+        {loading ? 'Connexion…' : 'Se connecter'}
+      </Button>
+
+      <Link
+        to="/onboarding"
+        className="mt-4 block text-center text-sm font-semibold text-brand hover:underline"
+      >
+        Pas encore de compte ? Crée-en un
+      </Link>
+    </form>
   )
 }
 
@@ -161,7 +286,7 @@ function LoginForm() {
     setLoading(true)
     try {
       await signInWithPassword(email, password)
-      // Le garde de route /parent redirige vers la bonne home si le rôle diffère.
+      // Le garde de route redirige vers la home du bon rôle (parent / prof / admin).
       await navigate({ to: '/parent' })
     } catch {
       toast.error('Email ou mot de passe incorrect.')
@@ -174,7 +299,7 @@ function LoginForm() {
     <form onSubmit={onSubmit}>
       <h1 className="font-heading text-2xl font-extrabold tracking-tight">Se connecter</h1>
       <p className="mt-1 text-sm text-muted-foreground">
-        Accédez au suivi de votre enfant.
+        Parent, professeur ou administrateur.
       </p>
 
       <div className="mt-6 space-y-4">
@@ -185,7 +310,7 @@ function LoginForm() {
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="parent@email.com"
+            placeholder="vous@email.com"
             autoComplete="email"
             required
           />
