@@ -64,3 +64,16 @@ export function useAttachExamQuestions() {
     onSuccess: () => qc.invalidateQueries({ queryKey: keys.all }),
   })
 }
+
+/** Remplace l'ensemble des questions d'un examen (builder de la page dédiée). */
+export function useSetExamQuestions() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, questions }: { id: string; questions: ComposedExamQuestion[] }) =>
+      adminExamsService.setQuestions(id, questions),
+    onSuccess: (_data, { id }) => {
+      qc.invalidateQueries({ queryKey: keys.all })
+      qc.invalidateQueries({ queryKey: keys.detail(id) })
+    },
+  })
+}

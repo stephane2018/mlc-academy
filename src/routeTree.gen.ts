@@ -76,6 +76,7 @@ import { Route as EleveSalleIdRouteImport } from './routes/eleve/salle/$id'
 import { Route as EleveExamensIdRouteImport } from './routes/eleve/examens/$id'
 import { Route as EleveDevoirsIdRouteImport } from './routes/eleve/devoirs/$id'
 import { Route as EleveBibliothequeIdRouteImport } from './routes/eleve/bibliotheque/$id'
+import { Route as AdminExamensExamIdRouteImport } from './routes/admin/examens.$examId'
 
 const ProfRoute = ProfRouteImport.update({
   id: '/prof',
@@ -412,6 +413,11 @@ const EleveBibliothequeIdRoute = EleveBibliothequeIdRouteImport.update({
   path: '/bibliotheque/$id',
   getParentRoute: () => EleveRoute,
 } as any)
+const AdminExamensExamIdRoute = AdminExamensExamIdRouteImport.update({
+  id: '/$examId',
+  path: '/$examId',
+  getParentRoute: () => AdminExamensRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -425,7 +431,7 @@ export interface FileRoutesByFullPath {
   '/prof': typeof ProfRouteWithChildren
   '/admin/abonnements': typeof AdminAbonnementsRoute
   '/admin/classes': typeof AdminClassesRoute
-  '/admin/examens': typeof AdminExamensRoute
+  '/admin/examens': typeof AdminExamensRouteWithChildren
   '/admin/gestionnaires': typeof AdminGestionnairesRoute
   '/admin/marketplace': typeof AdminMarketplaceRoute
   '/admin/matieres': typeof AdminMatieresRoute
@@ -463,6 +469,7 @@ export interface FileRoutesByFullPath {
   '/eleve/': typeof EleveIndexRoute
   '/parent/': typeof ParentIndexRoute
   '/prof/': typeof ProfIndexRoute
+  '/admin/examens/$examId': typeof AdminExamensExamIdRoute
   '/eleve/bibliotheque/$id': typeof EleveBibliothequeIdRoute
   '/eleve/devoirs/$id': typeof EleveDevoirsIdRoute
   '/eleve/examens/$id': typeof EleveExamensIdRoute
@@ -490,7 +497,7 @@ export interface FileRoutesByTo {
   '/onboarding': typeof OnboardingRoute
   '/admin/abonnements': typeof AdminAbonnementsRoute
   '/admin/classes': typeof AdminClassesRoute
-  '/admin/examens': typeof AdminExamensRoute
+  '/admin/examens': typeof AdminExamensRouteWithChildren
   '/admin/gestionnaires': typeof AdminGestionnairesRoute
   '/admin/marketplace': typeof AdminMarketplaceRoute
   '/admin/matieres': typeof AdminMatieresRoute
@@ -528,6 +535,7 @@ export interface FileRoutesByTo {
   '/eleve': typeof EleveIndexRoute
   '/parent': typeof ParentIndexRoute
   '/prof': typeof ProfIndexRoute
+  '/admin/examens/$examId': typeof AdminExamensExamIdRoute
   '/eleve/bibliotheque/$id': typeof EleveBibliothequeIdRoute
   '/eleve/devoirs/$id': typeof EleveDevoirsIdRoute
   '/eleve/examens/$id': typeof EleveExamensIdRoute
@@ -560,7 +568,7 @@ export interface FileRoutesById {
   '/prof': typeof ProfRouteWithChildren
   '/admin/abonnements': typeof AdminAbonnementsRoute
   '/admin/classes': typeof AdminClassesRoute
-  '/admin/examens': typeof AdminExamensRoute
+  '/admin/examens': typeof AdminExamensRouteWithChildren
   '/admin/gestionnaires': typeof AdminGestionnairesRoute
   '/admin/marketplace': typeof AdminMarketplaceRoute
   '/admin/matieres': typeof AdminMatieresRoute
@@ -598,6 +606,7 @@ export interface FileRoutesById {
   '/eleve/': typeof EleveIndexRoute
   '/parent/': typeof ParentIndexRoute
   '/prof/': typeof ProfIndexRoute
+  '/admin/examens/$examId': typeof AdminExamensExamIdRoute
   '/eleve/bibliotheque/$id': typeof EleveBibliothequeIdRoute
   '/eleve/devoirs/$id': typeof EleveDevoirsIdRoute
   '/eleve/examens/$id': typeof EleveExamensIdRoute
@@ -669,6 +678,7 @@ export interface FileRouteTypes {
     | '/eleve/'
     | '/parent/'
     | '/prof/'
+    | '/admin/examens/$examId'
     | '/eleve/bibliotheque/$id'
     | '/eleve/devoirs/$id'
     | '/eleve/examens/$id'
@@ -734,6 +744,7 @@ export interface FileRouteTypes {
     | '/eleve'
     | '/parent'
     | '/prof'
+    | '/admin/examens/$examId'
     | '/eleve/bibliotheque/$id'
     | '/eleve/devoirs/$id'
     | '/eleve/examens/$id'
@@ -803,6 +814,7 @@ export interface FileRouteTypes {
     | '/eleve/'
     | '/parent/'
     | '/prof/'
+    | '/admin/examens/$examId'
     | '/eleve/bibliotheque/$id'
     | '/eleve/devoirs/$id'
     | '/eleve/examens/$id'
@@ -1306,13 +1318,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EleveBibliothequeIdRouteImport
       parentRoute: typeof EleveRoute
     }
+    '/admin/examens/$examId': {
+      id: '/admin/examens/$examId'
+      path: '/$examId'
+      fullPath: '/admin/examens/$examId'
+      preLoaderRoute: typeof AdminExamensExamIdRouteImport
+      parentRoute: typeof AdminExamensRoute
+    }
   }
 }
+
+interface AdminExamensRouteChildren {
+  AdminExamensExamIdRoute: typeof AdminExamensExamIdRoute
+}
+
+const AdminExamensRouteChildren: AdminExamensRouteChildren = {
+  AdminExamensExamIdRoute: AdminExamensExamIdRoute,
+}
+
+const AdminExamensRouteWithChildren = AdminExamensRoute._addFileChildren(
+  AdminExamensRouteChildren,
+)
 
 interface AdminRouteChildren {
   AdminAbonnementsRoute: typeof AdminAbonnementsRoute
   AdminClassesRoute: typeof AdminClassesRoute
-  AdminExamensRoute: typeof AdminExamensRoute
+  AdminExamensRoute: typeof AdminExamensRouteWithChildren
   AdminGestionnairesRoute: typeof AdminGestionnairesRoute
   AdminMarketplaceRoute: typeof AdminMarketplaceRoute
   AdminMatieresRoute: typeof AdminMatieresRoute
@@ -1329,7 +1360,7 @@ interface AdminRouteChildren {
 const AdminRouteChildren: AdminRouteChildren = {
   AdminAbonnementsRoute: AdminAbonnementsRoute,
   AdminClassesRoute: AdminClassesRoute,
-  AdminExamensRoute: AdminExamensRoute,
+  AdminExamensRoute: AdminExamensRouteWithChildren,
   AdminGestionnairesRoute: AdminGestionnairesRoute,
   AdminMarketplaceRoute: AdminMarketplaceRoute,
   AdminMatieresRoute: AdminMatieresRoute,
