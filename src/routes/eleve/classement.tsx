@@ -52,7 +52,8 @@ function Trend({ trend }: { trend: Row['trend'] }) {
 }
 
 /** Un emplacement du podium (top 3). */
-function PodiumSpot({ row, place }: { row: Row; place: 1 | 2 | 3 }) {
+function PodiumSpot({ row, place }: { row: Row | undefined; place: 1 | 2 | 3 }) {
+  if (!row) return null
   const config = {
     1: {
       height: 'h-32 sm:h-40',
@@ -146,11 +147,10 @@ function ClassementPage() {
   const myClassCode = weekly.find((r) => r.studentId === myId)?.classCode
   const defaultClass = myClassCode ?? catalogClasses[0]?.code ?? '—'
   const me = leaderboard.find((r) => r.me) ?? leaderboard[leaderboard.length - 1]
+  // Podium par POSITION (leaderboard déjà trié par rang) — robuste aux ex æquo
+  // et aux rangs non séquentiels, contrairement à un find sur rank === N.
   const top3 = leaderboard.slice(0, 3)
-  const podium =
-    top3.length === 3
-      ? { 1: top3.find((r) => r.rank === 1), 2: top3.find((r) => r.rank === 2), 3: top3.find((r) => r.rank === 3) }
-      : null
+  const podium = top3.length === 3 ? { 1: top3[0], 2: top3[1], 3: top3[2] } : null
 
   if (isLoading) {
     return (
