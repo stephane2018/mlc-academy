@@ -7,7 +7,6 @@ import { Badge } from '@/components/ui/badge'
 import { Switch } from '@/components/ui/switch'
 import { Skeleton } from '@/components/ui/skeleton'
 import { PageHero } from '@/components/blocks'
-import { permissionCategories } from '@/lib/mock'
 import { cn } from '@/lib/utils'
 import { useRolePermissions, useSetRolePermission } from '@/hooks/use-role-permissions'
 import type { EditableRole, RolePermission } from '@/services/role-permissions'
@@ -40,9 +39,10 @@ const ROLE_TONE: Record<EditableRole, string> = {
   eleve: 'bg-brand-soft text-brand',
 }
 
-/** Libellé d'une catégorie (fallback sur la clé brute si inconnue). */
-function categoryLabel(key: string): string {
-  return permissionCategories.find((c) => c.key === key)?.label ?? key
+/** Libellé d'une catégorie dérivé de sa clé BD (ex. 'admin_contenu' → 'Contenu'). */
+function categoryLabel(category: string): string {
+  const base = category.replace(/^admin_/, '').replace(/_/g, ' ').trim()
+  return base ? base.charAt(0).toUpperCase() + base.slice(1) : category
 }
 
 function AdminPermissions() {
@@ -72,13 +72,12 @@ function AdminPermissions() {
     [granted],
   )
 
-  // Catégories effectivement présentes, dans l'ordre du catalogue mock.
+  // Catégories présentes, dans l'ordre d'apparition du catalogue API
+  // (l'endpoint trie déjà par catégorie puis `ordre`).
   const categories = useMemo(() => {
-    const present = new Set(permissions.map((p) => p.category))
-    const ordered: string[] = permissionCategories.map((c) => c.key).filter((k) => present.has(k))
-    // Catégories inconnues du mock ajoutées à la fin.
-    const extra = [...present].filter((k) => !ordered.includes(k))
-    return [...ordered, ...extra]
+    const seen: string[] = []
+    for (const p of permissions) if (!seen.includes(p.category)) seen.push(p.category)
+    return seen
   }, [permissions])
 
   const toggle = (role: EditableRole, perm: RolePermission) => {
