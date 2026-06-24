@@ -9,7 +9,6 @@ import {
   Shield,
   ShieldCheck,
   Lock,
-  Copy,
   Trophy,
   Zap,
   Flame,
@@ -39,8 +38,8 @@ import {
 import { SectionHeader, SoftIcon } from '@/components/student/parts'
 import { SparkArea } from '@/components/blocks'
 import { cn } from '@/lib/utils'
-import { plans } from '@/lib/mock'
 import { useAdminSettings, useUpdateSetting } from '@/hooks/use-admin-settings'
+import { useAdminPlans } from '@/hooks/use-admin-billing'
 import type { AppSettings, SettingValue } from '@/services/admin-settings'
 
 export const Route = createFileRoute('/admin/parametres')({
@@ -53,20 +52,14 @@ export const Route = createFileRoute('/admin/parametres')({
 
 type Tone = 'brand' | 'teal' | 'amber' | 'success' | 'info' | 'violet'
 
-/* Stripe — clés API factices masquées (lecture seule, gérées par Stripe) */
-type ApiKeyRow = { id: string; label: string; value: string }
+/* Stripe — secrets gérés côté serveur (variables d'environnement / Dashboard Stripe),
+   jamais exposés par l'API : on affiche seulement leur intitulé, sans valeur inventée. */
+type ApiKeyRow = { id: string; label: string }
 const stripeKeys: ApiKeyRow[] = [
-  { id: 'pk', label: 'Clé publiable', value: 'pk_live_••••••••••••••••••••4f2a' },
-  { id: 'sk', label: 'Clé secrète', value: 'sk_live_••••••••••••••••••••9c71' },
-  { id: 'wh', label: 'Secret webhook', value: 'whsec_••••••••••••••••••0b8e' },
+  { id: 'pk', label: 'Clé publiable' },
+  { id: 'sk', label: 'Clé secrète' },
+  { id: 'wh', label: 'Secret webhook' },
 ]
-
-/* Stripe — formules → prix Stripe (basé sur plans de @/lib/mock) */
-const planPriceIds: Record<string, string> = {
-  Découverte: 'price_••••free',
-  Premium: 'price_••••1Pr9',
-  Famille: 'price_••••1Fm4',
-}
 
 /* Stripe — moyens de paiement → clé app_settings `payment_method_<method>` */
 type PaymentMethod = { id: string; label: string; method: string; icon: IconComponent; defaultEnabled: boolean }
@@ -136,6 +129,18 @@ function stringSetting(data: AppSettings | undefined, key: string, fallback: str
   return typeof v === 'string' && v.length > 0 ? v : fallback
 }
 
+/* Formatage d'une formule (`/admin/plans`) pour le tableau Stripe */
+function formatPrice(cents: number): string {
+  if (cents <= 0) return 'Gratuit'
+  return (cents / 100).toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })
+}
+
+function formatPeriod(period: string | null): string {
+  if (!period) return '—'
+  const map: Record<string, string> = { month: '/mois', year: '/an', week: '/semaine', day: '/jour' }
+  return map[period] ?? period
+}
+
 /* ------------------------------------------------------------------ */
 /* Navigation de sections                                              */
 /* ------------------------------------------------------------------ */
@@ -192,24 +197,17 @@ function CardShell({
   )
 }
 
-/* Champ secret en lecture seule + bouton Copier visuel */
+/* Intitulé d'un secret + état de présence (la valeur reste côté serveur, jamais affichée) */
 function SecretField({ field }: { field: ApiKeyRow }) {
   return (
     <div className="space-y-1.5">
-      <Label className="text-muted-foreground" htmlFor={`key-${field.id}`}>
+      <Label className="text-muted-foreground">
         <Lock className="size-3.5" />
         {field.label}
       </Label>
-      <div className="flex items-center gap-2">
-        <Input
-          id={`key-${field.id}`}
-          readOnly
-          value={field.value}
-          className="h-9 font-mono tracking-tight text-muted-foreground"
-        />
-        <Button type="button" variant="outline" size="icon" className="size-9 shrink-0" aria-label="Copier">
-          <Copy className="size-4" />
-        </Button>
+      <div className="flex h-9 items-center gap-2 rounded-md border border-border bg-secondary/40 px-3 text-sm text-muted-foreground">
+        <ShieldCheck className="size-4 shrink-0 text-success" />
+        Gérée côté serveur
       </div>
     </div>
   )
@@ -309,6 +307,7 @@ function AdminParametres() {
   const [section, setSection] = useState<SectionId>('stripe')
   const { data, isLoading, isError } = useAdminSettings()
   const updateSetting = useUpdateSetting()
+  const plansQ = useAdminPlans()
 
   /* Stripe — clés app_settings backées : stripe_test_mode + payment_method_<method> */
   const stripeTestMode = boolSetting(data, 'stripe_test_mode', false)
@@ -490,20 +489,38 @@ function AdminParametres() {
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-border">
-                            {plans.map((plan) => (
-                              <tr key={plan.id} className="transition-colors hover:bg-secondary/40">
-                                <td className="px-5 py-3 font-medium">{plan.name}</td>
-                                <td className="px-5 py-3 font-semibold tabular-nums">{plan.price}</td>
-                                <td className="px-5 py-3 text-muted-foreground">
-                                  {plan.period ? plan.period : '—'}
-                                </td>
-                                <td className="px-5 py-3">
-                                  <code className="rounded-md bg-secondary px-2 py-1 font-mono text-xs text-muted-foreground">
-                                    {planPriceIds[plan.name] ?? 'price_••••'}
-                                  </code>
+                            {plansQ.isLoading ? (
+                              <tr>
+                                <td colSpan={4} className="px-5 py-6 text-center text-sm text-muted-foreground">
+                                  Chargement des formules…
                                 </td>
                               </tr>
-                            ))}
+                            ) : plansQ.isError ? (
+                              <tr>
+                                <td colSpan={4} className="px-5 py-6 text-center text-sm text-destructive">
+                                  Impossible de charger les formules.
+                                </td>
+                              </tr>
+                            ) : !plansQ.data?.length ? (
+                              <tr>
+                                <td colSpan={4} className="px-5 py-6 text-center text-sm text-muted-foreground">
+                                  Aucune formule configurée.
+                                </td>
+                              </tr>
+                            ) : (
+                              plansQ.data.map((plan) => (
+                                <tr key={plan.id} className="transition-colors hover:bg-secondary/40">
+                                  <td className="px-5 py-3 font-medium">{plan.name}</td>
+                                  <td className="px-5 py-3 font-semibold tabular-nums">{formatPrice(plan.priceCents)}</td>
+                                  <td className="px-5 py-3 text-muted-foreground">{formatPeriod(plan.period)}</td>
+                                  <td className="px-5 py-3">
+                                    <code className="rounded-md bg-secondary px-2 py-1 font-mono text-xs text-muted-foreground">
+                                      {plan.stripePriceId ?? '—'}
+                                    </code>
+                                  </td>
+                                </tr>
+                              ))
+                            )}
                           </tbody>
                         </table>
                       </div>
@@ -570,7 +587,7 @@ function AdminParametres() {
                     }
                   >
                     <div className="grid gap-4 sm:grid-cols-2">
-                      <SecretField field={{ id: 'resend', label: 'Clé API Resend', value: 're_••••••••••••••••3aD7' }} />
+                      <SecretField field={{ id: 'resend', label: 'Clé API Resend' }} />
                       <div className="space-y-1.5">
                         <Label className="text-muted-foreground" htmlFor="sender">
                           <Mail className="size-3.5" />

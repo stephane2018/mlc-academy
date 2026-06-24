@@ -6,12 +6,19 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
-import { coachSuggestions } from '@/lib/mock'
 import { useCoachHistory, useAskCoach } from '@/hooks/use-coach'
 
 export const Route = createFileRoute('/eleve/coach')({
   component: CoachPage,
 })
+
+/** Exemples de questions proposés en amorce (copie UI statique, pas de la donnée). */
+const COACH_SUGGESTIONS = [
+  'Explique-moi les fractions',
+  'Comment résoudre 2x + 5 = 17 ?',
+  'Donne-moi un exercice de géométrie',
+  "C'est quoi le théorème de Pythagore ?",
+] as const
 
 /** Message affiché dans le fil (issu du BFF ou ajouté en optimiste). */
 type Msg = { id: string; from: 'eleve' | 'coach'; text: string }
@@ -119,7 +126,7 @@ function CoachPage() {
         {/* Suggestions */}
         <div className="border-t border-border px-3 py-2.5">
           <div className="flex gap-2 overflow-x-auto pb-1">
-            {coachSuggestions.map((s) => (
+            {COACH_SUGGESTIONS.map((s) => (
               <button
                 key={s}
                 type="button"
