@@ -27,6 +27,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { QueryError } from '@/components/query-error'
 import { cn } from '@/lib/utils'
 import type { ResourceType } from '@/lib/mock'
 import { useResources, useCreateResource, useDeleteResource, useShareResource } from '@/hooks/use-resources'
@@ -48,7 +49,9 @@ const STATUS_TONE: Record<string, string> = {
 
 function ResourcesPage() {
   const [filter, setFilter] = useState<Filter>('all')
-  const { data: resources = [], isLoading } = useResources()
+  const resourcesQ = useResources()
+  const resources = resourcesQ.data ?? []
+  const isLoading = resourcesQ.isLoading
 
   const visible = resources.filter((r) => filter === 'all' || r.type === filter)
   const published = resources.filter((r) => r.status === 'publie').length
@@ -97,6 +100,8 @@ function ResourcesPage() {
 
       {isLoading ? (
         <p className="py-12 text-center text-sm text-muted-foreground">Chargement de tes ressources…</p>
+      ) : resourcesQ.isError ? (
+        <QueryError onRetry={() => resourcesQ.refetch()} />
       ) : visible.length === 0 ? (
         <p className="rounded-2xl border border-dashed border-border bg-card py-12 text-center text-sm text-muted-foreground">
           Aucune ressource. Ajoute ton premier contenu à partager.

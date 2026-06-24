@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
+import { QueryError } from '@/components/query-error'
 import {
   Dialog,
   DialogContent,
@@ -35,8 +36,12 @@ export const Route = createFileRoute('/prof/groupes/')({
 })
 
 function ProfGroupes() {
-  const { data: groups = [], isLoading } = useGroups()
-  const { data: classes = [] } = useClasses()
+  const groupsQ = useGroups()
+  const classesQ = useClasses()
+  const groups = groupsQ.data ?? []
+  const classes = classesQ.data ?? []
+  const isLoading = groupsQ.isLoading
+  const isError = groupsQ.isError || classesQ.isError
   const classLabel = (id: string) => classes.find((c) => c.id === id)?.label ?? '—'
 
   return (
@@ -50,6 +55,8 @@ function ProfGroupes() {
 
       {isLoading ? (
         <p className="py-10 text-center text-sm text-muted-foreground">Chargement de tes groupes…</p>
+      ) : isError ? (
+        <QueryError onRetry={() => { groupsQ.refetch(); classesQ.refetch() }} />
       ) : groups.length === 0 ? (
         <p className="rounded-2xl border border-dashed border-border bg-card py-12 text-center text-sm text-muted-foreground">
           Aucun groupe pour l'instant. Crée ton premier groupe et partage son code.

@@ -4,6 +4,7 @@ import { TYPE_META } from '@/components/student/resource-card'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { QueryError } from '@/components/query-error'
 import { cn } from '@/lib/utils'
 import type { ResourceType } from '@/lib/mock'
 import { useResources } from '@/hooks/use-resources'
@@ -32,7 +33,9 @@ function BackLink() {
 
 function ResourceDetail() {
   const { id } = useParams({ from: '/prof/ressources/$id' })
-  const { data: resources = [], isLoading } = useResources()
+  const resourcesQ = useResources()
+  const resources = resourcesQ.data ?? []
+  const isLoading = resourcesQ.isLoading
   const r = resources.find((x) => x.id === id)
 
   if (isLoading) {
@@ -40,6 +43,14 @@ function ResourceDetail() {
       <div className="space-y-4 2xl:mx-auto 2xl:max-w-[900px]">
         <BackLink />
         <Card className="py-12 text-center text-sm text-muted-foreground">Chargement…</Card>
+      </div>
+    )
+  }
+  if (resourcesQ.isError) {
+    return (
+      <div className="space-y-4 2xl:mx-auto 2xl:max-w-[900px]">
+        <BackLink />
+        <QueryError onRetry={() => resourcesQ.refetch()} />
       </div>
     )
   }

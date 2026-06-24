@@ -16,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { QueryError } from '@/components/query-error'
 import { useTeacherStudents } from '@/hooks/use-teacher'
 import { useReports, useSendReport, useReportPdf } from '@/hooks/use-reports'
 import type { ReportKind } from '@/services/reports'
@@ -29,7 +30,9 @@ const dateFmt = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short
 
 function ProfReports() {
   const { data: students = [] } = useTeacherStudents()
-  const { data: reports = [], isLoading } = useReports()
+  const reportsQ = useReports()
+  const reports = reportsQ.data ?? []
+  const isLoading = reportsQ.isLoading
   const send = useSendReport()
   const pdf = useReportPdf()
 
@@ -139,6 +142,8 @@ function ProfReports() {
           <p className="font-heading text-lg font-bold">Historique des rapports</p>
           {isLoading ? (
             <Card className="py-10 text-center text-sm text-muted-foreground">Chargement…</Card>
+          ) : reportsQ.isError ? (
+            <QueryError onRetry={() => reportsQ.refetch()} />
           ) : reports.length === 0 ? (
             <Card className="py-10 text-center text-sm text-muted-foreground">Aucun rapport envoyé pour l'instant.</Card>
           ) : (

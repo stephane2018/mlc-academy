@@ -3,6 +3,7 @@ import { ArrowLeft } from '@/components/icons'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { QueryError } from '@/components/query-error'
 import { cn } from '@/lib/utils'
 import { productKindLabels, formatPrice, type ProductKind } from '@/lib/mock'
 import { useMyProducts } from '@/hooks/use-marketplace'
@@ -35,7 +36,9 @@ function BackLink() {
 
 function ProductDetail() {
   const { id } = Route.useParams()
-  const { data: products = [], isLoading } = useMyProducts()
+  const productsQ = useMyProducts()
+  const products = productsQ.data ?? []
+  const isLoading = productsQ.isLoading
   const { data: subjects = [] } = useSubjects()
   const { data: classes = [] } = useClasses()
   const p = products.find((x) => x.id === id)
@@ -45,6 +48,14 @@ function ProductDetail() {
       <div className="space-y-4 2xl:mx-auto 2xl:max-w-[1700px]">
         <BackLink />
         <Card className="py-12 text-center text-sm text-muted-foreground">Chargement…</Card>
+      </div>
+    )
+  }
+  if (productsQ.isError) {
+    return (
+      <div className="space-y-4 2xl:mx-auto 2xl:max-w-[1700px]">
+        <BackLink />
+        <QueryError onRetry={() => productsQ.refetch()} />
       </div>
     )
   }

@@ -5,6 +5,7 @@ import { SectionHeader } from '@/components/student/parts'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
+import { QueryError } from '@/components/query-error'
 import { cn } from '@/lib/utils'
 import { useTeacherStudents } from '@/hooks/use-teacher'
 
@@ -18,7 +19,9 @@ const fmtLast = (iso: string | null) => (iso ? dateFmt.format(new Date(iso)) : '
 function ProfEleves() {
   const [query, setQuery] = useState('')
   const [group, setGroup] = useState<string>('Tous')
-  const { data: students = [], isLoading } = useTeacherStudents()
+  const studentsQ = useTeacherStudents()
+  const students = studentsQ.data ?? []
+  const isLoading = studentsQ.isLoading
 
   const groups = useMemo(
     () => ['Tous', ...Array.from(new Set(students.flatMap((s) => s.groups)))],
@@ -105,7 +108,14 @@ function ProfEleves() {
                   </td>
                 </tr>
               ))}
-              {!isLoading && filtered.length === 0 && (
+              {!isLoading && studentsQ.isError && (
+                <tr>
+                  <td colSpan={4} className="px-4 py-8">
+                    <QueryError onRetry={() => studentsQ.refetch()} />
+                  </td>
+                </tr>
+              )}
+              {!isLoading && !studentsQ.isError && filtered.length === 0 && (
                 <tr>
                   <td colSpan={4} className="px-4 py-8 text-center text-sm text-muted-foreground">
                     Aucun élève ne correspond à votre recherche.

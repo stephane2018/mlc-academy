@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate, Link } from '@tanstack/react-router'
 import { Settings } from '@/components/icons'
 import { Button } from '@/components/ui/button'
 import { NotificationCenter } from '@/components/notifications'
+import { QueryError } from '@/components/query-error'
 import type { Notification, NotifKind } from '@/lib/mock'
 import { useNotifications, useMarkNotificationRead, useMarkAllNotificationsRead } from '@/hooks/use-notifications'
 
@@ -36,7 +37,9 @@ function routeFor(kind: NotifKind) {
 
 function ProfNotifications() {
   const navigate = useNavigate()
-  const { data = [], isLoading } = useNotifications()
+  const notificationsQ = useNotifications()
+  const data = notificationsQ.data ?? []
+  const isLoading = notificationsQ.isLoading
   const markRead = useMarkNotificationRead()
   const markAllRead = useMarkAllNotificationsRead()
 
@@ -71,6 +74,8 @@ function ProfNotifications() {
       </div>
       {isLoading ? (
         <p className="py-10 text-center text-sm text-muted-foreground">Chargement des notifications…</p>
+      ) : notificationsQ.isError ? (
+        <QueryError onRetry={() => notificationsQ.refetch()} />
       ) : (
         <NotificationCenter items={items} onOpen={open} onMarkAllRead={markAll} />
       )}

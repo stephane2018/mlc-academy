@@ -26,6 +26,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { QueryError } from '@/components/query-error'
 import { cn } from '@/lib/utils'
 import { productKindLabels, formatPrice, type ProductKind } from '@/lib/mock'
 import { useMyProducts, usePublishProduct } from '@/hooks/use-marketplace'
@@ -52,7 +53,9 @@ const STATUS_TONE: Record<string, string> = {
 }
 
 function ProfProduits() {
-  const { data: products = [], isLoading } = useMyProducts()
+  const productsQ = useMyProducts()
+  const products = productsQ.data ?? []
+  const isLoading = productsQ.isLoading
   const { data: subjects = [] } = useSubjects()
   const { data: classes = [] } = useClasses()
 
@@ -83,6 +86,8 @@ function ProfProduits() {
 
       {isLoading ? (
         <p className="py-12 text-center text-sm text-muted-foreground">Chargement de tes produits…</p>
+      ) : productsQ.isError ? (
+        <QueryError onRetry={() => productsQ.refetch()} />
       ) : products.length === 0 ? (
         <p className="rounded-2xl border border-dashed border-border bg-card py-12 text-center text-sm text-muted-foreground">
           Aucun produit pour l'instant. Publie ton premier contenu vendable.

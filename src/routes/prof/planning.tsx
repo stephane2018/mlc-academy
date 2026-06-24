@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { QueryError } from '@/components/query-error'
 import {
   Dialog,
   DialogContent,
@@ -70,8 +71,12 @@ function SessionRow({ session: s, groupName }: { session: LiveSession; groupName
 }
 
 function ProfPlanning() {
-  const { data: sessions = [], isLoading } = useLiveSessions()
-  const { data: groups = [] } = useGroups()
+  const sessionsQ = useLiveSessions()
+  const groupsQ = useGroups()
+  const sessions = sessionsQ.data ?? []
+  const groups = groupsQ.data ?? []
+  const isLoading = sessionsQ.isLoading
+  const isError = sessionsQ.isError || groupsQ.isError
   const groupName = (id: string | null) => (id ? groups.find((g) => g.id === id)?.name : null) ?? null
 
   const upcoming = sessions
@@ -88,6 +93,8 @@ function ProfPlanning() {
 
       {isLoading ? (
         <Card className="py-10 text-center text-sm text-muted-foreground">Chargement…</Card>
+      ) : isError ? (
+        <QueryError onRetry={() => { sessionsQ.refetch(); groupsQ.refetch() }} />
       ) : (
         <>
           <section className="space-y-3">

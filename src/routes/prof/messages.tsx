@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
+import { QueryError } from '@/components/query-error'
 import { cn } from '@/lib/utils'
 import { useConversations, useMessages, useSendMessage, useMarkConversationRead } from '@/hooks/use-messaging'
 import { useTeacherStudents } from '@/hooks/use-teacher'
@@ -41,7 +42,9 @@ function Bubble({ message }: { message: Msg }) {
 }
 
 function ProfMessages() {
-  const { data: conversations = [], isLoading } = useConversations()
+  const conversationsQ = useConversations()
+  const conversations = conversationsQ.data ?? []
+  const isLoading = conversationsQ.isLoading
   const { data: students = [] } = useTeacherStudents()
   const [query, setQuery] = useState('')
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -105,7 +108,12 @@ function ProfMessages() {
 
           <ul className="min-h-0 flex-1 overflow-y-auto">
             {isLoading && <li className="p-6 text-center text-sm text-muted-foreground">Chargement…</li>}
-            {!isLoading && filtered.length === 0 && (
+            {!isLoading && conversationsQ.isError && (
+              <li className="p-4">
+                <QueryError onRetry={() => conversationsQ.refetch()} />
+              </li>
+            )}
+            {!isLoading && !conversationsQ.isError && filtered.length === 0 && (
               <li className="p-6 text-center text-sm text-muted-foreground">Aucune conversation.</li>
             )}
             {filtered.map((c) => {
@@ -177,9 +185,11 @@ function ProfMessages() {
                 <p className="mx-auto flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1 text-[11px] font-medium text-muted-foreground">
                   <Clock className="size-3.5" /> Réponse sous 24–48 h
                 </p>
-                {thread.map((m) => (
-                  <Bubble key={m.id} message={m} />
-                ))}
+                {messagesQ.isError ? (
+                  <QueryError onRetry={() => messagesQ.refetch()} className="mx-auto max-w-sm" />
+                ) : (
+                  thread.map((m) => <Bubble key={m.id} message={m} />)
+                )}
               </div>
 
               <div className="border-t border-border p-3">

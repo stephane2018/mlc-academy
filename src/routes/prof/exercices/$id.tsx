@@ -19,6 +19,7 @@ import { PageHero, RailLayout, StatTile, SparkBars } from '@/components/blocks'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { QueryError } from '@/components/query-error'
 import { useAssignment, useAssignmentSubmissions, useUpdateAssignmentStatus } from '@/hooks/use-assignments'
 import { useSubjects } from '@/hooks/use-catalog'
 
@@ -63,13 +64,21 @@ function NotFoundCard() {
 
 function AssignmentResults() {
   const { id } = useParams({ from: '/prof/exercices/$id' })
-  const { data: assignment, isLoading } = useAssignment(id)
+  const assignmentQ = useAssignment(id)
+  const { data: assignment, isLoading } = assignmentQ
   const { data: subs = [] } = useAssignmentSubmissions(id)
   const { data: subjects = [] } = useSubjects()
   const updateStatus = useUpdateAssignmentStatus()
 
   if (isLoading) {
     return <div className="flex min-h-[50vh] items-center justify-center text-sm text-muted-foreground">Chargement…</div>
+  }
+  if (assignmentQ.isError) {
+    return (
+      <div className="2xl:mx-auto 2xl:max-w-[1700px]">
+        <QueryError onRetry={() => assignmentQ.refetch()} />
+      </div>
+    )
   }
   if (!assignment) return <NotFoundCard />
 

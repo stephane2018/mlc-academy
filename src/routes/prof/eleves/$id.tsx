@@ -19,6 +19,7 @@ import {
   DialogTrigger,
   DialogClose,
 } from '@/components/ui/dialog'
+import { QueryError } from '@/components/query-error'
 import { useTeacherStudent, useResetStudentPin } from '@/hooks/use-teacher'
 
 export const Route = createFileRoute('/prof/eleves/$id')({
@@ -51,10 +52,18 @@ function NotFound() {
 
 function ProfStudentDetail() {
   const { id } = useParams({ from: '/prof/eleves/$id' })
-  const { data: detail, isLoading } = useTeacherStudent(id)
+  const detailQ = useTeacherStudent(id)
+  const { data: detail, isLoading } = detailQ
 
   if (isLoading) {
     return <div className="flex min-h-[50vh] items-center justify-center text-sm text-muted-foreground">Chargement…</div>
+  }
+  if (detailQ.isError) {
+    return (
+      <div className="2xl:mx-auto 2xl:max-w-[1700px]">
+        <QueryError onRetry={() => detailQ.refetch()} />
+      </div>
+    )
   }
   if (!detail) return <NotFound />
 

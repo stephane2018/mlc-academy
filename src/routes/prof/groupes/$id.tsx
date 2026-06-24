@@ -21,6 +21,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
+import { QueryError } from '@/components/query-error'
 import {
   Dialog,
   DialogContent,
@@ -57,7 +58,8 @@ const timeFmt = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-d
 function GroupDetail() {
   const { id } = useParams({ from: '/prof/groupes/$id' })
   const navigate = useNavigate()
-  const { data: group, isLoading } = useGroup(id)
+  const groupQ = useGroup(id)
+  const { data: group, isLoading } = groupQ
   const { data: classes = [] } = useClasses()
   const { data: liveSessions = [] } = useLiveSessions()
   const regenerate = useRegenerateGroupCode()
@@ -65,6 +67,14 @@ function GroupDetail() {
 
   if (isLoading) {
     return <div className="flex min-h-[50vh] items-center justify-center text-sm text-muted-foreground">Chargement du groupe…</div>
+  }
+
+  if (groupQ.isError) {
+    return (
+      <div className="flex min-h-[50vh] flex-col items-center justify-center gap-4 text-center">
+        <QueryError onRetry={() => groupQ.refetch()} />
+      </div>
+    )
   }
 
   if (!group) {

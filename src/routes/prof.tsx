@@ -92,6 +92,9 @@ function SidebarContent({
   onNavigate?: () => void
   rail?: boolean
 }) {
+  const { me } = useAuth()
+  const email = me?.user.email ?? null
+  const initials = email ? email.slice(0, 2).toUpperCase() : 'PR'
   return (
     <div className="flex h-full flex-col">
       <div className={cn('flex items-center gap-2.5 px-2 py-1', rail && 'justify-center px-0')}>
@@ -117,12 +120,12 @@ function SidebarContent({
         )}
       >
         <Avatar className="size-9 shrink-0">
-          <AvatarFallback className="bg-brand-soft text-sm font-bold text-brand">HD</AvatarFallback>
+          <AvatarFallback className="bg-brand-soft text-sm font-bold text-brand">{initials}</AvatarFallback>
         </Avatar>
         {!rail && (
           <div className="min-w-0 leading-tight">
-            <p className="truncate text-sm font-bold">Prof. Hibou</p>
-            <p className="truncate text-xs text-muted-foreground">m.dupont@athénée.be</p>
+            <p className="truncate text-sm font-bold">Enseignant</p>
+            <p className="truncate text-xs text-muted-foreground">{email ?? 'Compte enseignant'}</p>
           </div>
         )}
       </div>

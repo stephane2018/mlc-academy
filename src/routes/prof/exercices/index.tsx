@@ -15,6 +15,7 @@ import { PageHero, StatTile } from '@/components/blocks'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { QueryError } from '@/components/query-error'
 import { cn } from '@/lib/utils'
 import type { SubjectKey } from '@/lib/mock'
 import { useAssignments } from '@/hooks/use-assignments'
@@ -48,7 +49,9 @@ const difficultyMeta: Record<string, string> = {
 function ExercicesList() {
   const [filter, setFilter] = useState<FilterKey>('tout')
   const [subject, setSubject] = useState<SubjectFilterValue>('all')
-  const { data: assignments = [], isLoading } = useAssignments()
+  const assignmentsQ = useAssignments()
+  const assignments = assignmentsQ.data ?? []
+  const isLoading = assignmentsQ.isLoading
   const { data: subjects = [] } = useSubjects()
 
   const subjectById = new Map(subjects.map((s) => [s.id, s]))
@@ -114,6 +117,8 @@ function ExercicesList() {
       {/* Cartes */}
       {isLoading ? (
         <p className="py-10 text-center text-sm text-muted-foreground">Chargement de tes exercices…</p>
+      ) : assignmentsQ.isError ? (
+        <QueryError onRetry={() => assignmentsQ.refetch()} />
       ) : (
         <div className="grid gap-4 lg:grid-cols-2 2xl:grid-cols-3">
           {visible.map((a: AssignmentListItem) => {

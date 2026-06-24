@@ -6,6 +6,7 @@ import { PageHero, RailLayout, StatTile } from '@/components/blocks'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { QueryError } from '@/components/query-error'
 import { useGroups } from '@/hooks/use-groups'
 import { useTeacherStudents } from '@/hooks/use-teacher'
 import { useLiveSessions } from '@/hooks/use-live'
@@ -18,10 +19,22 @@ export const Route = createFileRoute('/prof/')({
 const dateFmt = new Intl.DateTimeFormat('fr-FR', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
 
 function ProfOverview() {
-  const { data: groups = [] } = useGroups()
-  const { data: students = [] } = useTeacherStudents()
-  const { data: sessions = [] } = useLiveSessions()
-  const { data: classes = [] } = useClasses()
+  const groupsQ = useGroups()
+  const studentsQ = useTeacherStudents()
+  const sessionsQ = useLiveSessions()
+  const classesQ = useClasses()
+  const groups = groupsQ.data ?? []
+  const students = studentsQ.data ?? []
+  const sessions = sessionsQ.data ?? []
+  const classes = classesQ.data ?? []
+
+  const isError = groupsQ.isError || studentsQ.isError || sessionsQ.isError || classesQ.isError
+  const refetchAll = () => {
+    groupsQ.refetch()
+    studentsQ.refetch()
+    sessionsQ.refetch()
+    classesQ.refetch()
+  }
 
   const classLabel = (id: string) => classes.find((c) => c.id === id)?.label ?? '—'
   const groupName = (id: string | null) => (id ? groups.find((g) => g.id === id)?.name : null) ?? null
@@ -39,6 +52,11 @@ function ProfOverview() {
         title="Bonjour 👋"
         subtitle="Voici l'état de vos groupes et la prochaine échéance."
       />
+
+      {isError ? (
+        <QueryError onRetry={refetchAll} />
+      ) : (
+        <>
 
       {/* KPI */}
       <div className="grid gap-4 sm:grid-cols-3">
@@ -156,6 +174,8 @@ function ProfOverview() {
           )}
         </section>
       </RailLayout>
+        </>
+      )}
     </div>
   )
 }

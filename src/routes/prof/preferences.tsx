@@ -2,6 +2,7 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { toast } from 'sonner'
 import { ArrowLeft } from '@/components/icons'
 import { NotificationPreferences } from '@/components/notification-prefs'
+import { QueryError } from '@/components/query-error'
 import { profPrefs, type PrefChannel } from '@/lib/mock'
 import { useNotificationPrefs, useUpsertNotificationPref } from '@/hooks/use-notifications'
 import type { NotifCategory, NotifChannel } from '@/services/notifications'
@@ -11,7 +12,9 @@ export const Route = createFileRoute('/prof/preferences')({
 })
 
 function ProfPreferences() {
-  const { data: serverPrefs = [], isLoading } = useNotificationPrefs()
+  const prefsQ = useNotificationPrefs()
+  const serverPrefs = prefsQ.data ?? []
+  const isLoading = prefsQ.isLoading
   const upsert = useUpsertNotificationPref()
 
   const serverByKey = new Map(serverPrefs.map((p) => [`${p.category}:${p.channel}`, p.enabled]))
@@ -54,6 +57,8 @@ function ProfPreferences() {
       </div>
       {isLoading ? (
         <p className="py-10 text-center text-sm text-muted-foreground">Chargement de tes préférences…</p>
+      ) : prefsQ.isError ? (
+        <QueryError onRetry={() => prefsQ.refetch()} />
       ) : (
         <NotificationPreferences key={serverPrefs.length} prefs={prefs} onSave={save} saving={upsert.isPending} />
       )}
