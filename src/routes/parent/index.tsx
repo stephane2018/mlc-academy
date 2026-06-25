@@ -18,6 +18,7 @@ import { useChildOverview } from '@/hooks/use-parent'
 import { useSelectedChild } from '@/lib/parent-child'
 import { useReports } from '@/hooks/use-reports'
 import { ResetPinDialog } from '@/components/parent/reset-pin-dialog'
+import { LinkChildDialog } from '@/components/parent/link-child-dialog'
 
 export const Route = createFileRoute('/parent/')({
   component: ParentDashboard,
@@ -52,9 +53,9 @@ function ParentDashboard() {
         <p className="mt-2 text-sm text-muted-foreground">
           Votre enfant génère un code de liaison depuis son profil, puis vous le saisissez ici.
         </p>
-        <Button asChild className="mt-6 rounded-xl">
-          <Link to="/connexion-parent">Lier mon enfant</Link>
-        </Button>
+        <div className="mt-6 flex justify-center">
+          <LinkChildDialog />
+        </div>
       </div>
     )
   }

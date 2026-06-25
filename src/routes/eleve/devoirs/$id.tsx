@@ -13,6 +13,7 @@ import {
 } from '@/components/icons'
 import { Math as Maths } from '@/components/math'
 import { MathText } from '@/components/math-text'
+import { SignedImage } from '@/components/signed-image'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { subjectLabel, type SubjectKey } from '@/lib/mock'
@@ -187,11 +188,14 @@ function DevoirSession({
       <div className="flex-1 px-4 pt-5">
         <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
           <p className="text-xs font-bold uppercase tracking-widest text-brand">{q.domain}</p>
-          <p className="mt-3 text-base font-medium leading-relaxed"><MathText value={q.prompt} /></p>
+          {q.prompt && <p className="mt-3 text-base font-medium leading-relaxed"><MathText value={q.prompt} /></p>}
           {q.katex && (
             <div className="mt-4 rounded-xl bg-secondary/60 py-4 text-xl">
               <Maths expr={q.katex} display />
             </div>
+          )}
+          {q.imagePath && (
+            <SignedImage path={q.imagePath} className="mt-4 max-h-72 w-auto rounded-xl border border-border object-contain" />
           )}
         </div>
 
@@ -218,7 +222,12 @@ function DevoirSession({
                 >
                   {letter}
                 </span>
-                <span className="text-lg font-semibold"><MathText value={opt.label} /></span>
+                <div className="min-w-0 flex-1 space-y-2">
+                  {opt.label && <span className="block text-lg font-semibold"><MathText value={opt.label} /></span>}
+                  {opt.imagePath && (
+                    <SignedImage path={opt.imagePath} className="max-h-40 w-auto rounded-lg border border-border object-contain" />
+                  )}
+                </div>
               </button>
             )
           })}

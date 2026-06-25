@@ -34,6 +34,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
+import { UploadZone, type UploadState } from '@/components/upload-zone'
+import { uploadResourceFile } from '@/services/resources'
 import {
   Dialog,
   DialogContent,
@@ -88,6 +90,7 @@ type FormState = {
   pages: string
   questionCount: string
   videoUrl: string
+  storagePath: string | null
 }
 
 const EMPTY_FORM: FormState = {
@@ -103,6 +106,7 @@ const EMPTY_FORM: FormState = {
   pages: '',
   questionCount: '',
   videoUrl: '',
+  storagePath: null,
 }
 
 function fromResource(r: AdminResource): FormState {
@@ -119,6 +123,7 @@ function fromResource(r: AdminResource): FormState {
     pages: r.pages != null ? String(r.pages) : '',
     questionCount: r.questionCount != null ? String(r.questionCount) : '',
     videoUrl: r.videoUrl ?? '',
+    storagePath: r.storagePath ?? null,
   }
 }
 
@@ -140,6 +145,7 @@ function toInput(f: FormState): CreateResourceInput {
     pages: f.type === 'pdf' || f.type === 'fiche' ? num(f.pages) : null,
     questionCount: f.type === 'exercice' ? num(f.questionCount) : null,
     videoUrl: f.type === 'video' && f.videoUrl.trim() ? f.videoUrl.trim() : null,
+    storagePath: f.type === 'pdf' || f.type === 'fiche' ? f.storagePath : null,
   }
 }
 
@@ -174,12 +180,19 @@ function ResourceDialog({
   mode: 'create' | 'edit'
 }) {
   const [form, setForm] = useState<FormState>(initial)
+  const [upload, setUpload] = useState<UploadState>({ phase: 'idle' })
 
   // Réinitialise le formulaire à chaque (ré)ouverture.
   const [openedFor, setOpenedFor] = useState<string | null>(null)
   const initialKey = `${mode}:${initial.title}:${initial.subjectId}`
   if (open && openedFor !== initialKey) {
     setForm(initial)
+    // Affiche le fichier déjà attaché (édition) sinon zone vide.
+    setUpload(
+      initial.storagePath
+        ? { phase: 'done', name: initial.storagePath.split('/').pop() ?? 'Fichier', size: '' }
+        : { phase: 'idle' },
+    )
     setOpenedFor(initialKey)
   }
   if (!open && openedFor !== null) setOpenedFor(null)
@@ -329,16 +342,39 @@ function ResourceDialog({
           )}
 
           {(form.type === 'pdf' || form.type === 'fiche') && (
-            <div className="space-y-2">
-              <Label htmlFor="res-pages">Nombre de pages</Label>
-              <Input
-                id="res-pages"
-                type="number"
-                min={0}
-                value={form.pages}
-                onChange={(e) => set('pages', e.target.value)}
-              />
-            </div>
+            <>
+              <div className="space-y-2">
+                <Label>Fichier {form.type === 'pdf' ? 'PDF' : 'de la fiche'}</Label>
+                <UploadZone
+                  state={upload}
+                  onChange={setUpload}
+                  accept=".pdf"
+                  hint="PDF — 100 Mo max."
+                  onUpload={async (file) => {
+                    try {
+                      const r = await uploadResourceFile(file)
+                      set('storagePath', r.storagePath)
+                    } catch (e) {
+                      toast.error("Échec de l'envoi du fichier.", {
+                        description: e instanceof Error ? e.message : undefined,
+                      })
+                      throw e
+                    }
+                  }}
+                  onRemove={() => set('storagePath', null)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="res-pages">Nombre de pages</Label>
+                <Input
+                  id="res-pages"
+                  type="number"
+                  min={0}
+                  value={form.pages}
+                  onChange={(e) => set('pages', e.target.value)}
+                />
+              </div>
+            </>
           )}
 
           {form.type === 'exercice' && (

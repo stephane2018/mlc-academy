@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { toast } from 'sonner'
 import { useAuth } from '@/lib/auth'
@@ -18,14 +19,20 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
 
-export const Route = createFileRoute('/connexion-parent')({
-  component: ConnexionPage,
-})
-
 /** Public visé : élève (pseudo + code) vs adulte parent/prof/admin (email + mot de passe). */
 type Audience = 'eleve' | 'autre'
 /** Sous-mode du parcours adulte. */
 type Mode = 'login' | 'signup' | 'link'
+
+export const Route = createFileRoute('/connexion-parent')({
+  // `?mode=link` (ou signup/login) ouvre directement le parcours adulte sur le bon onglet,
+  // ex. depuis « Lier mon enfant » du dashboard parent.
+  validateSearch: (search: Record<string, unknown>): { mode?: Mode } => {
+    const m = search.mode
+    return m === 'login' || m === 'signup' || m === 'link' ? { mode: m } : {}
+  },
+  component: ConnexionPage,
+})
 
 /** Contenu du panneau gauche (desktop) selon le public. */
 const ASIDE = {
@@ -56,8 +63,10 @@ const ASIDE = {
 } as const
 
 function ConnexionPage() {
-  const [audience, setAudience] = useState<Audience>('eleve')
-  const [mode, setMode] = useState<Mode>('login')
+  const { mode: initialMode } = Route.useSearch()
+  // Un `mode` adulte dans l'URL ouvre directement le parcours « autre » sur cet onglet.
+  const [audience, setAudience] = useState<Audience>(initialMode ? 'autre' : 'eleve')
+  const [mode, setMode] = useState<Mode>(initialMode ?? 'login')
   const aside = ASIDE[audience]
 
   return (
@@ -179,7 +188,7 @@ function ConnexionPage() {
                 <div className="flex-1 pt-7">
                   {mode === 'login' && <LoginForm />}
                   {mode === 'signup' && <SignupForm />}
-                  {mode === 'link' && <LinkChildForm />}
+                  {mode === 'link' && <LinkChildForm onNeedLogin={() => setMode('login')} />}
                 </div>
 
                 {/* Mention email adulte */}
@@ -430,16 +439,56 @@ function SignupForm() {
   )
 }
 
-function LinkChildForm() {
+function LinkChildForm({ onNeedLogin }: { onNeedLogin: () => void }) {
+  const { session } = useAuth()
+  const navigate = useNavigate()
+  const qc = useQueryClient()
   const [code, setCode] = useState('')
   const valid = /^MLC-[A-Z0-9]{3,}$/i.test(code.trim())
 
+  const linkMutation = useMutation({
+    mutationFn: () => authService.linkChild(code.trim().toUpperCase()),
+    onSuccess: async () => {
+      // Rafraîchit la liste des enfants rattachés (dashboard parent).
+      await qc.invalidateQueries({ queryKey: ['parent'] })
+      toast.success('Enfant lié à votre compte')
+      await navigate({ to: '/parent' })
+    },
+    onError: (err) => {
+      const msg =
+        err instanceof ApiError && err.status === 400
+          ? 'Code invalide ou expiré.'
+          : 'Liaison impossible. Réessayez.'
+      toast.error(msg)
+    },
+  })
+
+  function onSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!valid || linkMutation.isPending) return
+    linkMutation.mutate()
+  }
+
   return (
-    <div>
+    <form onSubmit={onSubmit}>
       <h1 className="font-heading text-2xl font-extrabold tracking-tight">Lier mon enfant</h1>
       <p className="mt-1 text-sm text-muted-foreground">
-        Votre enfant génère un code de liaison depuis son tableau de bord élève.
+        Votre enfant génère un code de liaison depuis son espace, dans son profil.
       </p>
+
+      {/* La liaison écrit sur le compte parent → il faut être connecté. */}
+      {!session && (
+        <div className="mt-5 flex items-start gap-2 rounded-xl bg-amber-soft p-3">
+          <AlertCircle className="mt-0.5 size-4 shrink-0 text-amber" />
+          <p className="text-xs leading-snug text-muted-foreground">
+            Connectez-vous d'abord à votre compte parent.{' '}
+            <button type="button" onClick={onNeedLogin} className="font-semibold text-brand hover:underline">
+              Se connecter
+            </button>
+            .
+          </p>
+        </div>
+      )}
 
       <div className="mt-6 space-y-2">
         <Label htmlFor="link-code">Code de liaison</Label>
@@ -449,6 +498,7 @@ function LinkChildForm() {
           onChange={(e) => setCode(e.target.value)}
           placeholder="MLC-7K2"
           className="font-mono uppercase tracking-widest"
+          autoComplete="off"
         />
         <p className="text-xs text-muted-foreground">
           Format <span className="font-mono">MLC-XXX</span>. Il expire après quelques minutes pour
@@ -456,17 +506,14 @@ function LinkChildForm() {
         </p>
       </div>
 
-      {valid ? (
-        <Button asChild size="lg" className="mt-6 w-full rounded-xl text-base">
-          <Link to="/parent" onClick={() => toast.success('Enfant lié à votre compte')}>
-            <Link2 className="size-5" /> Lier
-          </Link>
-        </Button>
-      ) : (
-        <Button size="lg" disabled className="mt-6 w-full rounded-xl text-base">
-          <Link2 className="size-5" /> Lier
-        </Button>
-      )}
-    </div>
+      <Button
+        type="submit"
+        size="lg"
+        disabled={!valid || !session || linkMutation.isPending}
+        className="mt-6 w-full rounded-xl text-base"
+      >
+        <Link2 className="size-5" /> {linkMutation.isPending ? 'Liaison…' : 'Lier'}
+      </Button>
+    </form>
   )
 }

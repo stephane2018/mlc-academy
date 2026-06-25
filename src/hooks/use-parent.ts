@@ -1,5 +1,6 @@
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { parentService } from '@/services/parent'
+import { authService } from '@/services/auth'
 
 /** Enfants rattachés au parent courant. */
 export function useChildren() {
@@ -21,6 +22,15 @@ export function useChildAssignments(childId: string | undefined) {
     queryKey: ['parent', 'assignments', childId],
     queryFn: () => parentService.assignments(childId!),
     enabled: !!childId,
+  })
+}
+
+/** Rattache un enfant au parent courant via son code de liaison (`MLC-XXXX`). */
+export function useLinkChild() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (code: string) => authService.linkChild(code.trim().toUpperCase()),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['parent'] }),
   })
 }
 

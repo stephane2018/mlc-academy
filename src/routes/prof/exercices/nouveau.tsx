@@ -19,6 +19,9 @@ import {
 import { Math as Maths } from '@/components/math'
 import { MathField } from '@/components/math-field'
 import { MathText } from '@/components/math-text'
+import { ImageUpload } from '@/components/image-upload'
+import { SignedImage } from '@/components/signed-image'
+import { ConfirmDialog } from '@/components/confirm-dialog'
 import {
   Dialog,
   DialogClose,
@@ -34,6 +37,7 @@ import { RailLayout } from '@/components/blocks'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { DatePicker } from '@/components/ui/date-picker'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import {
@@ -116,7 +120,8 @@ type QDraft = {
   id: string
   prompt: string
   katex: string
-  options: { id: string; label: string }[]
+  imagePath: string | null
+  options: { id: string; label: string; imagePath: string | null }[]
   correctId: string
   explanation: string
 }
@@ -128,11 +133,12 @@ function emptyQuestion(): QDraft {
     id: `nq${qCounter}`,
     prompt: '',
     katex: '',
+    imagePath: null,
     options: [
-      { id: 'a', label: '' },
-      { id: 'b', label: '' },
-      { id: 'c', label: '' },
-      { id: 'd', label: '' },
+      { id: 'a', label: '', imagePath: null },
+      { id: 'b', label: '', imagePath: null },
+      { id: 'c', label: '', imagePath: null },
+      { id: 'd', label: '', imagePath: null },
     ],
     correctId: 'a',
     explanation: '',
@@ -180,6 +186,13 @@ function ExerciceBuilder() {
     setQuestions((qs) =>
       qs.map((q, i) =>
         i === idx ? { ...q, options: q.options.map((o, oi) => (oi === optIdx ? { ...o, label } : o)) } : q,
+      ),
+    )
+  }
+  function patchOptionImage(idx: number, optIdx: number, imagePath: string | null) {
+    setQuestions((qs) =>
+      qs.map((q, i) =>
+        i === idx ? { ...q, options: q.options.map((o, oi) => (oi === optIdx ? { ...o, imagePath } : o)) } : q,
       ),
     )
   }
@@ -239,13 +252,14 @@ function ExerciceBuilder() {
   /** Valide + transforme les questions du builder pour l'API (filtre options vides). */
   function buildPayloadQuestions() {
     return questions.map((q) => {
-      const kept = q.options.filter((o) => o.label.trim())
+      const kept = q.options.filter((o) => o.label.trim() || o.imagePath)
       return {
         prompt: q.prompt.trim(),
         katex: q.katex.trim() || null,
+        imagePath: q.imagePath,
         themeId: themeId || null,
         explanation: q.explanation.trim() || null,
-        options: kept.map((o) => ({ label: o.label.trim(), isCorrect: o.id === q.correctId })),
+        options: kept.map((o) => ({ label: o.label.trim(), isCorrect: o.id === q.correctId, imagePath: o.imagePath })),
       }
     })
   }
@@ -254,9 +268,9 @@ function ExerciceBuilder() {
     if (!title.trim()) return 'Donne un titre au devoir.'
     if (!subjectId) return 'Choisis une matière.'
     for (const q of questions) {
-      if (!q.prompt.trim()) return 'Chaque question doit avoir un énoncé.'
-      const kept = q.options.filter((o) => o.label.trim())
-      if (kept.length < 2) return 'Chaque question doit avoir au moins 2 options.'
+      if (!q.prompt.trim() && !q.imagePath) return 'Chaque question doit avoir un énoncé ou une image.'
+      const kept = q.options.filter((o) => o.label.trim() || o.imagePath)
+      if (kept.length < 2) return 'Chaque question doit avoir au moins 2 options (texte ou image).'
       if (!kept.some((o) => o.id === q.correctId)) return 'Désigne une bonne réponse parmi les options remplies.'
     }
     if (requireTargets && totalTargets === 0) return 'Sélectionne au moins un groupe ou un élève à assigner.'
@@ -342,6 +356,9 @@ function ExerciceBuilder() {
                     <Maths expr={current.katex} display />
                   </div>
                 )}
+                {current.imagePath && (
+                  <SignedImage path={current.imagePath} className="mt-3 max-h-48 w-auto rounded-xl border border-border object-contain" />
+                )}
               </div>
 
               <div className="mt-3 space-y-2">
@@ -364,9 +381,14 @@ function ExerciceBuilder() {
                       >
                         {isAnswer ? <Check className="size-3.5" /> : letter}
                       </span>
-                      <span className="text-sm font-semibold">
-                        {opt.label ? <MathText value={opt.label} /> : <span className="text-muted-foreground">Option {letter}</span>}
-                      </span>
+                      <div className="min-w-0 flex-1 space-y-1.5">
+                        <span className="text-sm font-semibold">
+                          {opt.label ? <MathText value={opt.label} /> : !opt.imagePath ? <span className="text-muted-foreground">Option {letter}</span> : null}
+                        </span>
+                        {opt.imagePath && (
+                          <SignedImage path={opt.imagePath} className="max-h-28 w-auto rounded-lg border border-border object-contain" />
+                        )}
+                      </div>
                     </div>
                   )
                 })}
@@ -556,7 +578,7 @@ function ExerciceBuilder() {
               <Label htmlFor="dueDate" className="flex items-center gap-1.5">
                 <CalendarDays className="size-4" /> Date limite
               </Label>
-              <Input id="dueDate" type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+              <DatePicker id="dueDate" value={dueDate} onChange={setDueDate} />
             </div>
           </div>
         </Card>
@@ -588,15 +610,22 @@ function ExerciceBuilder() {
                       >
                         <Copy className="size-4" />
                       </button>
-                      <button
-                        type="button"
-                        title="Supprimer"
-                        disabled={questions.length <= 1}
-                        onClick={(e) => { e.stopPropagation(); removeQuestion(idx) }}
-                        className="grid size-8 place-items-center rounded-lg text-muted-foreground transition hover:bg-destructive/10 hover:text-destructive disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-muted-foreground"
-                      >
-                        <Trash2 className="size-4" />
-                      </button>
+                      <ConfirmDialog
+                        title="Supprimer la question ?"
+                        description={`La question ${idx + 1} sera retirée du devoir.`}
+                        onConfirm={() => removeQuestion(idx)}
+                        trigger={
+                          <button
+                            type="button"
+                            title="Supprimer"
+                            disabled={questions.length <= 1}
+                            onClick={(e) => e.stopPropagation()}
+                            className="grid size-8 place-items-center rounded-lg text-muted-foreground transition hover:bg-destructive/10 hover:text-destructive disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-muted-foreground"
+                          >
+                            <Trash2 className="size-4" />
+                          </button>
+                        }
+                      />
                     </div>
                   </div>
 
@@ -604,7 +633,10 @@ function ExerciceBuilder() {
                     <div className="space-y-1.5">
                       <Label htmlFor={`prompt-${q.id}`}>Énoncé</Label>
                       <Textarea ref={registerField(`prompt-${q.id}`)} id={`prompt-${q.id}`} value={q.prompt} onChange={(e) => patchQuestion(idx, { prompt: e.target.value })} placeholder="Rédige la question… (insère des formules avec le bouton ci-dessous)" rows={2} />
-                      <MathInsertButton onInsert={(latex) => insertFormula(`prompt-${q.id}`, latex, q.prompt, (v) => patchQuestion(idx, { prompt: v }))} />
+                      <div className="flex flex-wrap items-center gap-2">
+                        <MathInsertButton onInsert={(latex) => insertFormula(`prompt-${q.id}`, latex, q.prompt, (v) => patchQuestion(idx, { prompt: v }))} />
+                        <ImageUpload value={q.imagePath} onChange={(p) => patchQuestion(idx, { imagePath: p })} label="Image d'énoncé" />
+                      </div>
                     </div>
 
                     <div className="space-y-1.5">
@@ -631,21 +663,26 @@ function ExerciceBuilder() {
                         const letter = String.fromCharCode(65 + oi)
                         const isAnswer = opt.id === q.correctId
                         return (
-                          <div key={opt.id} className="flex items-center gap-2">
-                            <button
-                              type="button"
-                              title="Désigner comme bonne réponse"
-                              onClick={(e) => { e.stopPropagation(); patchQuestion(idx, { correctId: opt.id }) }}
-                              className={cn(
-                                'grid size-7 shrink-0 place-items-center rounded-full border-2 transition',
-                                isAnswer ? 'border-success bg-success text-white' : 'border-border text-transparent hover:border-success/50',
-                              )}
-                            >
-                              <Check className="size-4" />
-                            </button>
-                            <span className="w-5 text-center text-sm font-bold text-muted-foreground">{letter}</span>
-                            <Input ref={registerField(`opt-${opt.id}`)} value={opt.label} onChange={(e) => patchOption(idx, oi, e.target.value)} placeholder={`Option ${letter}`} />
-                            <MathInsertButton compact onInsert={(latex) => insertFormula(`opt-${opt.id}`, latex, opt.label, (v) => patchOption(idx, oi, v))} />
+                          <div key={opt.id} className="space-y-1.5 rounded-xl border border-border/60 p-2">
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                title="Désigner comme bonne réponse"
+                                onClick={(e) => { e.stopPropagation(); patchQuestion(idx, { correctId: opt.id }) }}
+                                className={cn(
+                                  'grid size-7 shrink-0 place-items-center rounded-full border-2 transition',
+                                  isAnswer ? 'border-success bg-success text-white' : 'border-border text-transparent hover:border-success/50',
+                                )}
+                              >
+                                <Check className="size-4" />
+                              </button>
+                              <span className="w-5 text-center text-sm font-bold text-muted-foreground">{letter}</span>
+                              <Input ref={registerField(`opt-${opt.id}`)} value={opt.label} onChange={(e) => patchOption(idx, oi, e.target.value)} placeholder={`Option ${letter} (texte ou image)`} />
+                              <MathInsertButton compact onInsert={(latex) => insertFormula(`opt-${opt.id}`, latex, opt.label, (v) => patchOption(idx, oi, v))} />
+                            </div>
+                            <div className="pl-9">
+                              <ImageUpload value={opt.imagePath} onChange={(p) => patchOptionImage(idx, oi, p)} label="Image (option)" />
+                            </div>
                           </div>
                         )
                       })}

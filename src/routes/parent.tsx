@@ -1,19 +1,13 @@
 import { Outlet, Link, useLocation, useNavigate, createFileRoute } from '@tanstack/react-router'
-import { GraduationCap, LogOut } from '@/components/icons'
+import { GraduationCap, LogOut, UserPlus } from '@/components/icons'
 import { BellBadge } from '@/components/notifications'
 import { ThemeToggle } from '@/components/theme'
 import { Button } from '@/components/ui/button'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import { cn } from '@/lib/utils'
 import { spreadAvatar } from '@/lib/avatar'
 import { RequireRole } from '@/components/auth/require-role'
 import { ParentChildProvider, useSelectedChild } from '@/lib/parent-child'
+import { LinkChildDialog } from '@/components/parent/link-child-dialog'
 import { useAuth } from '@/lib/auth'
 import { useRealtimeSync } from '@/hooks/use-realtime'
 import { useNotifications } from '@/hooks/use-notifications'
@@ -32,24 +26,76 @@ const tabs = [
   { to: '/parent/boutique', label: 'Boutique', exact: false },
 ] as const
 
-/** Sélecteur d'enfant (header) — partagé via le contexte ParentChild. */
-function ChildSelect() {
-  const { kids, selected, setSelectedId } = useSelectedChild()
+/** Switcher d'enfant (header) — pastilles d'avatars cliquables, partagé via le contexte. */
+function ChildSwitcher() {
+  const { kids, selectedId, setSelectedId } = useSelectedChild()
   if (kids.length === 0) return null
+
+  const addButton = (
+    <LinkChildDialog
+      trigger={
+        <Button
+          variant="outline"
+          size="icon"
+          className="size-9 shrink-0 rounded-xl"
+          aria-label="Ajouter un enfant"
+          title="Ajouter un enfant"
+        >
+          <UserPlus className="size-4" />
+        </Button>
+      }
+    />
+  )
+
+  // Un seul enfant → simple pastille (rien à switcher) + ajout.
+  if (kids.length === 1) {
+    const k = kids[0]!
+    return (
+      <div className="flex items-center gap-1.5">
+        <span className="flex h-9 items-center gap-2 rounded-xl border border-border px-3 text-sm font-semibold">
+          <span className="text-base">{spreadAvatar(k.avatar, k.pseudo)}</span>
+          <span className="hidden max-w-[8rem] truncate sm:inline">{k.pseudo}</span>
+        </span>
+        {addButton}
+      </div>
+    )
+  }
+
+  // Plusieurs enfants → segmenté, défilable si nombreux.
   return (
-    <Select value={selected?.id ?? ''} onValueChange={setSelectedId}>
-      <SelectTrigger className="h-9 w-auto gap-2 border-border">
-        <span className="text-base">{spreadAvatar(selected?.avatar, selected?.pseudo ?? '')}</span>
-        <SelectValue />
-      </SelectTrigger>
-      <SelectContent>
-        {kids.map((k) => (
-          <SelectItem key={k.id} value={k.id}>
-            {k.pseudo}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+    <div className="flex items-center gap-1.5">
+      <div
+        role="tablist"
+        aria-label="Changer d'enfant"
+        className="no-scrollbar flex max-w-[55vw] items-center gap-1 overflow-x-auto rounded-xl bg-secondary p-1 lg:max-w-none"
+      >
+        {kids.map((k) => {
+          const active = k.id === selectedId
+          return (
+            <button
+              key={k.id}
+              type="button"
+              role="tab"
+              aria-selected={active}
+              onClick={() => setSelectedId(k.id)}
+              title={k.pseudo}
+              className={cn(
+                'flex h-7 shrink-0 items-center gap-1.5 rounded-lg px-2 text-sm font-semibold transition-colors',
+                active
+                  ? 'bg-card text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground',
+              )}
+            >
+              <span className="text-base leading-none">{spreadAvatar(k.avatar, k.pseudo)}</span>
+              <span className={cn('max-w-[7rem] truncate', active ? 'inline' : 'hidden sm:inline')}>
+                {k.pseudo}
+              </span>
+            </button>
+          )
+        })}
+      </div>
+      {addButton}
+    </div>
   )
 }
 
@@ -90,7 +136,7 @@ function ParentLayout() {
                 <BellBadge count={parentUnread} />
               </Link>
             </Button>
-            <ChildSelect />
+            <ChildSwitcher />
             <Button
               variant="ghost"
               size="sm"

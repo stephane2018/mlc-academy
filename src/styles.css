@@ -401,17 +401,28 @@ math-field:focus-within {
   --keyboard-toolbar-background-selected: var(--brand-soft);
   --keyboard-toolbar-font-size: 14px;
 }
+/* Barre d'outils (onglets) : nettement séparée des touches */
 .MLK__toolbar {
   font-weight: 600;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 8px;
+  padding-bottom: 6px;
 }
-/* Keycaps : bien arrondies + retour tactile doux */
+/* Keycaps : bordure marquée + base plus foncée (effet touche) + arrondi */
 .MLK__keycap,
 .MLK__keycap.is-shifted {
+  border: 1px solid var(--border) !important;
+  border-bottom: 3px solid var(--input) !important;
   border-radius: 12px !important;
-  transition: background 120ms ease, color 120ms ease, transform 80ms ease;
+  background-clip: padding-box;
+  transition: background 120ms ease, color 120ms ease, transform 80ms ease, box-shadow 120ms ease;
+}
+.MLK__keycap:hover {
+  border-color: color-mix(in oklab, var(--brand) 40%, var(--border)) !important;
 }
 .MLK__keycap:active {
   transform: translateY(1px);
+  border-bottom-width: 1px !important;
 }
 
 /* --- Fenêtre flottante (déplaçable / réductible / fermable) --- */
@@ -422,7 +433,10 @@ math-field:focus-within {
   z-index: 2147483000;
   display: flex;
   flex-direction: column;
-  width: min(720px, calc(100vw - 32px));
+  /* Largeur DÉFINIE (les keycaps font 10cqw → besoin d'une largeur de référence) ;
+     la hauteur, elle, s'ajuste au contenu (cf. .MLK__backdrop height:auto). */
+  width: min(760px, calc(100vw - 24px));
+  max-height: calc(100vh - 24px);
   overflow: hidden;
   background: var(--card);
   border: 1px solid var(--border);
@@ -500,12 +514,22 @@ math-field:focus-within {
   inset: auto !important;
   bottom: auto !important;
   transform: none !important;
+  /* Hauteur dynamique : épouse le clavier au lieu de réserver --_keyboard-height
+     (qui créait un décalage). Le contenu (.MLK__plate) est en flux normal. */
+  height: auto !important;
   opacity: 1 !important;
   visibility: visible !important;
   box-shadow: none !important;
   background: transparent !important;
 }
+/* Le plate (= contenu réel : toolbar + rangées de touches) est en position:absolute
+   chez MathLive. Combiné au backdrop height:auto ci-dessus, il sort du flux et le
+   cadre s'effondre (seul le padding reste → clavier invisible). On le remet en flux. */
 .mlk-float .MLK__plate {
+  position: relative !important;
+  top: auto !important;
+  left: auto !important;
+  width: 100% !important;
   border-radius: 0 !important;
   box-shadow: none !important;
   border: none !important;

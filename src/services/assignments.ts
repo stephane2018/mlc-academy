@@ -33,6 +33,7 @@ export type AssignmentQuestion = {
   type: string
   prompt: string
   katex: string | null
+  imagePath: string | null
   themeId: string | null
   options: QuizOption[]
 }
@@ -108,7 +109,8 @@ export type AssignmentSubmissionRow = {
 export type ComposedQuestion = {
   prompt: string
   katex?: string | null
+  imagePath?: string | null
   themeId?: string | null
   explanation?: string | null
-  options: { label: string; isCorrect: boolean }[]
+  options: { label: string; isCorrect: boolean; imagePath?: string | null }[]
 }

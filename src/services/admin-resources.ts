@@ -17,6 +17,7 @@ export type AdminResource = {
   pages: number | null
   questionCount: number | null
   videoUrl: string | null
+  storagePath: string | null
 }
 
 export type AdminResourcesQuery = {
@@ -39,6 +40,7 @@ export type CreateResourceInput = {
   pages?: number | null
   questionCount?: number | null
   videoUrl?: string | null
+  storagePath?: string | null
 }
 
 /** Champs modifiables d'une ressource (PATCH partiel). */

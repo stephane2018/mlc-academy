@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
+import { DatePicker, TimePicker } from '@/components/ui/date-picker'
 import { Label } from '@/components/ui/label'
 import { QueryError } from '@/components/query-error'
 import {
@@ -206,11 +207,11 @@ function CreateSessionDialog() {
           <div className="grid gap-4 sm:grid-cols-3">
             <div className="space-y-1.5">
               <Label htmlFor="session-date">Date</Label>
-              <Input id="session-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+              <DatePicker id="session-date" value={date} onChange={setDate} />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="session-time">Heure</Label>
-              <Input id="session-time" type="time" value={time} onChange={(e) => setTime(e.target.value)} />
+              <TimePicker id="session-time" value={time} onChange={setTime} />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="session-duration">Durée</Label>

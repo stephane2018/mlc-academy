@@ -51,6 +51,18 @@ export async function uploadResourceFile(file: File): Promise<UploadedFile> {
   return { storagePath: path, fileName: file.name, fileSize: String(file.size) }
 }
 
+/** Image de QCM (énoncé/option) → bucket `resources`, dossier `{userId}/questions/…`. */
+export async function uploadQuestionImage(file: File): Promise<string> {
+  const { data: auth } = await supabase.auth.getUser()
+  const userId = auth.user?.id
+  if (!userId) throw new Error('Session expirée — reconnecte-toi.')
+  const safeName = file.name.replace(/[^\w.\-]+/g, '_')
+  const path = `${userId}/questions/${crypto.randomUUID()}-${safeName}`
+  const { error } = await supabase.storage.from(BUCKET).upload(path, file, { upsert: false })
+  if (error) throw error
+  return path
+}
+
 /** URL signée (5 min) pour télécharger/visualiser un fichier de ressource. */
 export async function getResourceDownloadUrl(storagePath: string): Promise<string> {
   const { data, error } = await supabase.storage.from(BUCKET).createSignedUrl(storagePath, 300)

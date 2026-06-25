@@ -22,7 +22,7 @@ export type SubjectSkill = {
   themes: { themeId: string; name: string; mastery: number }[]
 }
 
-export type QuizOption = { id: string; label: string }
+export type QuizOption = { id: string; label: string; imagePath?: string | null }
 export type QuizQuestion = {
   id: string
   type: string
