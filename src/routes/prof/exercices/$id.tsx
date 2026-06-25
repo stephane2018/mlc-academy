@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { createFileRoute, Link, useParams } from '@tanstack/react-router'
 import { toast } from 'sonner'
 import {
@@ -13,6 +14,8 @@ import {
   Award,
   AlertCircle,
   Target,
+  Eye,
+  Pencil,
 } from '@/components/icons'
 import { Meter, SectionHeader, SoftIcon } from '@/components/student/parts'
 import { spreadAvatar } from '@/lib/avatar'
@@ -20,8 +23,25 @@ import { PageHero, RailLayout, StatTile, SparkBars } from '@/components/blocks'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { QueryError } from '@/components/query-error'
-import { useAssignment, useAssignmentSubmissions, useUpdateAssignmentStatus } from '@/hooks/use-assignments'
+import {
+  useAssignment,
+  useAssignmentSubmissions,
+  useGradeSubmission,
+  useUpdateAssignmentStatus,
+} from '@/hooks/use-assignments'
+import { assignmentsService, type AssignmentSubmissionRow } from '@/services/assignments'
 import { useSubjects } from '@/hooks/use-catalog'
 
 export const Route = createFileRoute('/prof/exercices/$id')({
@@ -70,6 +90,21 @@ function AssignmentResults() {
   const { data: subs = [] } = useAssignmentSubmissions(id)
   const { data: subjects = [] } = useSubjects()
   const updateStatus = useUpdateAssignmentStatus()
+  const [grading, setGrading] = useState<AssignmentSubmissionRow | null>(null)
+  const [viewingId, setViewingId] = useState<string | null>(null)
+
+  async function viewFile(row: AssignmentSubmissionRow) {
+    if (viewingId) return
+    setViewingId(row.studentId)
+    try {
+      const { url } = await assignmentsService.submissionFileUrl(id, row.studentId)
+      window.open(url, '_blank', 'noopener')
+    } catch {
+      toast.error("Impossible d'ouvrir la copie.")
+    } finally {
+      setViewingId(null)
+    }
+  }
 
   if (isLoading) {
     return <div className="flex min-h-[50vh] items-center justify-center text-sm text-muted-foreground">Chargement…</div>
@@ -230,6 +265,7 @@ function AssignmentResults() {
                       <th className="px-4 py-3">Statut</th>
                       <th className="px-4 py-3">Score</th>
                       <th className="hidden px-4 py-3 md:table-cell">Rendu le</th>
+                      <th className="px-4 py-3 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -242,22 +278,56 @@ function AssignmentResults() {
                           </div>
                         </td>
                         <td className="px-4 py-3">
-                          <Badge variant="secondary" className="bg-success-soft text-success">
-                            <Check className="size-3.5" />
-                            Rendu
-                          </Badge>
+                          {s.hasFile && s.score === null ? (
+                            <Badge variant="secondary" className="bg-amber-soft text-amber-foreground">
+                              <AlertCircle className="size-3.5" />
+                              À corriger
+                            </Badge>
+                          ) : (
+                            <Badge variant="secondary" className="bg-success-soft text-success">
+                              <Check className="size-3.5" />
+                              Rendu
+                            </Badge>
+                          )}
                         </td>
                         <td className="px-4 py-3">
                           {typeof s.score === 'number' ? (
                             <div className="flex items-center gap-2">
                               <Meter value={s.score} color="auto" className="w-20" />
-                              <span className="w-9 text-right text-xs font-bold tabular-nums">{s.score}%</span>
+                              <span className="w-12 text-right text-xs font-bold tabular-nums">{s.score}/100</span>
                             </div>
                           ) : (
                             <span className="text-muted-foreground">—</span>
                           )}
                         </td>
                         <td className="hidden px-4 py-3 text-muted-foreground md:table-cell">{fmtDate(s.submittedAt)}</td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center justify-end gap-2">
+                            {s.hasFile && (
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="rounded-lg"
+                                disabled={viewingId === s.studentId}
+                                onClick={() => viewFile(s)}
+                              >
+                                <Eye className="size-4" />
+                                Voir la copie
+                              </Button>
+                            )}
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="secondary"
+                              className="rounded-lg"
+                              onClick={() => setGrading(s)}
+                            >
+                              <Pencil className="size-4" />
+                              Noter
+                            </Button>
+                          </div>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -276,6 +346,95 @@ function AssignmentResults() {
           </p>
         </Card>
       </RailLayout>
+
+      <GradeDialog assignmentId={id} row={grading} onClose={() => setGrading(null)} />
     </div>
+  )
+}
+
+function GradeDialog({
+  assignmentId,
+  row,
+  onClose,
+}: {
+  assignmentId: string
+  row: AssignmentSubmissionRow | null
+  onClose: () => void
+}) {
+  const grade = useGradeSubmission()
+  const [score, setScore] = useState('')
+  const [feedback, setFeedback] = useState('')
+
+  // Re-synchronise les champs à chaque ouverture sur une nouvelle copie.
+  const [lastId, setLastId] = useState<string | null>(null)
+  if (row && row.studentId !== lastId) {
+    setLastId(row.studentId)
+    setScore(row.score === null ? '' : String(row.score))
+    setFeedback(row.feedback ?? '')
+  }
+
+  function save() {
+    if (!row) return
+    const parsed = Number(score)
+    if (!Number.isInteger(parsed) || parsed < 0 || parsed > 100) {
+      toast.error('La note doit être un entier entre 0 et 100.')
+      return
+    }
+    grade.mutate(
+      { id: assignmentId, studentId: row.studentId, score: parsed, feedback: feedback.trim() || null },
+      {
+        onSuccess: () => {
+          toast.success('Note enregistrée.')
+          onClose()
+        },
+        onError: () => toast.error("Échec de l'enregistrement de la note."),
+      },
+    )
+  }
+
+  return (
+    <Dialog open={row !== null} onOpenChange={(o) => { if (!o) onClose() }}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Noter la copie</DialogTitle>
+          <DialogDescription>{row ? `Copie de ${row.pseudo}.` : ''}</DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="grade-score">Note (sur 100)</Label>
+            <Input
+              id="grade-score"
+              type="number"
+              min={0}
+              max={100}
+              step={1}
+              value={score}
+              onChange={(e) => setScore(e.target.value)}
+              placeholder="0 à 100"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="grade-feedback">Récap de correction</Label>
+            <Textarea
+              id="grade-feedback"
+              rows={4}
+              value={feedback}
+              onChange={(e) => setFeedback(e.target.value)}
+              placeholder="Points forts, erreurs à revoir…"
+            />
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={onClose} disabled={grade.isPending}>
+            Annuler
+          </Button>
+          <Button type="button" onClick={save} disabled={grade.isPending}>
+            {grade.isPending ? 'Enregistrement…' : 'Enregistrer'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }

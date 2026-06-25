@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   assignmentsService,
+  uploadSubmissionFile,
   type AssignmentStatus,
   type CreateAssignmentInput,
   type Pagination,
@@ -12,6 +13,7 @@ const keys = {
   list: (p?: Pagination) => ['assignments', 'list', p ?? {}] as const,
   detail: (id: string) => ['assignments', 'detail', id] as const,
   questions: (id: string) => ['assignments', 'questions', id] as const,
+  submissions: (id: string) => ['assignments', 'submissions', id] as const,
 }
 
 export function useAssignments(pagination?: Pagination) {
@@ -59,9 +61,47 @@ export function useAssignmentQuestions(id: string) {
 
 export function useAssignmentSubmissions(id: string) {
   return useQuery({
-    queryKey: ['assignments', 'submissions', id],
+    queryKey: keys.submissions(id),
     queryFn: () => assignmentsService.submissions(id),
     enabled: !!id,
+  })
+}
+
+/** Remise d'une copie par fichier (accessibilité) : upload puis enregistrement. */
+export function useSubmitAssignmentFile() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, file }: { id: string; file: File }) => {
+      const storagePath = await uploadSubmissionFile(file)
+      return assignmentsService.submitFile(id, storagePath)
+    },
+    onSuccess: (_res, { id }) => {
+      qc.invalidateQueries({ queryKey: keys.all })
+      qc.invalidateQueries({ queryKey: keys.detail(id) })
+      qc.invalidateQueries({ queryKey: keys.submissions(id) })
+      qc.invalidateQueries({ queryKey: ['student', 'me'] })
+    },
+  })
+}
+
+/** Notation manuelle d'une copie par le prof. */
+export function useGradeSubmission() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({
+      id,
+      studentId,
+      score,
+      feedback,
+    }: {
+      id: string
+      studentId: string
+      score: number
+      feedback?: string | null
+    }) => assignmentsService.grade(id, { studentId, score, feedback }),
+    onSuccess: (_res, { id }) => {
+      qc.invalidateQueries({ queryKey: keys.submissions(id) })
+    },
   })
 }
 

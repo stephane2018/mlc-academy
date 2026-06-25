@@ -1,4 +1,5 @@
 import { api } from '@/lib/api-client'
+import { supabase } from '@/lib/supabase'
 import type { QuizOption, GameAnswer } from './student'
 
 export type AssignmentType = 'devoir' | 'evaluation'
@@ -93,6 +94,27 @@ export const assignmentsService = {
   setTargets: (id: string, input: { groupIds?: string[]; studentIds?: string[] }) =>
     api.post<{ targeted: number }>(`/assignments/${id}/targets`, input),
   submissions: (id: string) => api.get<AssignmentSubmissionRow[]>(`/assignments/${id}/submissions`),
+  /** Remise par fichier (accessibilité) : la copie est déjà uploadée. */
+  submitFile: (id: string, storagePath: string) =>
+    api.post<{ ok: true }>(`/assignments/${id}/submit-file`, { storagePath }),
+  /** URL signée de la copie déposée (prof auteur ou élève proprio). */
+  submissionFileUrl: (id: string, studentId: string) =>
+    api.get<{ url: string }>(`/assignments/${id}/submissions/${studentId}/file`),
+  /** Notation manuelle d'une copie (prof auteur). */
+  grade: (id: string, input: { studentId: string; score: number; feedback?: string | null }) =>
+    api.post<{ ok: true }>(`/assignments/${id}/grade`, input),
+}
+
+/** Upload de la copie de l'élève dans le bucket privé `submissions` (`{userId}/…`). */
+export async function uploadSubmissionFile(file: File): Promise<string> {
+  const { data: auth } = await supabase.auth.getUser()
+  const userId = auth.user?.id
+  if (!userId) throw new Error('Session expirée — reconnecte-toi.')
+  const safeName = file.name.replace(/[^\w.\-]+/g, '_')
+  const path = `${userId}/${crypto.randomUUID()}-${safeName}`
+  const { error } = await supabase.storage.from('submissions').upload(path, file, { upsert: false })
+  if (error) throw error
+  return path
 }
 
 /** Copie d'élève dans la vue résultats du prof. */
@@ -103,6 +125,8 @@ export type AssignmentSubmissionRow = {
   status: string
   score: number | null
   submittedAt: string | null
+  hasFile: boolean
+  feedback: string | null
 }
 
 /** Question composée par le prof (entrée d'attache). */

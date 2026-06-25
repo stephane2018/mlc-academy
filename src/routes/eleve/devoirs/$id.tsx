@@ -10,6 +10,9 @@ import {
   ArrowLeft,
   ArrowRight,
   CheckSquare,
+  CloudUpload,
+  FileText,
+  Loader,
 } from '@/components/icons'
 import { Math as Maths } from '@/components/math'
 import { MathText } from '@/components/math-text'
@@ -17,7 +20,12 @@ import { SignedImage } from '@/components/signed-image'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { subjectLabel, type SubjectKey } from '@/lib/mock'
-import { useAssignment, useAssignmentQuestions, useSubmitAssignment } from '@/hooks/use-assignments'
+import {
+  useAssignment,
+  useAssignmentQuestions,
+  useSubmitAssignment,
+  useSubmitAssignmentFile,
+} from '@/hooks/use-assignments'
 import { useSubjects } from '@/hooks/use-catalog'
 import type { Assignment, AssignmentQuestion, AssignmentResult } from '@/services/assignments'
 
@@ -199,6 +207,9 @@ function DevoirSession({
           )}
         </div>
 
+        {/* Accessibilité — remise d'une copie par fichier */}
+        <FileSubmissionCard assignmentId={assignment.id} />
+
         {/* Options — pas de correction en direct */}
         <div className="mt-4 space-y-3">
           {q.options.map((opt, i) => {
@@ -272,6 +283,65 @@ function DevoirSession({
         <p className="mt-2 text-center text-xs text-muted-foreground">
           {answered}/{total} question{total > 1 ? 's' : ''} répondue{answered > 1 ? 's' : ''}
         </p>
+      </div>
+    </div>
+  )
+}
+
+/**
+ * Option d'accessibilité : déposer une photo/scan de sa copie au lieu de répondre
+ * au QCM en ligne. Alternative au flux QCM, sans le remplacer.
+ */
+function FileSubmissionCard({ assignmentId }: { assignmentId: string }) {
+  const submitFile = useSubmitAssignmentFile()
+
+  function onPick(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    e.target.value = '' // permet de re-sélectionner le même fichier
+    if (!file || submitFile.isPending) return
+    submitFile.mutate(
+      { id: assignmentId, file },
+      {
+        onSuccess: () => toast.success('Copie envoyée !', { description: 'Ton prof la corrigera bientôt.' }),
+        onError: () => toast.error("Échec de l'envoi de ta copie. Réessaie."),
+      },
+    )
+  }
+
+  return (
+    <div className="mt-4 rounded-2xl border border-dashed border-border bg-secondary/40 p-4">
+      <div className="flex items-start gap-3">
+        <span className="mt-0.5 grid size-9 shrink-0 place-items-center rounded-xl bg-card text-brand">
+          <FileText className="size-5" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-bold">Difficulté à répondre en ligne&nbsp;?</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            Dépose une photo ou un scan de ta copie, ton prof la corrigera à la main.
+          </p>
+          <label className="mt-3 inline-flex">
+            <input
+              type="file"
+              accept="image/*,application/pdf"
+              hidden
+              disabled={submitFile.isPending}
+              onChange={onPick}
+            />
+            <Button asChild type="button" variant="outline" size="sm" className="rounded-xl" disabled={submitFile.isPending}>
+              <span className="cursor-pointer">
+                {submitFile.isPending ? (
+                  <>
+                    <Loader className="size-4 animate-spin" /> Envoi…
+                  </>
+                ) : (
+                  <>
+                    <CloudUpload className="size-4" /> Rendre une copie (fichier)
+                  </>
+                )}
+              </span>
+            </Button>
+          </label>
+        </div>
       </div>
     </div>
   )
