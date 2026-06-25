@@ -19,7 +19,7 @@ import {
 import { Math as Maths } from '@/components/math'
 import { MathField } from '@/components/math-field'
 import { MathText } from '@/components/math-text'
-import { ImageUpload } from '@/components/image-upload'
+import { ImagePicker } from '@/components/image-picker'
 import { SignedImage } from '@/components/signed-image'
 import { ConfirmDialog } from '@/components/confirm-dialog'
 import {
@@ -635,7 +635,7 @@ function ExerciceBuilder() {
                       <Textarea ref={registerField(`prompt-${q.id}`)} id={`prompt-${q.id}`} value={q.prompt} onChange={(e) => patchQuestion(idx, { prompt: e.target.value })} placeholder="Rédige la question… (insère des formules avec le bouton ci-dessous)" rows={2} />
                       <div className="flex flex-wrap items-center gap-2">
                         <MathInsertButton onInsert={(latex) => insertFormula(`prompt-${q.id}`, latex, q.prompt, (v) => patchQuestion(idx, { prompt: v }))} />
-                        <ImageUpload value={q.imagePath} onChange={(p) => patchQuestion(idx, { imagePath: p })} label="Image d'énoncé" />
+                        <ImagePicker value={q.imagePath} onChange={(p) => patchQuestion(idx, { imagePath: p })} label="Image d'énoncé" />
                       </div>
                     </div>
 
@@ -681,7 +681,7 @@ function ExerciceBuilder() {
                               <MathInsertButton compact onInsert={(latex) => insertFormula(`opt-${opt.id}`, latex, opt.label, (v) => patchOption(idx, oi, v))} />
                             </div>
                             <div className="pl-9">
-                              <ImageUpload value={opt.imagePath} onChange={(p) => patchOptionImage(idx, oi, p)} label="Image (option)" />
+                              <ImagePicker value={opt.imagePath} onChange={(p) => patchOptionImage(idx, oi, p)} label="Image (option)" />
                             </div>
                           </div>
                         )
