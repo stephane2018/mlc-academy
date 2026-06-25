@@ -496,7 +496,7 @@ const gameStats = [
 function Gamification() {
   return (
     <section className="mx-auto w-full max-w-6xl px-5 py-4 sm:px-8">
-      <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-brand via-indigo-600 to-indigo-800 p-8 text-white sm:p-12">
+      <div className="relative overflow-hidden rounded-[2rem] bg-brand-gradient p-8 text-white sm:p-12">
         <div className="absolute inset-0 bg-grid-strong opacity-60" />
         <div className="relative">
           <SectionEyebrow tone="light">Inspiré des meilleurs</SectionEyebrow>

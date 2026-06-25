@@ -3,6 +3,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { toast } from 'sonner'
 import { ShoppingBag, Check, CreditCard, Crown } from '@/components/icons'
 import { PageHero } from '@/components/blocks'
+import { spreadAvatar } from '@/lib/avatar'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -95,7 +96,7 @@ function ParentBoutique() {
                       </SelectTrigger>
                       <SelectContent>
                         {children.map((c) => (
-                          <SelectItem key={c.id} value={c.id}>{c.avatar} {c.pseudo}</SelectItem>
+                          <SelectItem key={c.id} value={c.id}>{spreadAvatar(c.avatar, c.pseudo)} {c.pseudo}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>

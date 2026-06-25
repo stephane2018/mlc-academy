@@ -3,6 +3,7 @@ import { createFileRoute, Link, useParams } from '@tanstack/react-router'
 import { toast } from 'sonner'
 import { ArrowLeft, Zap, Flame, Percent, BookOpen, MessageSquare, Pencil, AlertCircle, Lock } from '@/components/icons'
 import { Meter, SectionHeader, SoftIcon } from '@/components/student/parts'
+import { spreadAvatar } from '@/lib/avatar'
 import { PageHero, RailLayout, StatTile } from '@/components/blocks'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -85,7 +86,7 @@ function ProfStudentDetail() {
         eyebrow="Fiche élève"
         title={
           <span className="flex items-center gap-3">
-            <span className="grid size-12 place-items-center rounded-2xl bg-brand-soft text-2xl">{detail.avatar}</span>
+            <span className="grid size-12 place-items-center rounded-2xl bg-brand-soft text-2xl">{spreadAvatar(detail.avatar, detail.pseudo)}</span>
             {detail.pseudo}
           </span>
         }

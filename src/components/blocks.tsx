@@ -35,7 +35,7 @@ export function PageHero({
       className={cn(
         'relative overflow-hidden rounded-3xl border p-5 sm:p-6 lg:p-8',
         brand
-          ? 'border-transparent bg-gradient-to-br from-brand via-indigo-600 to-indigo-700 text-white shadow-brand-glow'
+          ? 'border-transparent bg-brand-gradient text-white shadow-brand-glow'
           : 'border-border bg-card shadow-soft',
         className,
       )}

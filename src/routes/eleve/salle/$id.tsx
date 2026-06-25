@@ -18,8 +18,10 @@ import {
   GraduationCap,
 } from '@/components/icons'
 import { Math as Maths } from '@/components/math'
+import { MathText } from '@/components/math-text'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { resolveAvatar, spreadAvatar } from '@/lib/avatar'
 import { liveChat, profStudents, quizQuestions, type LiveChatMsg } from '@/lib/mock'
 import { useLiveSessions } from '@/hooks/use-live'
 import { useStudentMe } from '@/hooks/use-student'
@@ -167,7 +169,7 @@ function Thumbnail({
         speaking ? 'ring-2 ring-success' : 'ring-white/10',
       )}
     >
-      <span className="text-2xl">{avatar}</span>
+      <span className="text-2xl">{teacher ? resolveAvatar(avatar) : spreadAvatar(avatar, pseudo)}</span>
       <div className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-1 bg-gradient-to-t from-black/70 to-transparent px-1.5 py-1">
         <span className="truncate text-[10px] font-medium text-white/90">
           {teacher && <GraduationCap className="mr-0.5 inline size-3 text-success" />}
@@ -262,7 +264,7 @@ function ChatPanel({ myPseudo }: { myPseudo: string }) {
           return (
             <div key={m.id} className="flex gap-2.5">
               <span className="grid size-8 shrink-0 place-items-center rounded-full bg-white/10 text-base">
-                {m.avatar}
+                {spreadAvatar(m.avatar, m.pseudo)}
               </span>
               <div className="min-w-0 flex-1">
                 <p className="flex items-baseline gap-2">
@@ -306,7 +308,7 @@ function QuizPanel() {
         <p className="text-[11px] font-bold uppercase tracking-widest text-success">
           Quiz en direct · {q.domain}
         </p>
-        <p className="mt-2 text-sm font-medium leading-relaxed">{q.prompt}</p>
+        <p className="mt-2 text-sm font-medium leading-relaxed"><MathText value={q.prompt} /></p>
         {q.katex && (
           <div className="mt-3 rounded-lg bg-white/5 py-3 text-center text-lg text-white">
             <Maths expr={q.katex} display />
@@ -338,7 +340,7 @@ function QuizPanel() {
               >
                 {letter}
               </span>
-              <span className="font-semibold">{opt.label}</span>
+              <span className="font-semibold"><MathText value={opt.label} /></span>
             </button>
           )
         })}

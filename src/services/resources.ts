@@ -1,4 +1,5 @@
 import { api } from '@/lib/api-client'
+import { supabase } from '@/lib/supabase'
 
 export type SharedResourceType = 'video' | 'pdf' | 'exercice' | 'fiche'
 export type SharedStatus = 'publie' | 'planifie' | 'brouillon'
@@ -10,6 +11,7 @@ export type SharedResource = {
   type: SharedResourceType
   status: SharedStatus
   message: string | null
+  storagePath: string | null
   fileName: string | null
   fileSize: string | null
   scheduledAt: string | null
@@ -24,6 +26,36 @@ export type CreateResourceInput = {
   message?: string | null
   status?: SharedStatus
   scheduledAt?: string | null
+  storagePath?: string | null
+  fileName?: string | null
+  fileSize?: string | null
+}
+
+const BUCKET = 'resources'
+
+/** Détails d'un fichier uploadé, à passer à `create`. */
+export type UploadedFile = { storagePath: string; fileName: string; fileSize: string }
+
+/**
+ * Upload direct du fichier dans le bucket `resources` (RLS : prof autorisé),
+ * sous `{userId}/{uuid}-{nom}`. Le chemin est ensuite enregistré via le BFF.
+ */
+export async function uploadResourceFile(file: File): Promise<UploadedFile> {
+  const { data: auth } = await supabase.auth.getUser()
+  const userId = auth.user?.id
+  if (!userId) throw new Error('Session expirée — reconnecte-toi.')
+  const safeName = file.name.replace(/[^\w.\-]+/g, '_')
+  const path = `${userId}/${crypto.randomUUID()}-${safeName}`
+  const { error } = await supabase.storage.from(BUCKET).upload(path, file, { upsert: false })
+  if (error) throw error
+  return { storagePath: path, fileName: file.name, fileSize: String(file.size) }
+}
+
+/** URL signée (5 min) pour télécharger/visualiser un fichier de ressource. */
+export async function getResourceDownloadUrl(storagePath: string): Promise<string> {
+  const { data, error } = await supabase.storage.from(BUCKET).createSignedUrl(storagePath, 300)
+  if (error || !data) throw error ?? new Error('Lien de téléchargement indisponible')
+  return data.signedUrl
 }
 
 /** Service resources (espace prof) — `/resources/*`. */

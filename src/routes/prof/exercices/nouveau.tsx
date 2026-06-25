@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
@@ -14,8 +14,22 @@ import {
   CalendarDays,
   Check,
   Send,
+  Sparkles,
 } from '@/components/icons'
 import { Math as Maths } from '@/components/math'
+import { MathField } from '@/components/math-field'
+import { MathText } from '@/components/math-text'
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
+import { spreadAvatar } from '@/lib/avatar'
 import { RailLayout } from '@/components/blocks'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -44,6 +58,58 @@ const difficulties: { value: 'facile' | 'moyen' | 'difficile'; label: string }[]
   { value: 'moyen', label: 'Moyen' },
   { value: 'difficile', label: 'Difficile' },
 ]
+
+/** Bouton + dialog d'insertion d'une formule (éditeur visuel MathLive → LaTeX). */
+function MathInsertButton({ onInsert, compact }: { onInsert: (latex: string) => void; compact?: boolean }) {
+  const [open, setOpen] = useState(false)
+  const [latex, setLatex] = useState('')
+  const confirm = () => {
+    const v = latex.trim()
+    if (v) onInsert(v)
+    setLatex('')
+    setOpen(false)
+  }
+  // Garde : ne pas fermer le dialog quand on interagit avec le clavier flottant
+  // (posé sur <body>, donc « hors » du dialog).
+  const keepOpenOnKeyboard = (e: Event) => {
+    const t = e.target as HTMLElement | null
+    if (t?.closest?.('.mlk-float, .ML__keyboard')) e.preventDefault()
+  }
+  return (
+    <Dialog open={open} onOpenChange={setOpen} modal={false}>
+      <DialogTrigger asChild>
+        {compact ? (
+          <Button type="button" variant="outline" size="icon" className="size-9 shrink-0" title="Insérer une formule" aria-label="Insérer une formule">
+            <Sparkles className="size-4" />
+          </Button>
+        ) : (
+          <Button type="button" variant="outline" size="sm">
+            <Sparkles className="size-4" />
+            Insérer une formule
+          </Button>
+        )}
+      </DialogTrigger>
+      <DialogContent onInteractOutside={keepOpenOnKeyboard} onPointerDownOutside={keepOpenOnKeyboard}>
+        <DialogHeader>
+          <DialogTitle>Insérer une formule</DialogTitle>
+          <DialogDescription>Écris ta formule (clavier de symboles dispo) — elle s'insère dans le texte.</DialogDescription>
+        </DialogHeader>
+        <MathField value={latex} onChange={setLatex} placeholder="Ex : (a+b)/2" />
+        {latex.trim() && (
+          <div className="rounded-xl bg-secondary/60 py-3 text-center text-lg">
+            <Maths expr={latex} display />
+          </div>
+        )}
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button type="button" variant="ghost">Annuler</Button>
+          </DialogClose>
+          <Button type="button" onClick={confirm} disabled={!latex.trim()}>Insérer</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
 
 /** Brouillon de question composé dans le builder. */
 type QDraft = {
@@ -116,6 +182,29 @@ function ExerciceBuilder() {
         i === idx ? { ...q, options: q.options.map((o, oi) => (oi === optIdx ? { ...o, label } : o)) } : q,
       ),
     )
+  }
+
+  // Refs des champs texte (énoncé + options), pour insérer une formule au curseur.
+  const fieldRefs = useRef<Map<string, HTMLInputElement | HTMLTextAreaElement>>(new Map())
+  const registerField = (key: string) => (el: HTMLInputElement | HTMLTextAreaElement | null) => {
+    if (el) fieldRefs.current.set(key, el)
+    else fieldRefs.current.delete(key)
+  }
+  function insertFormula(key: string, latex: string, current: string, apply: (v: string) => void) {
+    const wrapped = `$${latex}$`
+    const el = fieldRefs.current.get(key)
+    if (!el) {
+      apply(current ? `${current} ${wrapped}` : wrapped)
+      return
+    }
+    const start = el.selectionStart ?? current.length
+    const end = el.selectionEnd ?? current.length
+    apply(current.slice(0, start) + wrapped + current.slice(end))
+    requestAnimationFrame(() => {
+      const caret = start + wrapped.length
+      el.focus()
+      el.setSelectionRange(caret, caret)
+    })
   }
   function addQuestion() {
     setQuestions((qs) => [...qs, emptyQuestion()])
@@ -246,7 +335,7 @@ function ExerciceBuilder() {
                   {themes.find((t) => t.id === themeId)?.name ? ` · ${themes.find((t) => t.id === themeId)?.name}` : ''}
                 </p>
                 <p className="mt-2 text-sm font-medium leading-relaxed">
-                  {current.prompt || 'Saisis un énoncé…'}
+                  {current.prompt ? <MathText value={current.prompt} /> : 'Saisis un énoncé…'}
                 </p>
                 {current.katex && (
                   <div className="mt-3 rounded-xl bg-secondary/60 py-3 text-lg">
@@ -276,7 +365,7 @@ function ExerciceBuilder() {
                         {isAnswer ? <Check className="size-3.5" /> : letter}
                       </span>
                       <span className="text-sm font-semibold">
-                        {opt.label || <span className="text-muted-foreground">Option {letter}</span>}
+                        {opt.label ? <MathText value={opt.label} /> : <span className="text-muted-foreground">Option {letter}</span>}
                       </span>
                     </div>
                   )
@@ -332,7 +421,7 @@ function ExerciceBuilder() {
                           on ? 'border-brand bg-brand text-white' : 'border-border bg-card text-muted-foreground hover:border-brand/40',
                         )}
                       >
-                        <span>{s.avatar}</span>
+                        <span>{spreadAvatar(s.avatar, s.pseudo)}</span>
                         {s.pseudo}
                       </button>
                     )
@@ -514,14 +603,23 @@ function ExerciceBuilder() {
                   <div className="mt-3 space-y-3">
                     <div className="space-y-1.5">
                       <Label htmlFor={`prompt-${q.id}`}>Énoncé</Label>
-                      <Textarea id={`prompt-${q.id}`} value={q.prompt} onChange={(e) => patchQuestion(idx, { prompt: e.target.value })} placeholder="Rédige la question…" rows={2} />
+                      <Textarea ref={registerField(`prompt-${q.id}`)} id={`prompt-${q.id}`} value={q.prompt} onChange={(e) => patchQuestion(idx, { prompt: e.target.value })} placeholder="Rédige la question… (insère des formules avec le bouton ci-dessous)" rows={2} />
+                      <MathInsertButton onInsert={(latex) => insertFormula(`prompt-${q.id}`, latex, q.prompt, (v) => patchQuestion(idx, { prompt: v }))} />
                     </div>
 
                     <div className="space-y-1.5">
-                      <Label htmlFor={`katex-${q.id}`}>Formule KaTeX (optionnel)</Label>
-                      <Input id={`katex-${q.id}`} value={q.katex} onChange={(e) => patchQuestion(idx, { katex: e.target.value })} placeholder="Ex : \frac{3}{4} + \frac{1}{2}" className="font-mono" />
+                      <Label>Formule mathématique (optionnel)</Label>
+                      <p className="text-xs text-muted-foreground">
+                        Écris directement (fraction, racine, exposant…) — utilise le clavier de symboles. Aucun code à retenir.
+                      </p>
+                      <MathField
+                        value={q.katex}
+                        onChange={(latex) => patchQuestion(idx, { katex: latex })}
+                        placeholder="Ex : (a+b)/2"
+                      />
                       {q.katex && (
                         <div className="rounded-xl bg-secondary/60 py-3 text-center text-lg">
+                          <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Aperçu élève</p>
                           <Maths expr={q.katex} display />
                         </div>
                       )}
@@ -546,7 +644,8 @@ function ExerciceBuilder() {
                               <Check className="size-4" />
                             </button>
                             <span className="w-5 text-center text-sm font-bold text-muted-foreground">{letter}</span>
-                            <Input value={opt.label} onChange={(e) => patchOption(idx, oi, e.target.value)} placeholder={`Option ${letter}`} />
+                            <Input ref={registerField(`opt-${opt.id}`)} value={opt.label} onChange={(e) => patchOption(idx, oi, e.target.value)} placeholder={`Option ${letter}`} />
+                            <MathInsertButton compact onInsert={(latex) => insertFormula(`opt-${opt.id}`, latex, opt.label, (v) => patchOption(idx, oi, v))} />
                           </div>
                         )
                       })}

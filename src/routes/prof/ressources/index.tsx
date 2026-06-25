@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { toast } from 'sonner'
-import { Plus, Boxes, Check, FileText, Users, Trash2, Link2 } from '@/components/icons'
+import { Plus, Boxes, Check, FileText, Users, Trash2, Link2, CloudUpload, Download, X } from '@/components/icons'
 import { PageHero, StatTile } from '@/components/blocks'
 import { TYPE_META } from '@/components/student/resource-card'
 import { Card } from '@/components/ui/card'
@@ -33,6 +33,8 @@ import type { ResourceType } from '@/lib/mock'
 import { useResources, useCreateResource, useDeleteResource, useShareResource } from '@/hooks/use-resources'
 import { useGroups } from '@/hooks/use-groups'
 import type { SharedResource, SharedResourceType } from '@/services/resources'
+import { uploadResourceFile, getResourceDownloadUrl } from '@/services/resources'
+import { ConfirmDialog } from '@/components/confirm-dialog'
 
 export const Route = createFileRoute('/prof/ressources/')({
   component: ResourcesPage,
@@ -120,6 +122,16 @@ function ResourcesPage() {
 function ResourceCard({ resource: r }: { resource: SharedResource }) {
   const meta = TYPE_META[r.type as ResourceType]
   const del = useDeleteResource()
+  const path = r.storagePath
+  async function download() {
+    if (!path) return
+    try {
+      const url = await getResourceDownloadUrl(path)
+      window.open(url, '_blank', 'noopener')
+    } catch {
+      toast.error('Téléchargement indisponible.')
+    }
+  }
   return (
     <Card className="card-hover gap-0 p-5">
       <div className="flex items-start justify-between gap-3">
@@ -153,20 +165,33 @@ function ResourceCard({ resource: r }: { resource: SharedResource }) {
 
       <div className="mt-4 flex items-center gap-2 border-t border-border pt-3">
         <ShareResourceDialog resource={r} />
-        <Button
-          variant="ghost"
-          size="sm"
-          className="ml-auto text-destructive hover:bg-destructive/10 hover:text-destructive"
-          disabled={del.isPending}
-          onClick={() =>
+        {path && (
+          <Button variant="ghost" size="sm" onClick={download}>
+            <Download className="size-4" /> Télécharger
+          </Button>
+        )}
+        <ConfirmDialog
+          title="Supprimer la ressource ?"
+          description={<>« {r.title} » sera définitivement supprimée. Cette action est irréversible.</>}
+          pending={del.isPending}
+          onConfirm={() =>
             del.mutate(r.id, {
               onSuccess: () => toast.success('Ressource supprimée'),
               onError: () => toast.error('Échec de la suppression.'),
             })
           }
-        >
-          <Trash2 className="size-4" />
-        </Button>
+          trigger={
+            <Button
+              variant="ghost"
+              size="sm"
+              className="ml-auto text-destructive hover:bg-destructive/10 hover:text-destructive"
+              disabled={del.isPending}
+              aria-label="Supprimer la ressource"
+            >
+              <Trash2 className="size-4" />
+            </Button>
+          }
+        />
       </div>
     </Card>
   )
@@ -178,6 +203,8 @@ function CreateResourceDialog() {
   const [type, setType] = useState<SharedResourceType>('fiche')
   const [description, setDescription] = useState('')
   const [message, setMessage] = useState('')
+  const [file, setFile] = useState<File | null>(null)
+  const [uploading, setUploading] = useState(false)
   const create = useCreateResource()
 
   const reset = () => {
@@ -185,12 +212,34 @@ function CreateResourceDialog() {
     setType('fiche')
     setDescription('')
     setMessage('')
+    setFile(null)
   }
 
-  function submit() {
+  async function submit() {
     if (!title.trim()) return
+    let uploaded: { storagePath: string; fileName: string; fileSize: string } | null = null
+    if (file) {
+      setUploading(true)
+      try {
+        uploaded = await uploadResourceFile(file)
+      } catch (e) {
+        setUploading(false)
+        toast.error("Échec de l'envoi du fichier.", { description: e instanceof Error ? e.message : undefined })
+        return
+      }
+      setUploading(false)
+    }
     create.mutate(
-      { title: title.trim(), type, description: description.trim() || null, message: message.trim() || null, status: 'brouillon' },
+      {
+        title: title.trim(),
+        type,
+        description: description.trim() || null,
+        message: message.trim() || null,
+        status: 'brouillon',
+        storagePath: uploaded?.storagePath ?? null,
+        fileName: uploaded?.fileName ?? null,
+        fileSize: uploaded?.fileSize ?? null,
+      },
       {
         onSuccess: () => {
           setOpen(false)
@@ -201,6 +250,8 @@ function CreateResourceDialog() {
       },
     )
   }
+
+  const busy = uploading || create.isPending
 
   return (
     <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) reset() }}>
@@ -233,6 +284,28 @@ function CreateResourceDialog() {
             </Select>
           </div>
           <div className="space-y-1.5">
+            <Label>Fichier (optionnel)</Label>
+            {file ? (
+              <div className="flex items-center gap-2 rounded-xl border border-border bg-secondary/40 px-3 py-2.5">
+                <FileText className="size-4 shrink-0 text-brand" />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium">{file.name}</p>
+                  <p className="text-xs text-muted-foreground">{(file.size / 1024).toFixed(0)} Ko</p>
+                </div>
+                <Button type="button" variant="ghost" size="icon" className="size-8 shrink-0" onClick={() => setFile(null)} aria-label="Retirer le fichier">
+                  <X className="size-4" />
+                </Button>
+              </div>
+            ) : (
+              <label className="flex cursor-pointer flex-col items-center gap-1.5 rounded-xl border border-dashed border-border bg-secondary/30 px-4 py-6 text-center transition-colors hover:border-brand/50 hover:bg-secondary/50">
+                <CloudUpload className="size-6 text-muted-foreground" />
+                <span className="text-sm font-medium">Choisir un fichier</span>
+                <span className="text-xs text-muted-foreground">PDF, image, document…</span>
+                <input type="file" className="hidden" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+              </label>
+            )}
+          </div>
+          <div className="space-y-1.5">
             <Label htmlFor="res-desc">Description</Label>
             <Textarea id="res-desc" value={description} onChange={(e) => setDescription(e.target.value)} rows={2} />
           </div>
@@ -245,7 +318,9 @@ function CreateResourceDialog() {
           <DialogClose asChild>
             <Button variant="ghost">Annuler</Button>
           </DialogClose>
-          <Button disabled={!title.trim() || create.isPending} onClick={submit}>Créer</Button>
+          <Button disabled={!title.trim() || busy} onClick={submit}>
+            {uploading ? 'Envoi du fichier…' : create.isPending ? 'Création…' : 'Créer'}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

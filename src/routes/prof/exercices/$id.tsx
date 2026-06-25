@@ -15,6 +15,7 @@ import {
   Target,
 } from '@/components/icons'
 import { Meter, SectionHeader, SoftIcon } from '@/components/student/parts'
+import { spreadAvatar } from '@/lib/avatar'
 import { PageHero, RailLayout, StatTile, SparkBars } from '@/components/blocks'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -236,7 +237,7 @@ function AssignmentResults() {
                       <tr key={s.studentId} className="border-b border-border transition-colors last:border-0 hover:bg-secondary/40">
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2.5">
-                            <span className="grid size-9 place-items-center rounded-xl bg-secondary text-lg">{s.avatar}</span>
+                            <span className="grid size-9 place-items-center rounded-xl bg-secondary text-lg">{spreadAvatar(s.avatar, s.pseudo)}</span>
                             <span className="font-semibold">{s.pseudo}</span>
                           </div>
                         </td>

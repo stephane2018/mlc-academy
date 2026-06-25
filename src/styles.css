@@ -1,7 +1,7 @@
 @import "katex/dist/katex.min.css";
-@import "@fontsource-variable/outfit";
-@import "@fontsource-variable/lexend";
-@import "@fontsource-variable/jetbrains-mono";
+@import "@fontsource-variable/bricolage-grotesque";
+@import "@fontsource-variable/geist";
+@import "@fontsource-variable/geist-mono";
 @import "tailwindcss";
 @import "tw-animate-css";
 
@@ -15,18 +15,20 @@
 @custom-variant data-unchecked (&[data-state="unchecked"]);
 
 /* ------------------------------------------------------------------ *
- * MLC Academy — Direction artistique
- * Indigo primaire · Teal secondaire · Ambre (badges/streak) · Slate
- * Titres : Outfit · Corps : Lexend
+ * MLC Academy — Direction artistique « Une marque, quatre ambiances »
+ * Base neutre chaude commune (crème) · un accent d'identité par rôle :
+ *   Élève corail · Parent teal · Prof indigo · Admin slate
+ * Titres : Bricolage Grotesque · Corps : Geist · Mono/chiffres : Geist Mono
+ * Light + dark de série · grille 4 pt · WCAG AA
  * ------------------------------------------------------------------ */
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
 
-  --font-sans: "Lexend Variable", ui-sans-serif, system-ui, sans-serif;
-  --font-heading: "Outfit Variable", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "JetBrains Mono Variable", ui-monospace, monospace;
+  --font-sans: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-heading: "Bricolage Grotesque Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono Variable", ui-monospace, monospace;
 
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
@@ -81,111 +83,167 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-  --radius-2xl: calc(var(--radius) + 8px);
+  /* Rayons — échelle dédiée 6 / 10 / 14 / 20 / 24 */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-2xl: 24px;
 }
 
+/* ============================================================ *
+ * Base neutre chaude — accent corail par défaut (landing/élève)
+ * ============================================================ */
 :root {
-  --radius: 1rem;
+  --radius: 14px;
 
-  --background: #f6f8fb;
-  --foreground: #0f172a;
+  --background: #efebe3;       /* neutre 100 — crème */
+  --foreground: #1c1a17;       /* encre 900 */
   --card: #ffffff;
-  --card-foreground: #0f172a;
+  --card-foreground: #1c1a17;
   --popover: #ffffff;
-  --popover-foreground: #0f172a;
+  --popover-foreground: #1c1a17;
 
-  --primary: #4f46e5;
+  --primary: #ed7551;          /* corail 500 */
   --primary-foreground: #ffffff;
-  --secondary: #f1f5f9;
-  --secondary-foreground: #334155;
-  --muted: #f1f5f9;
-  --muted-foreground: #64748b;
-  --accent: #eef2ff;
-  --accent-foreground: #4338ca;
-  --destructive: #dc2626;
-  --border: #e2e8f0;
-  --input: #e2e8f0;
-  --ring: #4f46e5;
+  --secondary: #f6f4ef;        /* neutre 50 */
+  --secondary-foreground: #3a362f;
+  --muted: #f6f4ef;
+  --muted-foreground: #6e6a62; /* neutre 600 */
+  --accent: #fceae3;           /* corail 50 */
+  --accent-foreground: #c9501f; /* corail 700 */
+  --destructive: #dd5a4e;
+  --border: #e6e1d8;           /* neutre 200 */
+  --input: #dcd6ca;
+  --ring: #ed7551;
 
-  --brand: #4f46e5;
+  --brand: #ed7551;
   --brand-foreground: #ffffff;
-  --brand-soft: #eef2ff;
-  --teal: #14b8a6;
+  --brand-soft: #fceae3;
+  --teal: #2ba597;             /* parent */
   --teal-foreground: #ffffff;
-  --teal-soft: #ccfbf1;
-  --amber: #f97316; /* Streak / XP — orange vif */
-  --amber-foreground: #9a3412;
-  --amber-soft: #ffedd5;
-  --success: #22c55e; /* vert vif */
+  --teal-soft: #dcf2ef;
+  --amber: #d99a2b;            /* alerte / streak — or chaud */
+  --amber-foreground: #8a5e10;
+  --amber-soft: #f8edd4;
+  --success: #2e9e6e;
   --success-foreground: #ffffff;
-  --success-soft: #dcfce7;
-  --info: #3b82f6;
+  --success-soft: #ddf2e8;
+  --info: #3b82c4;
   --info-foreground: #ffffff;
-  --info-soft: #dbeafe;
-  --violet: #7c3aed;
+  --info-soft: #deebf6;
+  --violet: #5b63e0;           /* prof indigo */
   --violet-foreground: #ffffff;
-  --violet-soft: #ede9fe;
-  --locked: #94a3b8;
+  --violet-soft: #e6e8fb;
+  --locked: #c9c3b6;           /* neutre 400 */
 
-  --chart-1: #4f46e5;
-  --chart-2: #14b8a6;
-  --chart-3: #f97316;
-  --chart-4: #22c55e;
-  --chart-5: #7c3aed;
+  /* Dégradé de marque — chaud (marque → amber), suit l'accent du rôle.
+   * Les var() internes se résolvent au point d'usage → théma-aware. */
+  --brand-gradient: linear-gradient(135deg, var(--brand) 0%, var(--amber) 100%);
 
-  --sidebar: #0f172a;
-  --sidebar-foreground: #cbd5e1;
-  --sidebar-primary: #0d9488;
+  --chart-1: #ed7551;
+  --chart-2: #2ba597;
+  --chart-3: #5b63e0;
+  --chart-4: #2e9e6e;
+  --chart-5: #d99a2b;
+
+  /* Chrome sombre chaud (sidebar admin) */
+  --sidebar: #1c1a17;
+  --sidebar-foreground: #c9c3b6;
+  --sidebar-primary: #ed7551;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #1e293b;
+  --sidebar-accent: #2a2722;
   --sidebar-accent-foreground: #ffffff;
-  --sidebar-border: #1e293b;
-  --sidebar-ring: #0d9488;
+  --sidebar-border: #2a2722;
+  --sidebar-ring: #ed7551;
 }
 
+/* ============================================================ *
+ * Dark — doux, jamais noir pur (violet sombre)
+ * ============================================================ */
 .dark {
-  --background: #0f172a;
-  --foreground: #f1f5f9;
-  --card: #1e293b;
-  --card-foreground: #f1f5f9;
-  --popover: #1e293b;
-  --popover-foreground: #f1f5f9;
-  --primary: #6366f1;
+  --background: #15141a;       /* canvas */
+  --foreground: #eceaf1;       /* encre */
+  --card: #1e1d24;             /* surface */
+  --card-foreground: #eceaf1;
+  --popover: #1e1d24;
+  --popover-foreground: #eceaf1;
+
+  --primary: #ed7551;
   --primary-foreground: #ffffff;
-  --secondary: #1e293b;
-  --secondary-foreground: #f1f5f9;
-  --muted: #1e293b;
-  --muted-foreground: #94a3b8;
-  --accent: #312e81;
-  --accent-foreground: #e0e7ff;
-  --destructive: #ef4444;
-  --border: rgba(255, 255, 255, 0.1);
-  --input: rgba(255, 255, 255, 0.14);
-  --ring: #6366f1;
+  --secondary: #26252e;        /* surface 2 */
+  --secondary-foreground: #eceaf1;
+  --muted: #26252e;
+  --muted-foreground: #9d99a8;
+  --accent: #2e2a33;
+  --accent-foreground: #f4a287; /* corail 300 */
+  --destructive: #e06a5e;
+  --border: #302e39;
+  --input: #302e39;
+  --ring: #ed7551;
 
-  --brand: #6366f1;
-  --brand-soft: #312e81;
-  --teal: #2dd4bf;
-  --teal-soft: #134e4a;
-  --amber: #fb923c;
-  --amber-soft: #431407;
-  --amber-foreground: #fed7aa;
-  --success: #4ade80;
-  --success-soft: #14532d;
-  --info: #60a5fa;
-  --info-soft: #1e3a8a;
-  --violet: #a78bfa;
-  --violet-soft: #2e1065;
+  --brand: #ed7551;
+  --brand-soft: #2e2a33;
+  --teal: #4fc2b4;
+  --teal-soft: #133b37;
+  --amber: #e0ab45;
+  --amber-soft: #3a2e12;
+  --amber-foreground: #f0d79a;
+  --success: #4cbd8c;
+  --success-soft: #12382a;
+  --info: #62a4dc;
+  --info-soft: #16334d;
+  --violet: #8a90ee;
+  --violet-soft: #24264a;
 
-  --sidebar: #020617;
-  --sidebar-foreground: #cbd5e1;
-  --sidebar-accent: #0f172a;
-  --sidebar-border: #1e293b;
+  --sidebar: #15141a;
+  --sidebar-foreground: #9d99a8;
+  --sidebar-primary: #ed7551;
+  --sidebar-accent: #26252e;
+  --sidebar-accent-foreground: #eceaf1;
+  --sidebar-border: #302e39;
+  --sidebar-ring: #ed7551;
 }
+
+/* ============================================================ *
+ * Accent par rôle — surcharge l'accent sur la base neutre.
+ * À poser sur le layout racine de chaque espace.
+ *   Élève corail · Parent teal · Prof indigo · Admin slate
+ * ============================================================ */
+.theme-eleve {
+  --primary: #ed7551; --primary-foreground: #ffffff; --ring: #ed7551;
+  --brand: #ed7551; --brand-foreground: #ffffff; --brand-soft: #fceae3;
+  --accent: #fceae3; --accent-foreground: #c9501f;
+  --sidebar-primary: #ed7551; --sidebar-ring: #ed7551;
+  --chart-1: #ed7551;
+}
+.theme-parent {
+  --primary: #2ba597; --primary-foreground: #ffffff; --ring: #2ba597;
+  --brand: #2ba597; --brand-foreground: #ffffff; --brand-soft: #dcf2ef;
+  --accent: #dcf2ef; --accent-foreground: #156b61;
+  --sidebar-primary: #2ba597; --sidebar-ring: #2ba597;
+  --chart-1: #2ba597;
+}
+.theme-prof {
+  --primary: #ef6c2e; --primary-foreground: #ffffff; --ring: #ef6c2e;
+  --brand: #ef6c2e; --brand-foreground: #ffffff; --brand-soft: #fce7da;
+  --accent: #fce7da; --accent-foreground: #b04711;
+  --sidebar-primary: #ef6c2e; --sidebar-ring: #ef6c2e;
+  --chart-1: #ef6c2e;
+}
+.theme-admin {
+  --primary: #5e6a7e; --primary-foreground: #ffffff; --ring: #5e6a7e;
+  --brand: #5e6a7e; --brand-foreground: #ffffff; --brand-soft: #e9ebef;
+  --accent: #e9ebef; --accent-foreground: #38414f;
+  --sidebar-primary: #5e6a7e; --sidebar-ring: #5e6a7e;
+  --chart-1: #5e6a7e;
+}
+
+/* Variantes douces en dark : les `soft` clairs deviennent des surfaces sombres */
+.dark .theme-eleve { --brand-soft: #2e2a33; --accent: #2e2a33; --accent-foreground: #f4a287; }
+.dark .theme-parent { --brand-soft: #133b37; --accent: #133b37; --accent-foreground: #6fc9bd; }
+.dark .theme-prof { --brand-soft: #3a2410; --accent: #3a2410; --accent-foreground: #f3b389; }
+.dark .theme-admin { --brand-soft: #262b34; --accent: #262b34; --accent-foreground: #98a1b2; }
 
 @layer base {
   * {
@@ -198,11 +256,11 @@
     @apply bg-background text-foreground;
     margin: 0;
     min-height: 100%;
-    font-feature-settings: "ss01";
     -webkit-font-smoothing: antialiased;
   }
   h1, h2, h3, h4, h5 {
     @apply font-heading;
+    letter-spacing: -0.02em;
   }
 }
 
@@ -211,27 +269,32 @@
   scrollbar-width: none;
 }
 
-/* --- Profondeur & finitions desktop --- */
+/* --- Profondeur & finitions — ombres douces multi-couches, teinte chaude --- */
 @utility shadow-soft {
   box-shadow:
-    0 1px 2px rgba(15, 23, 42, 0.04),
-    0 4px 12px rgba(15, 23, 42, 0.05);
+    0 1px 2px rgba(28, 26, 23, 0.05),
+    0 4px 12px rgba(28, 26, 23, 0.06);
 }
 @utility shadow-float {
   box-shadow:
-    0 1px 2px rgba(15, 23, 42, 0.04),
-    0 10px 30px -8px rgba(15, 23, 42, 0.12),
-    0 4px 10px -4px rgba(15, 23, 42, 0.06);
+    0 2px 4px rgba(28, 26, 23, 0.05),
+    0 12px 28px -8px rgba(28, 26, 23, 0.12),
+    0 4px 10px -4px rgba(28, 26, 23, 0.06);
 }
 @utility shadow-brand-glow {
   box-shadow:
-    0 12px 32px -10px color-mix(in oklab, var(--brand) 55%, transparent),
-    0 4px 12px -4px color-mix(in oklab, var(--brand) 30%, transparent);
+    0 12px 32px -10px color-mix(in oklab, var(--brand) 45%, transparent),
+    0 4px 12px -4px color-mix(in oklab, var(--brand) 28%, transparent);
 }
 
-/* Texte en dégradé de marque */
+/* Fond en dégradé de marque chaud (héros, cartes mises en avant) */
+@utility bg-brand-gradient {
+  background-image: var(--brand-gradient);
+}
+
+/* Texte en dégradé de marque (suit l'accent du rôle) */
 @utility text-gradient-brand {
-  background: linear-gradient(100deg, var(--brand), #7c6cff 60%, var(--teal));
+  background: linear-gradient(100deg, var(--brand), color-mix(in oklab, var(--brand) 55%, #f4a287) 60%, var(--teal));
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -269,13 +332,192 @@
   .animate-float { animation: none; }
 }
 
+/* ============================================================ *
+ * MathLive — saisie maths visuelle (prof). Champ + clavier
+ * thémés sur les tokens de l'app : warm, arrondi, aéré.
+ * ============================================================ */
+math-field {
+  font-family: var(--font-sans);
+  border: none;
+  outline: none;
+  padding: 0.4rem 0.3rem;
+  --caret-color: var(--brand);
+  --selection-background-color: var(--brand-soft);
+  --primary: var(--brand);
+  --text-font-family: var(--font-sans);
+  --placeholder-color: var(--muted-foreground);
+}
+math-field:focus,
+math-field:focus-within {
+  outline: none;
+}
+/* Bascule clavier (icône dans le champ) */
+.ML__virtual-keyboard-toggle {
+  color: var(--muted-foreground);
+}
+.ML__virtual-keyboard-toggle:hover {
+  color: var(--brand);
+}
+
+/* Clavier virtuel — palette de marque chaude, touches arrondies et aérées */
+.ML__keyboard {
+  font-family: var(--font-sans);
+  --keyboard-background: var(--card);
+  --keyboard-border: var(--border);
+  --keyboard-accent-color: var(--brand);
+  --keyboard-text: var(--foreground);
+  --keyboard-padding-top: 12px;
+  --keyboard-padding-bottom: 16px;
+  --keyboard-padding-horizontal: 12px;
+
+  --keycap-height: 46px;
+  --keycap-gap: 6px;
+  --keycap-font-size: 18px;
+  --keycap-background: var(--card);
+  --keycap-background-hover: var(--secondary);
+  --keycap-background-active: var(--brand-soft);
+  --keycap-background-pressed: var(--brand-soft);
+  --keycap-text: var(--foreground);
+  --keycap-text-hover: var(--foreground);
+  --keycap-text-active: var(--brand);
+  --keycap-text-pressed: var(--brand);
+  --keycap-border: var(--border);
+  --keycap-border-bottom: var(--input);
+  --keycap-shift-color: var(--brand);
+
+  --keycap-primary-background: var(--brand);
+  --keycap-primary-background-hover: color-mix(in oklab, var(--brand) 88%, black);
+  --keycap-primary-text: var(--brand-foreground);
+
+  --keycap-secondary-background: var(--secondary);
+  --keycap-secondary-background-hover: color-mix(in oklab, var(--secondary) 82%, var(--foreground) 8%);
+  --keycap-secondary-text: var(--foreground);
+  --keycap-secondary-border: var(--border);
+  --keycap-secondary-border-bottom: var(--input);
+
+  --keyboard-toolbar-text: var(--muted-foreground);
+  --keyboard-toolbar-text-active: var(--brand);
+  --keyboard-toolbar-background-hover: var(--secondary);
+  --keyboard-toolbar-background-selected: var(--brand-soft);
+  --keyboard-toolbar-font-size: 14px;
+}
+.MLK__toolbar {
+  font-weight: 600;
+}
+/* Keycaps : bien arrondies + retour tactile doux */
+.MLK__keycap,
+.MLK__keycap.is-shifted {
+  border-radius: 12px !important;
+  transition: background 120ms ease, color 120ms ease, transform 80ms ease;
+}
+.MLK__keycap:active {
+  transform: translateY(1px);
+}
+
+/* --- Fenêtre flottante (déplaçable / réductible / fermable) --- */
+.mlk-float {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 2147483000;
+  display: flex;
+  flex-direction: column;
+  width: min(720px, calc(100vw - 32px));
+  overflow: hidden;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  box-shadow: 0 24px 60px -16px rgba(28, 26, 23, 0.34);
+  /* Caché par visibilité (pas display:none) → le conteneur garde ses dimensions,
+     MathLive peut mesurer et rendre le clavier. */
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 140ms ease;
+}
+.mlk-float.is-visible {
+  visibility: visible;
+  opacity: 1;
+  pointer-events: auto;
+}
+.mlk-float__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px 8px 14px;
+  background: var(--secondary);
+  border-bottom: 1px solid var(--border);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+.mlk-float__bar:active {
+  cursor: grabbing;
+}
+.mlk-float__title {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted-foreground);
+}
+.mlk-float__actions {
+  display: flex;
+  gap: 4px;
+}
+.mlk-float__btn {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted-foreground);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+}
+.mlk-float__btn:hover {
+  background: var(--card);
+  color: var(--brand);
+}
+.mlk-float.is-min .mlk-float__body {
+  display: none;
+}
+/* Clé du fix : remettre le clavier EN FLUX (relative) tout en gardant sa hauteur
+   calculée (var(--_keyboard-height)). On ne touche PAS à `height` du backdrop. */
+.mlk-float .ML__keyboard {
+  position: relative !important;
+  inset: auto !important;
+  height: auto !important;
+  transform: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+.mlk-float .MLK__backdrop {
+  position: relative !important;
+  inset: auto !important;
+  bottom: auto !important;
+  transform: none !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+.mlk-float .MLK__plate {
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
 /* Carte interactive : élévation au survol */
 @utility card-hover {
-  transition: transform 200ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 200ms ease;
+  transition: transform 200ms cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 200ms ease;
   &:hover {
     transform: translateY(-3px);
     box-shadow:
-      0 1px 2px rgba(15, 23, 42, 0.04),
-      0 16px 40px -12px rgba(15, 23, 42, 0.16);
+      0 1px 2px rgba(28, 26, 23, 0.05),
+      0 16px 40px -12px rgba(28, 26, 23, 0.16);
   }
 }

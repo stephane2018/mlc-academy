@@ -16,6 +16,7 @@ import {
   Copy,
 } from '@/components/icons'
 import { Meter, SectionHeader, SoftIcon, SUBJECT_COLOR } from '@/components/student/parts'
+import { spreadAvatar } from '@/lib/avatar'
 import {
   SubjectFilter,
   type SubjectFilterValue,
@@ -91,7 +92,7 @@ function ProfilPage() {
   const visibleMastery =
     subjectFilter === 'all' ? mastery : mastery.filter((sm) => sm.subject === subjectFilter)
 
-  const avatar = me?.avatar ?? '🙂'
+  const avatar = spreadAvatar(me?.avatar, me?.pseudo ?? '')
   const pseudo = me?.pseudo ?? '…'
   const level = me?.level ?? 1
   const streak = me?.streak ?? 0

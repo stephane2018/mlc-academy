@@ -11,6 +11,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
+import { spreadAvatar } from '@/lib/avatar'
 import { RequireRole } from '@/components/auth/require-role'
 import { ParentChildProvider, useSelectedChild } from '@/lib/parent-child'
 import { useAuth } from '@/lib/auth'
@@ -38,7 +39,7 @@ function ChildSelect() {
   return (
     <Select value={selected?.id ?? ''} onValueChange={setSelectedId}>
       <SelectTrigger className="h-9 w-auto gap-2 border-border">
-        <span className="text-base">{selected?.avatar}</span>
+        <span className="text-base">{spreadAvatar(selected?.avatar, selected?.pseudo ?? '')}</span>
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
@@ -67,7 +68,7 @@ function ParentLayout() {
 
   return (
     <ParentChildProvider>
-    <div className="min-h-dvh bg-background text-foreground">
+    <div className="theme-parent min-h-dvh bg-background text-foreground">
       <header className="sticky top-0 z-30 border-b border-border bg-card/95 backdrop-blur">
         <div className="flex w-full items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
           <div className="flex items-center gap-2.5">

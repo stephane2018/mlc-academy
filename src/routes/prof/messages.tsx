@@ -10,6 +10,7 @@ import { QueryError } from '@/components/query-error'
 import { cn } from '@/lib/utils'
 import { useConversations, useMessages, useSendMessage, useMarkConversationRead } from '@/hooks/use-messaging'
 import { useTeacherStudents } from '@/hooks/use-teacher'
+import { spreadAvatar } from '@/lib/avatar'
 
 export const Route = createFileRoute('/prof/messages')({
   component: ProfMessages,
@@ -119,7 +120,7 @@ function ProfMessages() {
             {filtered.map((c) => {
               const isActive = c.id === activeId
               const pseudo = c.peer?.name ?? 'Élève'
-              const avatar = c.peer?.avatar ?? '🙂'
+              const avatar = spreadAvatar(c.peer?.avatar, c.peer?.name ?? c.peer?.id ?? '')
               const group = c.peer ? groupByStudent.get(c.peer.id) : ''
               return (
                 <li key={c.id}>
@@ -164,7 +165,7 @@ function ProfMessages() {
                 <Button variant="ghost" size="sm" className="-ml-1.5 shrink-0 lg:hidden" aria-label="Retour" onClick={() => setMobileThread(false)}>
                   <ArrowLeft className="size-5" />
                 </Button>
-                <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-secondary text-lg">{active.peer?.avatar ?? '🙂'}</span>
+                <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-secondary text-lg">{spreadAvatar(active.peer?.avatar, active.peer?.name ?? '')}</span>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-bold">{active.peer?.name ?? 'Élève'}</p>
                   {active.peer && groupByStudent.get(active.peer.id) && (

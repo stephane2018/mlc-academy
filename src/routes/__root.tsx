@@ -29,7 +29,7 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
         name: 'viewport',
         content: 'width=device-width, initial-scale=1, maximum-scale=1',
       },
-      { name: 'theme-color', content: '#4f46e5' },
+      { name: 'theme-color', content: '#ed7551' },
       { name: 'application-name', content: "MLC Academy" },
       { title: "MLC Academy — Réussis ton CE1D" },
       {

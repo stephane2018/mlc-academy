@@ -52,7 +52,7 @@ function BadgesPage() {
       />
 
       {/* Niveau + XP */}
-      <Card className="gap-0 overflow-hidden border-0 bg-gradient-to-br from-brand to-indigo-500 p-4 text-white shadow-brand-glow">
+      <Card className="gap-0 overflow-hidden border-0 bg-brand-gradient p-4 text-white shadow-brand-glow">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-[11px] font-bold uppercase tracking-widest text-white/70">

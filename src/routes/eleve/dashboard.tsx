@@ -14,6 +14,7 @@ import {
   Play,
 } from '@/components/icons'
 import { Meter, SectionHeader, SoftIcon, avatarTint } from '@/components/student/parts'
+import { spreadAvatar } from '@/lib/avatar'
 import { BellBadge } from '@/components/notifications'
 import { ThemeToggle } from '@/components/theme'
 import { Card } from '@/components/ui/card'
@@ -156,7 +157,7 @@ function DashboardPage() {
                   {top5.map((p) => (
                     <li key={p.studentId} className="flex items-center gap-3 rounded-xl px-2 py-1.5">
                       <span className="w-5 shrink-0 text-center font-heading text-sm font-bold text-muted-foreground">{p.rankInClass}</span>
-                      <span className={`grid size-8 shrink-0 place-items-center rounded-lg text-base ${avatarTint(p.pseudo)}`}>{p.avatar}</span>
+                      <span className={`grid size-8 shrink-0 place-items-center rounded-lg text-base ${avatarTint(p.pseudo)}`}>{spreadAvatar(p.avatar, p.pseudo)}</span>
                       <span className="min-w-0 flex-1 truncate text-sm font-semibold">{p.pseudo}</span>
                       <span className="shrink-0 text-sm font-bold tabular-nums text-muted-foreground">{p.weekXp}</span>
                     </li>
@@ -166,7 +167,7 @@ function DashboardPage() {
               {me.weekRank != null && (
                 <div className="mt-2 flex items-center gap-3 rounded-xl bg-brand-soft px-2 py-2 text-brand ring-1 ring-brand/15">
                   <span className="w-5 shrink-0 text-center font-heading text-sm font-bold">{me.weekRank}</span>
-                  <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-card text-base">{me.avatar}</span>
+                  <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-card text-base">{spreadAvatar(me.avatar, me.pseudo)}</span>
                   <span className="min-w-0 flex-1 truncate text-sm font-bold">
                     {me.pseudo} <span className="font-medium text-brand/70">(toi)</span>
                   </span>

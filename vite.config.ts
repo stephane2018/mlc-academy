@@ -10,7 +10,7 @@ import { nitro } from 'nitro/vite'
 const config = defineConfig({
   resolve: { tsconfigPaths: true, dedupe: ['react', 'react-dom'] },
   optimizeDeps: {
-    include: ['react', 'react-dom', '@hugeicons/react', '@hugeicons/core-free-icons'],
+    include: ['react', 'react-dom', '@hugeicons/react', '@hugeicons/core-free-icons', 'mathlive'],
   },
   plugins: [
     devtools(),

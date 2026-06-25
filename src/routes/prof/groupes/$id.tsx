@@ -15,6 +15,7 @@ import {
 } from '@/components/icons'
 import { toast } from 'sonner'
 import { SoftIcon } from '@/components/student/parts'
+import { spreadAvatar } from '@/lib/avatar'
 import { PageHero, RailLayout, StatTile } from '@/components/blocks'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -201,7 +202,7 @@ function GroupDetail() {
                     className="flex min-w-0 flex-1 items-center gap-3"
                   >
                     <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-brand-soft text-lg">
-                      {s.avatar}
+                      {spreadAvatar(s.avatar, s.pseudo)}
                     </span>
                     <p className="truncate text-sm font-semibold">{s.pseudo}</p>
                   </Link>

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { Trophy, Zap, Check, Percent, CheckCircle2 } from '@/components/icons'
 import { Math as Maths } from '@/components/math'
+import { MathText } from '@/components/math-text'
 import { Meter, SoftIcon } from '@/components/student/parts'
 import { PageHero } from '@/components/blocks'
 import {
@@ -214,7 +215,7 @@ function HistoryCard({ entry: e }: { entry: HistoryEntry }) {
                     <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
                       Question {i + 1}/{e.questions.length}
                     </p>
-                    <p className="mt-1 text-sm font-medium">{q.prompt}</p>
+                    <p className="mt-1 text-sm font-medium"><MathText value={q.prompt} /></p>
                     {q.katex && (
                       <div className="mt-2 text-base">
                         <Maths expr={q.katex} display />
@@ -222,7 +223,7 @@ function HistoryCard({ entry: e }: { entry: HistoryEntry }) {
                     )}
                     {correctLabel && (
                       <p className="mt-2 flex items-center gap-1.5 text-sm font-semibold text-success">
-                        <Check className="size-4" /> Bonne réponse : {correctLabel}
+                        <Check className="size-4" /> Bonne réponse : <MathText value={correctLabel} />
                       </p>
                     )}
                     {q.explanation && (

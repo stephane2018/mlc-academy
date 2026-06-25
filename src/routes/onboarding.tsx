@@ -24,7 +24,7 @@ function OnboardingPage() {
   return (
     <div className="flex min-h-dvh bg-background">
       {/* Panneau gauche (desktop only) : réassurance */}
-      <aside className="hidden w-1/2 flex-col justify-between bg-gradient-to-br from-brand to-indigo-600 p-12 text-white lg:flex">
+      <aside className="hidden w-1/2 flex-col justify-between bg-brand-gradient p-12 text-white lg:flex">
         <div className="flex items-center gap-2">
           <span className="grid size-11 place-items-center rounded-2xl bg-white/15 font-heading text-2xl font-extrabold text-white">
             M

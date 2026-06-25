@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { PageHero } from '@/components/blocks'
 import { cn } from '@/lib/utils'
 import { useConversations, useMessages, useSendMessage, useMarkConversationRead } from '@/hooks/use-messaging'
+import { resolveAvatar } from '@/lib/avatar'
 
 export const Route = createFileRoute('/eleve/messages')({
   component: EleveMessages,
@@ -57,7 +58,7 @@ function EleveMessages() {
   const [input, setInput] = useState('')
 
   const profName = conv?.peer?.name ?? 'Ton professeur'
-  const profAvatar = conv?.peer?.avatar ?? DEFAULT_PROF_AVATAR
+  const profAvatar = resolveAvatar(conv?.peer?.avatar, DEFAULT_PROF_AVATAR)
 
   // Marque les messages reçus comme lus à l'ouverture (une fois).
   useEffect(() => {

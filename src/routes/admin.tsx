@@ -47,7 +47,7 @@ function AdminLayout() {
   }
 
   return (
-    <div className="flex min-h-dvh bg-background">
+    <div className="theme-admin flex min-h-dvh bg-background">
       {/* Sidebar tablette (rail icônes, md → lg) */}
       <aside className="sticky top-0 hidden h-dvh shrink-0 border-r border-sidebar-border md:block lg:hidden">
         <AdminSidebar pathname={pathname} variant="rail" />

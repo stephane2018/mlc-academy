@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { X, Zap, Check, Trophy, RotateCcw, ArrowRight } from '@/components/icons'
 import { Math as Maths } from '@/components/math'
+import { MathText } from '@/components/math-text'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { useSubjects } from '@/hooks/use-catalog'
@@ -152,7 +153,7 @@ function QuizSession({
 
       <div className="flex-1 px-4 pt-4">
         <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
-          <p className="text-base font-medium leading-relaxed">{q.prompt}</p>
+          <p className="text-base font-medium leading-relaxed"><MathText value={q.prompt} /></p>
           {q.katex && (
             <div className="mt-4 rounded-xl bg-secondary/60 py-4 text-xl">
               <Maths expr={q.katex} display />
@@ -192,7 +193,7 @@ function QuizSession({
                 )}>
                   {showCorrect ? <Check className="size-4" /> : showWrong ? <X className="size-4" /> : letter}
                 </span>
-                <span className="text-lg font-semibold">{opt.label}</span>
+                <span className="text-lg font-semibold"><MathText value={opt.label} /></span>
               </button>
             )
           })}

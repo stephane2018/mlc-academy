@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { toast } from 'sonner'
 import { TYPE_META } from '@/components/student/resource-card'
+import { spreadAvatar } from '@/lib/avatar'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -185,7 +186,7 @@ function ResourceForm({ mode, resource }: { mode: 'create' | 'edit'; resource?: 
                 {target.kind === 'student' &&
                   profStudents.map((s) => (
                     <SelectItem key={s.id} value={s.pseudo}>
-                      {s.avatar} {s.pseudo}
+                      {spreadAvatar(s.avatar, s.pseudo)} {s.pseudo}
                     </SelectItem>
                   ))}
                 {target.kind === 'level' &&

@@ -103,7 +103,7 @@ function MonAbonnementPage() {
         >
           {/* Abonnement actif */}
           <Card className="gap-0 overflow-hidden p-0 shadow-soft">
-            <div className="flex flex-col gap-4 bg-gradient-to-br from-brand to-indigo-600 p-5 text-white sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-4 bg-brand-gradient p-5 text-white sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-3">
                 <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-white/15">
                   <Crown className="size-6 text-amber-200" />

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { toast } from 'sonner'
-import { Plus, Boxes, Check, FileText, ArrowRight, Users } from '@/components/icons'
+import { Plus, Boxes, Check, FileText, ArrowRight, Users, CloudUpload, X, Download } from '@/components/icons'
 import { PageHero, StatTile } from '@/components/blocks'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -30,6 +30,7 @@ import { QueryError } from '@/components/query-error'
 import { cn } from '@/lib/utils'
 import { productKindLabels, formatPrice, type ProductKind } from '@/lib/mock'
 import { useMyProducts, usePublishProduct } from '@/hooks/use-marketplace'
+import { uploadProductCover, uploadProductContent, marketplaceService } from '@/services/marketplace'
 import { useSubjects, useClasses } from '@/hooks/use-catalog'
 
 export const Route = createFileRoute('/prof/produits/')({
@@ -127,6 +128,22 @@ function ProfProduits() {
                   <span className="font-heading text-lg font-extrabold tabular-nums">
                     {p.priceCents > 0 ? formatPrice(p.priceCents) : 'Gratuit'}
                   </span>
+                  {p.hasContent && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={async () => {
+                        try {
+                          const { url } = await marketplaceService.contentUrl(p.id)
+                          window.open(url, '_blank', 'noopener')
+                        } catch {
+                          toast.error('Téléchargement indisponible.')
+                        }
+                      }}
+                    >
+                      <Download className="size-4" /> Fichier
+                    </Button>
+                  )}
                 </div>
 
                 {p.status === 'rejete' && p.reviewNote && (
@@ -157,6 +174,41 @@ function ProfProduits() {
 const TRANSVERSAL = '__transversal__'
 const ALL_CLASSES = '__all__'
 
+/** Zone d'upload (dropzone) réutilisée pour la couverture et le fichier de contenu. */
+function UploadZone({ label, accept, onPick }: { label: string; accept?: string; onPick: (f: File) => void }) {
+  return (
+    <label className="flex cursor-pointer flex-col items-center gap-1.5 rounded-xl border border-dashed border-border bg-secondary/30 px-4 py-5 text-center transition-colors hover:border-brand/50 hover:bg-secondary/50">
+      <CloudUpload className="size-5 text-muted-foreground" />
+      <span className="text-sm font-medium">{label}</span>
+      <input
+        type="file"
+        accept={accept}
+        className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0]
+          if (f) onPick(f)
+        }}
+      />
+    </label>
+  )
+}
+
+/** Aperçu d'un fichier sélectionné avec bouton de retrait. */
+function FilePill({ name, size, onRemove }: { name: string; size: number; onRemove: () => void }) {
+  return (
+    <div className="flex items-center gap-2 rounded-xl border border-border bg-secondary/40 px-3 py-2.5">
+      <FileText className="size-4 shrink-0 text-brand" />
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-medium">{name}</p>
+        <p className="text-xs text-muted-foreground">{(size / 1024).toFixed(0)} Ko</p>
+      </div>
+      <Button type="button" variant="ghost" size="icon" className="size-8 shrink-0" onClick={onRemove} aria-label="Retirer le fichier">
+        <X className="size-4" />
+      </Button>
+    </div>
+  )
+}
+
 function CreateProductDialog() {
   const [open, setOpen] = useState(false)
   const [title, setTitle] = useState('')
@@ -165,6 +217,9 @@ function CreateProductDialog() {
   const [subjectId, setSubjectId] = useState<string>(TRANSVERSAL)
   const [classId, setClassId] = useState<string>(ALL_CLASSES)
   const [priceEuros, setPriceEuros] = useState('')
+  const [cover, setCover] = useState<File | null>(null)
+  const [content, setContent] = useState<File | null>(null)
+  const [uploading, setUploading] = useState(false)
   const { data: subjects = [] } = useSubjects()
   const { data: classes = [] } = useClasses()
   const publish = usePublishProduct()
@@ -176,13 +231,30 @@ function CreateProductDialog() {
     setSubjectId(TRANSVERSAL)
     setClassId(ALL_CLASSES)
     setPriceEuros('')
+    setCover(null)
+    setContent(null)
   }
 
   const euros = Number.parseFloat(priceEuros.replace(',', '.'))
   const priceCents = Number.isFinite(euros) && euros > 0 ? Math.round(euros * 100) : 0
+  const busy = uploading || publish.isPending
 
-  function submit() {
+  async function submit() {
     if (!title.trim()) return
+    let coverPath: string | null = null
+    let uploaded: { storagePath: string; fileName: string } | null = null
+    if (cover || content) {
+      setUploading(true)
+      try {
+        if (cover) coverPath = await uploadProductCover(cover)
+        if (content) uploaded = await uploadProductContent(content)
+      } catch (e) {
+        setUploading(false)
+        toast.error("Échec de l'envoi des fichiers.", { description: e instanceof Error ? e.message : undefined })
+        return
+      }
+      setUploading(false)
+    }
     publish.mutate(
       {
         title: title.trim(),
@@ -191,6 +263,9 @@ function CreateProductDialog() {
         subjectId: subjectId === TRANSVERSAL ? null : subjectId,
         classId: classId === ALL_CLASSES ? null : classId,
         priceCents,
+        coverPath,
+        contentPath: uploaded?.storagePath ?? null,
+        contentFileName: uploaded?.fileName ?? null,
       },
       {
         onSuccess: () => {
@@ -288,14 +363,33 @@ function CreateProductDialog() {
           </div>
 
           <p className="text-xs text-muted-foreground">Aperçu prix : <span className="font-semibold text-foreground">{priceCents > 0 ? formatPrice(priceCents) : 'Gratuit'}</span></p>
+
+          <div className="space-y-1.5">
+            <Label>Couverture (image, optionnel)</Label>
+            {cover ? (
+              <FilePill name={cover.name} size={cover.size} onRemove={() => setCover(null)} />
+            ) : (
+              <UploadZone label="Ajouter une image de couverture" accept="image/*" onPick={setCover} />
+            )}
+          </div>
+
+          <div className="space-y-1.5">
+            <Label>Fichier du produit (optionnel)</Label>
+            <p className="text-xs text-muted-foreground">Téléchargeable uniquement par les acheteurs (et toi).</p>
+            {content ? (
+              <FilePill name={content.name} size={content.size} onRemove={() => setContent(null)} />
+            ) : (
+              <UploadZone label="Ajouter le fichier vendu" onPick={setContent} />
+            )}
+          </div>
         </div>
 
         <DialogFooter>
           <DialogClose asChild>
             <Button variant="ghost">Annuler</Button>
           </DialogClose>
-          <Button disabled={!title.trim() || publish.isPending} onClick={submit}>
-            Soumettre
+          <Button disabled={!title.trim() || busy} onClick={submit}>
+            {uploading ? 'Envoi des fichiers…' : publish.isPending ? 'Soumission…' : 'Soumettre'}
           </Button>
         </DialogFooter>
       </DialogContent>

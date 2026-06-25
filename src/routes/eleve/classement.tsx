@@ -9,6 +9,7 @@ import {
   RotateCcw,
 } from '@/components/icons'
 import { Card } from '@/components/ui/card'
+import { spreadAvatar } from '@/lib/avatar'
 import { PageHero } from '@/components/blocks'
 import {
   Select,
@@ -99,7 +100,7 @@ function PodiumSpot({ row, place }: { row: Row | undefined; place: 1 | 2 | 3 }) 
             config.ring,
           )}
         >
-          {row.avatar}
+          {spreadAvatar(row.avatar, row.pseudo)}
         </span>
         <span
           className={cn(
@@ -213,10 +214,10 @@ function ClassementPage() {
 
       {/* Ta position */}
       {me && (
-      <Card className="gap-0 overflow-hidden border-0 bg-gradient-to-r from-brand to-indigo-600 p-5 text-white shadow-brand-glow">
+      <Card className="gap-0 overflow-hidden border-0 bg-brand-gradient p-5 text-white shadow-brand-glow">
         <div className="flex items-center gap-4">
           <div className="grid size-14 shrink-0 place-items-center rounded-2xl bg-white/15 text-3xl">
-            {me.avatar}
+            {spreadAvatar(me.avatar, me.pseudo)}
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/70">
@@ -293,7 +294,7 @@ function ClassementPage() {
                   row.me ? 'bg-card ring-1 ring-brand/30' : avatarTint(row.pseudo),
                 )}
               >
-                {row.avatar}
+                {spreadAvatar(row.avatar, row.pseudo)}
               </span>
               <span className="min-w-0 flex-1 truncate text-sm font-bold">
                 {row.pseudo}

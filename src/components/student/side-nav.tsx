@@ -18,6 +18,7 @@ import {
 } from '@/components/icons'
 import { cn } from '@/lib/utils'
 import { ThemeToggle } from '@/components/theme'
+import { resolveAvatar } from '@/lib/avatar'
 import { useStudentMe } from '@/hooks/use-student'
 import { useNotifications } from '@/hooks/use-notifications'
 
@@ -45,7 +46,7 @@ export function StudentSideNav() {
   const { data: notifs = [] } = useNotifications()
 
   const pseudo = me?.pseudo ?? '…'
-  const avatar = me?.avatar ?? '🙂'
+  const avatar = resolveAvatar(me?.avatar)
   const level = me?.level ?? 1
   const xp = me?.xp ?? 0
   const streak = me?.streak ?? 0
@@ -65,7 +66,7 @@ export function StudentSideNav() {
       {/* Mini-carte joueur */}
       <Link
         to="/eleve/profil"
-        className="mb-5 block rounded-2xl bg-gradient-to-br from-brand to-indigo-500 p-3 text-white shadow-soft transition-transform hover:scale-[1.01]"
+        className="mb-5 block rounded-2xl bg-brand-gradient p-3 text-white shadow-soft transition-transform hover:scale-[1.01]"
       >
         <div className="flex items-center gap-2.5">
           <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-white/15 text-xl">

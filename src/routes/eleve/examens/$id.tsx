@@ -13,6 +13,7 @@ import {
   CheckSquare,
 } from '@/components/icons'
 import { Math as Maths } from '@/components/math'
+import { MathText } from '@/components/math-text'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { useExam, useExamQuestions, useSubmitExam } from '@/hooks/use-exams'
@@ -176,7 +177,7 @@ function ExamSession({ exam, questions }: { exam: Exam; questions: QView[] }) {
           <p className="text-xs font-bold uppercase tracking-widest text-brand">
             {q.domain} · {q.type}
           </p>
-          <p className="mt-3 text-base font-medium leading-relaxed">{q.prompt}</p>
+          <p className="mt-3 text-base font-medium leading-relaxed"><MathText value={q.prompt} /></p>
           {q.katex && (
             <div className="mt-4 rounded-xl bg-secondary/60 py-4 text-xl">
               <Maths expr={q.katex} display />
@@ -207,7 +208,7 @@ function ExamSession({ exam, questions }: { exam: Exam; questions: QView[] }) {
                 >
                   {letter}
                 </span>
-                <span className="text-lg font-semibold">{opt.label}</span>
+                <span className="text-lg font-semibold"><MathText value={opt.label} /></span>
               </button>
             )
           })}
@@ -362,7 +363,7 @@ function ResultScreen({
                     <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
                       Question {i + 1}/{total} · {q.domain}
                     </p>
-                    <p className="mt-1 text-sm font-medium">{q.prompt}</p>
+                    <p className="mt-1 text-sm font-medium"><MathText value={q.prompt} /></p>
                     {q.katex && (
                       <div className="mt-2 text-base">
                         <Maths expr={q.katex} display />
@@ -370,10 +371,10 @@ function ResultScreen({
                     )}
                     <div className="mt-2 space-y-0.5 text-sm">
                       <p className={cn(ok ? 'text-success' : 'text-destructive')}>
-                        Ta réponse : {given ? givenLabel : 'aucune'}
+                        Ta réponse : {given ? <MathText value={givenLabel} /> : 'aucune'}
                       </p>
                       {!ok && correctLabel && (
-                        <p className="font-semibold text-success">Bonne réponse : {correctLabel}</p>
+                        <p className="font-semibold text-success">Bonne réponse : <MathText value={correctLabel} /></p>
                       )}
                     </div>
                     {correction?.explanation && (

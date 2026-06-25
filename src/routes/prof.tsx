@@ -148,7 +148,7 @@ function ProfLayout() {
   }
 
   return (
-    <div className="min-h-dvh bg-background text-foreground">
+    <div className="theme-prof min-h-dvh bg-background text-foreground">
       <div className="flex min-h-dvh w-full">
         {/* Rail d'icônes — tablette (md → lg) */}
         <aside className="sticky top-0 hidden h-dvh w-20 shrink-0 border-r border-border bg-card p-3 md:block lg:hidden">

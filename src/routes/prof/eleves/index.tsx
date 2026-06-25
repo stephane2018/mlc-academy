@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { Search, ChevronRight } from '@/components/icons'
 import { SectionHeader } from '@/components/student/parts'
+import { spreadAvatar } from '@/lib/avatar'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -84,7 +85,7 @@ function ProfEleves() {
                       params={{ id: s.id }}
                       className="flex items-center gap-2.5 px-4 py-3 outline-none focus-visible:ring-2 focus-visible:ring-brand"
                     >
-                      <span className="grid size-9 place-items-center rounded-xl bg-secondary text-lg">{s.avatar}</span>
+                      <span className="grid size-9 place-items-center rounded-xl bg-secondary text-lg">{spreadAvatar(s.avatar, s.pseudo)}</span>
                       <span className="font-semibold group-hover:text-brand">{s.pseudo}</span>
                     </Link>
                   </td>
