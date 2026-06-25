@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { toast } from 'sonner'
 import { Plus, Boxes, Check, FileText, ArrowRight, Users, CloudUpload, X, Download } from '@/components/icons'
@@ -30,7 +30,7 @@ import { QueryError } from '@/components/query-error'
 import { cn } from '@/lib/utils'
 import { productKindLabels, formatPrice, type ProductKind } from '@/lib/mock'
 import { useMyProducts, usePublishProduct } from '@/hooks/use-marketplace'
-import { uploadProductCover, uploadProductContent, marketplaceService } from '@/services/marketplace'
+import { uploadProductCover, uploadProductContent, getCoverUrl, marketplaceService } from '@/services/marketplace'
 import { useSubjects, useClasses } from '@/hooks/use-catalog'
 
 export const Route = createFileRoute('/prof/produits/')({
@@ -102,7 +102,7 @@ function ProfProduits() {
               <Card key={p.id} className="card-hover gap-0 p-5">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3">
-                    <span className="grid size-11 place-items-center rounded-xl bg-secondary text-2xl">{KIND_EMOJI[p.kind] ?? '🧩'}</span>
+                    <ProductThumb coverPath={p.coverPath} kind={p.kind} />
                     <p className="font-heading text-base font-bold">{p.title}</p>
                   </div>
                   <Badge variant="secondary" className={cn('shrink-0', STATUS_TONE[p.status])}>
@@ -206,6 +206,30 @@ function FilePill({ name, size, onRemove }: { name: string; size: number; onRemo
         <X className="size-4" />
       </Button>
     </div>
+  )
+}
+
+/** Vignette du produit : couverture (URL signée) ou emoji selon le type. */
+function ProductThumb({ coverPath, kind }: { coverPath: string | null; kind: string }) {
+  const [url, setUrl] = useState<string | null>(null)
+  useEffect(() => {
+    let alive = true
+    if (coverPath) {
+      getCoverUrl(coverPath)
+        .then((u) => alive && setUrl(u))
+        .catch(() => {})
+    } else {
+      setUrl(null)
+    }
+    return () => {
+      alive = false
+    }
+  }, [coverPath])
+  if (url) return <img src={url} alt="" className="size-11 shrink-0 rounded-xl object-cover" />
+  return (
+    <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-secondary text-2xl">
+      {KIND_EMOJI[kind] ?? '🧩'}
+    </span>
   )
 }
 
