@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { toast } from 'sonner'
+import { ApiError } from '@/lib/api-client'
 import { CreditCard, Users, Tag, Plus, Pencil, Trash2, CalendarDays } from '@/components/icons'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -226,7 +227,8 @@ function DeletePlanDialog({
         toast.success('Formule supprimée')
         onClose()
       },
-      onError: () => toast.error('Impossible de supprimer la formule'),
+      onError: (err) =>
+        toast.error(err instanceof ApiError ? err.message : 'Impossible de supprimer la formule'),
     })
   }
 

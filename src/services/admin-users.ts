@@ -24,6 +24,7 @@ export type AdminUsersQuery = {
 /** Service admin — gestion des comptes utilisateurs (`/admin/users/*`). */
 export const adminUsersService = {
   list: (query?: AdminUsersQuery) => api.get<AdminUser[]>('/admin/users', { query }),
+  get: (id: string) => api.get<AdminUser>(`/admin/users/${id}`),
   setRole: (id: string, role: UserRole) =>
     api.patch<{ ok: true }>(`/admin/users/${id}/role`, { role }),
   block: (id: string) => api.post<{ ok: true }>(`/admin/users/${id}/block`),

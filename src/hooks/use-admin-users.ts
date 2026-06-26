@@ -15,6 +15,14 @@ export function useAdminUsers(query?: AdminUsersQuery) {
   })
 }
 
+/** Détail d'un compte (`GET /admin/users/:id`). */
+export function useAdminUser(id: string) {
+  return useQuery({
+    queryKey: [...KEY, 'detail', id],
+    queryFn: () => adminUsersService.get(id),
+  })
+}
+
 /** Change le rôle d'un compte. */
 export function useSetUserRole() {
   const qc = useQueryClient()

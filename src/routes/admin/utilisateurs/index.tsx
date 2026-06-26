@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
 import { toast } from 'sonner'
 import {
   Users,
@@ -37,7 +37,7 @@ import { cn } from '@/lib/utils'
 import { useAdminUsers, useSetUserRole, useBlockUser, useUnblockUser } from '@/hooks/use-admin-users'
 import type { AdminUser, UserRole } from '@/services/admin-users'
 
-export const Route = createFileRoute('/admin/utilisateurs')({
+export const Route = createFileRoute('/admin/utilisateurs/')({
   component: AdminUtilisateurs,
 })
 
@@ -375,18 +375,22 @@ function AdminUtilisateurs() {
               users.map((u) => (
                 <tr key={u.id} className="transition-colors hover:bg-secondary/40">
                   <td className="px-5 py-3">
-                    <div className="flex items-center gap-3">
+                    <Link
+                      to="/admin/utilisateurs/$id"
+                      params={{ id: u.id }}
+                      className="group flex items-center gap-3"
+                    >
                       <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-secondary">
                         <User className="size-4 text-muted-foreground" />
                       </span>
                       <div className="min-w-0">
-                        <p className="truncate font-medium">{u.displayName ?? '—'}</p>
+                        <p className="truncate font-medium group-hover:text-brand">{u.displayName ?? '—'}</p>
                         <p className="flex items-center gap-1.5 truncate text-xs text-muted-foreground">
                           <Mail className="size-3.5 shrink-0" />
                           {u.email}
                         </p>
                       </div>
-                    </div>
+                    </Link>
                   </td>
                   <td className="px-5 py-3">
                     <RoleBadge role={u.role} />

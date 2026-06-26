@@ -45,7 +45,6 @@ import { Route as EleveClassementRouteImport } from './routes/eleve/classement'
 import { Route as EleveBoutiqueRouteImport } from './routes/eleve/boutique'
 import { Route as EleveBadgesRouteImport } from './routes/eleve/badges'
 import { Route as EleveAbonnementRouteImport } from './routes/eleve/abonnement'
-import { Route as AdminUtilisateursRouteImport } from './routes/admin/utilisateurs'
 import { Route as AdminSupportRouteImport } from './routes/admin/support'
 import { Route as AdminRessourcesRouteImport } from './routes/admin/ressources'
 import { Route as AdminQuestionsRouteImport } from './routes/admin/questions'
@@ -54,7 +53,6 @@ import { Route as AdminParametresRouteImport } from './routes/admin/parametres'
 import { Route as AdminNotificationsRouteImport } from './routes/admin/notifications'
 import { Route as AdminMatieresRouteImport } from './routes/admin/matieres'
 import { Route as AdminMarketplaceRouteImport } from './routes/admin/marketplace'
-import { Route as AdminGestionnairesRouteImport } from './routes/admin/gestionnaires'
 import { Route as AdminExamensRouteImport } from './routes/admin/examens'
 import { Route as AdminClassesRouteImport } from './routes/admin/classes'
 import { Route as AdminAbonnementsRouteImport } from './routes/admin/abonnements'
@@ -66,6 +64,8 @@ import { Route as ProfElevesIndexRouteImport } from './routes/prof/eleves/index'
 import { Route as EleveExamensIndexRouteImport } from './routes/eleve/examens/index'
 import { Route as EleveDevoirsIndexRouteImport } from './routes/eleve/devoirs/index'
 import { Route as EleveBibliothequeIndexRouteImport } from './routes/eleve/bibliotheque/index'
+import { Route as AdminUtilisateursIndexRouteImport } from './routes/admin/utilisateurs/index'
+import { Route as AdminGestionnairesIndexRouteImport } from './routes/admin/gestionnaires/index'
 import { Route as ProfRessourcesIdRouteImport } from './routes/prof/ressources/$id'
 import { Route as ProfProduitsIdRouteImport } from './routes/prof/produits/$id'
 import { Route as ProfGroupesIdRouteImport } from './routes/prof/groupes/$id'
@@ -76,6 +76,8 @@ import { Route as EleveSalleIdRouteImport } from './routes/eleve/salle/$id'
 import { Route as EleveExamensIdRouteImport } from './routes/eleve/examens/$id'
 import { Route as EleveDevoirsIdRouteImport } from './routes/eleve/devoirs/$id'
 import { Route as EleveBibliothequeIdRouteImport } from './routes/eleve/bibliotheque/$id'
+import { Route as AdminUtilisateursIdRouteImport } from './routes/admin/utilisateurs/$id'
+import { Route as AdminGestionnairesIdRouteImport } from './routes/admin/gestionnaires/$id'
 import { Route as AdminExamensExamIdRouteImport } from './routes/admin/examens.$examId'
 
 const ProfRoute = ProfRouteImport.update({
@@ -258,11 +260,6 @@ const EleveAbonnementRoute = EleveAbonnementRouteImport.update({
   path: '/abonnement',
   getParentRoute: () => EleveRoute,
 } as any)
-const AdminUtilisateursRoute = AdminUtilisateursRouteImport.update({
-  id: '/utilisateurs',
-  path: '/utilisateurs',
-  getParentRoute: () => AdminRoute,
-} as any)
 const AdminSupportRoute = AdminSupportRouteImport.update({
   id: '/support',
   path: '/support',
@@ -301,11 +298,6 @@ const AdminMatieresRoute = AdminMatieresRouteImport.update({
 const AdminMarketplaceRoute = AdminMarketplaceRouteImport.update({
   id: '/marketplace',
   path: '/marketplace',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminGestionnairesRoute = AdminGestionnairesRouteImport.update({
-  id: '/gestionnaires',
-  path: '/gestionnaires',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminExamensRoute = AdminExamensRouteImport.update({
@@ -363,6 +355,16 @@ const EleveBibliothequeIndexRoute = EleveBibliothequeIndexRouteImport.update({
   path: '/bibliotheque/',
   getParentRoute: () => EleveRoute,
 } as any)
+const AdminUtilisateursIndexRoute = AdminUtilisateursIndexRouteImport.update({
+  id: '/utilisateurs/',
+  path: '/utilisateurs/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminGestionnairesIndexRoute = AdminGestionnairesIndexRouteImport.update({
+  id: '/gestionnaires/',
+  path: '/gestionnaires/',
+  getParentRoute: () => AdminRoute,
+} as any)
 const ProfRessourcesIdRoute = ProfRessourcesIdRouteImport.update({
   id: '/ressources/$id',
   path: '/ressources/$id',
@@ -413,6 +415,16 @@ const EleveBibliothequeIdRoute = EleveBibliothequeIdRouteImport.update({
   path: '/bibliotheque/$id',
   getParentRoute: () => EleveRoute,
 } as any)
+const AdminUtilisateursIdRoute = AdminUtilisateursIdRouteImport.update({
+  id: '/utilisateurs/$id',
+  path: '/utilisateurs/$id',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminGestionnairesIdRoute = AdminGestionnairesIdRouteImport.update({
+  id: '/gestionnaires/$id',
+  path: '/gestionnaires/$id',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminExamensExamIdRoute = AdminExamensExamIdRouteImport.update({
   id: '/$examId',
   path: '/$examId',
@@ -432,7 +444,6 @@ export interface FileRoutesByFullPath {
   '/admin/abonnements': typeof AdminAbonnementsRoute
   '/admin/classes': typeof AdminClassesRoute
   '/admin/examens': typeof AdminExamensRouteWithChildren
-  '/admin/gestionnaires': typeof AdminGestionnairesRoute
   '/admin/marketplace': typeof AdminMarketplaceRoute
   '/admin/matieres': typeof AdminMatieresRoute
   '/admin/notifications': typeof AdminNotificationsRoute
@@ -441,7 +452,6 @@ export interface FileRoutesByFullPath {
   '/admin/questions': typeof AdminQuestionsRoute
   '/admin/ressources': typeof AdminRessourcesRoute
   '/admin/support': typeof AdminSupportRoute
-  '/admin/utilisateurs': typeof AdminUtilisateursRoute
   '/eleve/abonnement': typeof EleveAbonnementRoute
   '/eleve/badges': typeof EleveBadgesRoute
   '/eleve/boutique': typeof EleveBoutiqueRoute
@@ -470,6 +480,8 @@ export interface FileRoutesByFullPath {
   '/parent/': typeof ParentIndexRoute
   '/prof/': typeof ProfIndexRoute
   '/admin/examens/$examId': typeof AdminExamensExamIdRoute
+  '/admin/gestionnaires/$id': typeof AdminGestionnairesIdRoute
+  '/admin/utilisateurs/$id': typeof AdminUtilisateursIdRoute
   '/eleve/bibliotheque/$id': typeof EleveBibliothequeIdRoute
   '/eleve/devoirs/$id': typeof EleveDevoirsIdRoute
   '/eleve/examens/$id': typeof EleveExamensIdRoute
@@ -480,6 +492,8 @@ export interface FileRoutesByFullPath {
   '/prof/groupes/$id': typeof ProfGroupesIdRoute
   '/prof/produits/$id': typeof ProfProduitsIdRoute
   '/prof/ressources/$id': typeof ProfRessourcesIdRoute
+  '/admin/gestionnaires/': typeof AdminGestionnairesIndexRoute
+  '/admin/utilisateurs/': typeof AdminUtilisateursIndexRoute
   '/eleve/bibliotheque/': typeof EleveBibliothequeIndexRoute
   '/eleve/devoirs/': typeof EleveDevoirsIndexRoute
   '/eleve/examens/': typeof EleveExamensIndexRoute
@@ -498,7 +512,6 @@ export interface FileRoutesByTo {
   '/admin/abonnements': typeof AdminAbonnementsRoute
   '/admin/classes': typeof AdminClassesRoute
   '/admin/examens': typeof AdminExamensRouteWithChildren
-  '/admin/gestionnaires': typeof AdminGestionnairesRoute
   '/admin/marketplace': typeof AdminMarketplaceRoute
   '/admin/matieres': typeof AdminMatieresRoute
   '/admin/notifications': typeof AdminNotificationsRoute
@@ -507,7 +520,6 @@ export interface FileRoutesByTo {
   '/admin/questions': typeof AdminQuestionsRoute
   '/admin/ressources': typeof AdminRessourcesRoute
   '/admin/support': typeof AdminSupportRoute
-  '/admin/utilisateurs': typeof AdminUtilisateursRoute
   '/eleve/abonnement': typeof EleveAbonnementRoute
   '/eleve/badges': typeof EleveBadgesRoute
   '/eleve/boutique': typeof EleveBoutiqueRoute
@@ -536,6 +548,8 @@ export interface FileRoutesByTo {
   '/parent': typeof ParentIndexRoute
   '/prof': typeof ProfIndexRoute
   '/admin/examens/$examId': typeof AdminExamensExamIdRoute
+  '/admin/gestionnaires/$id': typeof AdminGestionnairesIdRoute
+  '/admin/utilisateurs/$id': typeof AdminUtilisateursIdRoute
   '/eleve/bibliotheque/$id': typeof EleveBibliothequeIdRoute
   '/eleve/devoirs/$id': typeof EleveDevoirsIdRoute
   '/eleve/examens/$id': typeof EleveExamensIdRoute
@@ -546,6 +560,8 @@ export interface FileRoutesByTo {
   '/prof/groupes/$id': typeof ProfGroupesIdRoute
   '/prof/produits/$id': typeof ProfProduitsIdRoute
   '/prof/ressources/$id': typeof ProfRessourcesIdRoute
+  '/admin/gestionnaires': typeof AdminGestionnairesIndexRoute
+  '/admin/utilisateurs': typeof AdminUtilisateursIndexRoute
   '/eleve/bibliotheque': typeof EleveBibliothequeIndexRoute
   '/eleve/devoirs': typeof EleveDevoirsIndexRoute
   '/eleve/examens': typeof EleveExamensIndexRoute
@@ -569,7 +585,6 @@ export interface FileRoutesById {
   '/admin/abonnements': typeof AdminAbonnementsRoute
   '/admin/classes': typeof AdminClassesRoute
   '/admin/examens': typeof AdminExamensRouteWithChildren
-  '/admin/gestionnaires': typeof AdminGestionnairesRoute
   '/admin/marketplace': typeof AdminMarketplaceRoute
   '/admin/matieres': typeof AdminMatieresRoute
   '/admin/notifications': typeof AdminNotificationsRoute
@@ -578,7 +593,6 @@ export interface FileRoutesById {
   '/admin/questions': typeof AdminQuestionsRoute
   '/admin/ressources': typeof AdminRessourcesRoute
   '/admin/support': typeof AdminSupportRoute
-  '/admin/utilisateurs': typeof AdminUtilisateursRoute
   '/eleve/abonnement': typeof EleveAbonnementRoute
   '/eleve/badges': typeof EleveBadgesRoute
   '/eleve/boutique': typeof EleveBoutiqueRoute
@@ -607,6 +621,8 @@ export interface FileRoutesById {
   '/parent/': typeof ParentIndexRoute
   '/prof/': typeof ProfIndexRoute
   '/admin/examens/$examId': typeof AdminExamensExamIdRoute
+  '/admin/gestionnaires/$id': typeof AdminGestionnairesIdRoute
+  '/admin/utilisateurs/$id': typeof AdminUtilisateursIdRoute
   '/eleve/bibliotheque/$id': typeof EleveBibliothequeIdRoute
   '/eleve/devoirs/$id': typeof EleveDevoirsIdRoute
   '/eleve/examens/$id': typeof EleveExamensIdRoute
@@ -617,6 +633,8 @@ export interface FileRoutesById {
   '/prof/groupes/$id': typeof ProfGroupesIdRoute
   '/prof/produits/$id': typeof ProfProduitsIdRoute
   '/prof/ressources/$id': typeof ProfRessourcesIdRoute
+  '/admin/gestionnaires/': typeof AdminGestionnairesIndexRoute
+  '/admin/utilisateurs/': typeof AdminUtilisateursIndexRoute
   '/eleve/bibliotheque/': typeof EleveBibliothequeIndexRoute
   '/eleve/devoirs/': typeof EleveDevoirsIndexRoute
   '/eleve/examens/': typeof EleveExamensIndexRoute
@@ -641,7 +659,6 @@ export interface FileRouteTypes {
     | '/admin/abonnements'
     | '/admin/classes'
     | '/admin/examens'
-    | '/admin/gestionnaires'
     | '/admin/marketplace'
     | '/admin/matieres'
     | '/admin/notifications'
@@ -650,7 +667,6 @@ export interface FileRouteTypes {
     | '/admin/questions'
     | '/admin/ressources'
     | '/admin/support'
-    | '/admin/utilisateurs'
     | '/eleve/abonnement'
     | '/eleve/badges'
     | '/eleve/boutique'
@@ -679,6 +695,8 @@ export interface FileRouteTypes {
     | '/parent/'
     | '/prof/'
     | '/admin/examens/$examId'
+    | '/admin/gestionnaires/$id'
+    | '/admin/utilisateurs/$id'
     | '/eleve/bibliotheque/$id'
     | '/eleve/devoirs/$id'
     | '/eleve/examens/$id'
@@ -689,6 +707,8 @@ export interface FileRouteTypes {
     | '/prof/groupes/$id'
     | '/prof/produits/$id'
     | '/prof/ressources/$id'
+    | '/admin/gestionnaires/'
+    | '/admin/utilisateurs/'
     | '/eleve/bibliotheque/'
     | '/eleve/devoirs/'
     | '/eleve/examens/'
@@ -707,7 +727,6 @@ export interface FileRouteTypes {
     | '/admin/abonnements'
     | '/admin/classes'
     | '/admin/examens'
-    | '/admin/gestionnaires'
     | '/admin/marketplace'
     | '/admin/matieres'
     | '/admin/notifications'
@@ -716,7 +735,6 @@ export interface FileRouteTypes {
     | '/admin/questions'
     | '/admin/ressources'
     | '/admin/support'
-    | '/admin/utilisateurs'
     | '/eleve/abonnement'
     | '/eleve/badges'
     | '/eleve/boutique'
@@ -745,6 +763,8 @@ export interface FileRouteTypes {
     | '/parent'
     | '/prof'
     | '/admin/examens/$examId'
+    | '/admin/gestionnaires/$id'
+    | '/admin/utilisateurs/$id'
     | '/eleve/bibliotheque/$id'
     | '/eleve/devoirs/$id'
     | '/eleve/examens/$id'
@@ -755,6 +775,8 @@ export interface FileRouteTypes {
     | '/prof/groupes/$id'
     | '/prof/produits/$id'
     | '/prof/ressources/$id'
+    | '/admin/gestionnaires'
+    | '/admin/utilisateurs'
     | '/eleve/bibliotheque'
     | '/eleve/devoirs'
     | '/eleve/examens'
@@ -777,7 +799,6 @@ export interface FileRouteTypes {
     | '/admin/abonnements'
     | '/admin/classes'
     | '/admin/examens'
-    | '/admin/gestionnaires'
     | '/admin/marketplace'
     | '/admin/matieres'
     | '/admin/notifications'
@@ -786,7 +807,6 @@ export interface FileRouteTypes {
     | '/admin/questions'
     | '/admin/ressources'
     | '/admin/support'
-    | '/admin/utilisateurs'
     | '/eleve/abonnement'
     | '/eleve/badges'
     | '/eleve/boutique'
@@ -815,6 +835,8 @@ export interface FileRouteTypes {
     | '/parent/'
     | '/prof/'
     | '/admin/examens/$examId'
+    | '/admin/gestionnaires/$id'
+    | '/admin/utilisateurs/$id'
     | '/eleve/bibliotheque/$id'
     | '/eleve/devoirs/$id'
     | '/eleve/examens/$id'
@@ -825,6 +847,8 @@ export interface FileRouteTypes {
     | '/prof/groupes/$id'
     | '/prof/produits/$id'
     | '/prof/ressources/$id'
+    | '/admin/gestionnaires/'
+    | '/admin/utilisateurs/'
     | '/eleve/bibliotheque/'
     | '/eleve/devoirs/'
     | '/eleve/examens/'
@@ -1101,13 +1125,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EleveAbonnementRouteImport
       parentRoute: typeof EleveRoute
     }
-    '/admin/utilisateurs': {
-      id: '/admin/utilisateurs'
-      path: '/utilisateurs'
-      fullPath: '/admin/utilisateurs'
-      preLoaderRoute: typeof AdminUtilisateursRouteImport
-      parentRoute: typeof AdminRoute
-    }
     '/admin/support': {
       id: '/admin/support'
       path: '/support'
@@ -1162,13 +1179,6 @@ declare module '@tanstack/react-router' {
       path: '/marketplace'
       fullPath: '/admin/marketplace'
       preLoaderRoute: typeof AdminMarketplaceRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/gestionnaires': {
-      id: '/admin/gestionnaires'
-      path: '/gestionnaires'
-      fullPath: '/admin/gestionnaires'
-      preLoaderRoute: typeof AdminGestionnairesRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/examens': {
@@ -1248,6 +1258,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EleveBibliothequeIndexRouteImport
       parentRoute: typeof EleveRoute
     }
+    '/admin/utilisateurs/': {
+      id: '/admin/utilisateurs/'
+      path: '/utilisateurs'
+      fullPath: '/admin/utilisateurs/'
+      preLoaderRoute: typeof AdminUtilisateursIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/gestionnaires/': {
+      id: '/admin/gestionnaires/'
+      path: '/gestionnaires'
+      fullPath: '/admin/gestionnaires/'
+      preLoaderRoute: typeof AdminGestionnairesIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/prof/ressources/$id': {
       id: '/prof/ressources/$id'
       path: '/ressources/$id'
@@ -1318,6 +1342,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EleveBibliothequeIdRouteImport
       parentRoute: typeof EleveRoute
     }
+    '/admin/utilisateurs/$id': {
+      id: '/admin/utilisateurs/$id'
+      path: '/utilisateurs/$id'
+      fullPath: '/admin/utilisateurs/$id'
+      preLoaderRoute: typeof AdminUtilisateursIdRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/gestionnaires/$id': {
+      id: '/admin/gestionnaires/$id'
+      path: '/gestionnaires/$id'
+      fullPath: '/admin/gestionnaires/$id'
+      preLoaderRoute: typeof AdminGestionnairesIdRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/examens/$examId': {
       id: '/admin/examens/$examId'
       path: '/$examId'
@@ -1344,7 +1382,6 @@ interface AdminRouteChildren {
   AdminAbonnementsRoute: typeof AdminAbonnementsRoute
   AdminClassesRoute: typeof AdminClassesRoute
   AdminExamensRoute: typeof AdminExamensRouteWithChildren
-  AdminGestionnairesRoute: typeof AdminGestionnairesRoute
   AdminMarketplaceRoute: typeof AdminMarketplaceRoute
   AdminMatieresRoute: typeof AdminMatieresRoute
   AdminNotificationsRoute: typeof AdminNotificationsRoute
@@ -1353,15 +1390,17 @@ interface AdminRouteChildren {
   AdminQuestionsRoute: typeof AdminQuestionsRoute
   AdminRessourcesRoute: typeof AdminRessourcesRoute
   AdminSupportRoute: typeof AdminSupportRoute
-  AdminUtilisateursRoute: typeof AdminUtilisateursRoute
   AdminIndexRoute: typeof AdminIndexRoute
+  AdminGestionnairesIdRoute: typeof AdminGestionnairesIdRoute
+  AdminUtilisateursIdRoute: typeof AdminUtilisateursIdRoute
+  AdminGestionnairesIndexRoute: typeof AdminGestionnairesIndexRoute
+  AdminUtilisateursIndexRoute: typeof AdminUtilisateursIndexRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminAbonnementsRoute: AdminAbonnementsRoute,
   AdminClassesRoute: AdminClassesRoute,
   AdminExamensRoute: AdminExamensRouteWithChildren,
-  AdminGestionnairesRoute: AdminGestionnairesRoute,
   AdminMarketplaceRoute: AdminMarketplaceRoute,
   AdminMatieresRoute: AdminMatieresRoute,
   AdminNotificationsRoute: AdminNotificationsRoute,
@@ -1370,8 +1409,11 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminQuestionsRoute: AdminQuestionsRoute,
   AdminRessourcesRoute: AdminRessourcesRoute,
   AdminSupportRoute: AdminSupportRoute,
-  AdminUtilisateursRoute: AdminUtilisateursRoute,
   AdminIndexRoute: AdminIndexRoute,
+  AdminGestionnairesIdRoute: AdminGestionnairesIdRoute,
+  AdminUtilisateursIdRoute: AdminUtilisateursIdRoute,
+  AdminGestionnairesIndexRoute: AdminGestionnairesIndexRoute,
+  AdminUtilisateursIndexRoute: AdminUtilisateursIndexRoute,
 }
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
