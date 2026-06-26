@@ -14,6 +14,7 @@ import {
 } from '@/components/icons'
 import { Math as Maths } from '@/components/math'
 import { MathText } from '@/components/math-text'
+import { SignedImage } from '@/components/signed-image'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { useExam, useExamQuestions, useSubmitExam } from '@/hooks/use-exams'
@@ -183,6 +184,9 @@ function ExamSession({ exam, questions }: { exam: Exam; questions: QView[] }) {
               <Maths expr={q.katex} display />
             </div>
           )}
+          {q.imagePath && (
+            <SignedImage path={q.imagePath} className="mt-4 max-h-72 w-auto rounded-xl border border-border object-contain" />
+          )}
         </div>
 
         {/* Options — pas de correction en direct (mode examen) */}
@@ -208,7 +212,12 @@ function ExamSession({ exam, questions }: { exam: Exam; questions: QView[] }) {
                 >
                   {letter}
                 </span>
-                <span className="text-lg font-semibold"><MathText value={opt.label} /></span>
+                <span className="min-w-0 flex-1 space-y-2">
+                  {opt.label && <span className="block text-lg font-semibold"><MathText value={opt.label} /></span>}
+                  {opt.imagePath && (
+                    <SignedImage path={opt.imagePath} className="max-h-32 w-auto rounded-lg border border-border object-contain" />
+                  )}
+                </span>
               </button>
             )
           })}
@@ -368,6 +377,9 @@ function ResultScreen({
                       <div className="mt-2 text-base">
                         <Maths expr={q.katex} display />
                       </div>
+                    )}
+                    {q.imagePath && (
+                      <SignedImage path={q.imagePath} className="mt-2 max-h-48 w-auto rounded-lg border border-border object-contain" />
                     )}
                     <div className="mt-2 space-y-0.5 text-sm">
                       <p className={cn(ok ? 'text-success' : 'text-destructive')}>

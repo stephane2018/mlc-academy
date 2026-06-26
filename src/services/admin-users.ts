@@ -34,9 +34,19 @@ export type AdminUserDetail = AdminUser & {
     groups: string[]
     parents: string[]
     skills: SubjectSkill[]
+    recentSubmissions: { title: string; type: string; score: number | null; status: string; submittedAt: string | null }[]
+    recentExams: { title: string; score: number | null; submittedAt: string | null }[]
   } | null
-  teacher: { groups: { name: string; memberCount: number }[]; studentCount: number } | null
-  parent: { children: { pseudo: string; classCode: string | null }[] } | null
+  teacher: {
+    groups: { name: string; memberCount: number }[]
+    studentCount: number
+    recentAssignments: { title: string; type: string; status: string; createdAt: string }[]
+  } | null
+  parent: {
+    children: { pseudo: string; classCode: string | null }[]
+    subscription: { status: string; planId: string | null; currentPeriodEnd: string | null } | null
+    invoices: { amountCents: number; status: string; issuedAt: string | null; pdfUrl: string | null }[]
+  } | null
   caps: string[] | null
 }
 

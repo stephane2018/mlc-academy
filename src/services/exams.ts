@@ -10,6 +10,7 @@ export type ExamQuestion = {
   type: string
   prompt: string
   katex: string | null
+  imagePath: string | null
   themeId: string | null
   options: QuizOption[]
 }

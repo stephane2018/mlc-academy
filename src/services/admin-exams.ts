@@ -28,6 +28,7 @@ export type AdminExamQuestion = {
   id: string
   prompt: string
   katex: string | null
+  imagePath: string | null
   themeId: string | null
   explanation: string | null
   explanationKatex: string | null
@@ -66,10 +67,11 @@ export type UpdateExamInput = Partial<{
 export type ComposedExamQuestion = {
   prompt: string
   katex?: string | null
+  imagePath?: string | null
   themeId?: string | null
   explanation?: string | null
   explanationKatex?: string | null
-  options: { label: string; isCorrect: boolean }[]
+  options: { label: string; isCorrect: boolean; imagePath?: string | null }[]
 }
 
 /** Service examens (rôle admin) — `/admin/exams/*`. */

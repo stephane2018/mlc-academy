@@ -28,6 +28,7 @@ export type QuizQuestion = {
   type: string
   prompt: string
   katex: string | null
+  imagePath: string | null
   themeId: string | null
   explanation: string | null
   explanationKatex: string | null

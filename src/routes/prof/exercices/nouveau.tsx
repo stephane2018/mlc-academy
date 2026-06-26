@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useState } from 'react'
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
@@ -14,24 +14,12 @@ import {
   CalendarDays,
   Check,
   Send,
-  Sparkles,
 } from '@/components/icons'
 import { Math as Maths } from '@/components/math'
-import { MathField } from '@/components/math-field'
 import { MathText } from '@/components/math-text'
-import { ImagePicker } from '@/components/image-picker'
 import { SignedImage } from '@/components/signed-image'
 import { ConfirmDialog } from '@/components/confirm-dialog'
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog'
+import { QuestionEditor } from '@/components/question-editor'
 import { spreadAvatar } from '@/lib/avatar'
 import { RailLayout } from '@/components/blocks'
 import { Card } from '@/components/ui/card'
@@ -62,58 +50,6 @@ const difficulties: { value: 'facile' | 'moyen' | 'difficile'; label: string }[]
   { value: 'moyen', label: 'Moyen' },
   { value: 'difficile', label: 'Difficile' },
 ]
-
-/** Bouton + dialog d'insertion d'une formule (éditeur visuel MathLive → LaTeX). */
-function MathInsertButton({ onInsert, compact }: { onInsert: (latex: string) => void; compact?: boolean }) {
-  const [open, setOpen] = useState(false)
-  const [latex, setLatex] = useState('')
-  const confirm = () => {
-    const v = latex.trim()
-    if (v) onInsert(v)
-    setLatex('')
-    setOpen(false)
-  }
-  // Garde : ne pas fermer le dialog quand on interagit avec le clavier flottant
-  // (posé sur <body>, donc « hors » du dialog).
-  const keepOpenOnKeyboard = (e: Event) => {
-    const t = e.target as HTMLElement | null
-    if (t?.closest?.('.mlk-float, .ML__keyboard')) e.preventDefault()
-  }
-  return (
-    <Dialog open={open} onOpenChange={setOpen} modal={false}>
-      <DialogTrigger asChild>
-        {compact ? (
-          <Button type="button" variant="outline" size="icon" className="size-9 shrink-0" title="Insérer une formule" aria-label="Insérer une formule">
-            <Sparkles className="size-4" />
-          </Button>
-        ) : (
-          <Button type="button" variant="outline" size="sm">
-            <Sparkles className="size-4" />
-            Insérer une formule
-          </Button>
-        )}
-      </DialogTrigger>
-      <DialogContent onInteractOutside={keepOpenOnKeyboard} onPointerDownOutside={keepOpenOnKeyboard}>
-        <DialogHeader>
-          <DialogTitle>Insérer une formule</DialogTitle>
-          <DialogDescription>Écris ta formule (clavier de symboles dispo) — elle s'insère dans le texte.</DialogDescription>
-        </DialogHeader>
-        <MathField value={latex} onChange={setLatex} placeholder="Ex : (a+b)/2" />
-        {latex.trim() && (
-          <div className="rounded-xl bg-secondary/60 py-3 text-center text-lg">
-            <Maths expr={latex} display />
-          </div>
-        )}
-        <DialogFooter>
-          <DialogClose asChild>
-            <Button type="button" variant="ghost">Annuler</Button>
-          </DialogClose>
-          <Button type="button" onClick={confirm} disabled={!latex.trim()}>Insérer</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  )
-}
 
 /** Brouillon de question composé dans le builder. */
 type QDraft = {
@@ -179,46 +115,6 @@ function ExerciceBuilder() {
     setThemeId('')
   }
 
-  function patchQuestion(idx: number, patch: Partial<QDraft>) {
-    setQuestions((qs) => qs.map((q, i) => (i === idx ? { ...q, ...patch } : q)))
-  }
-  function patchOption(idx: number, optIdx: number, label: string) {
-    setQuestions((qs) =>
-      qs.map((q, i) =>
-        i === idx ? { ...q, options: q.options.map((o, oi) => (oi === optIdx ? { ...o, label } : o)) } : q,
-      ),
-    )
-  }
-  function patchOptionImage(idx: number, optIdx: number, imagePath: string | null) {
-    setQuestions((qs) =>
-      qs.map((q, i) =>
-        i === idx ? { ...q, options: q.options.map((o, oi) => (oi === optIdx ? { ...o, imagePath } : o)) } : q,
-      ),
-    )
-  }
-
-  // Refs des champs texte (énoncé + options), pour insérer une formule au curseur.
-  const fieldRefs = useRef<Map<string, HTMLInputElement | HTMLTextAreaElement>>(new Map())
-  const registerField = (key: string) => (el: HTMLInputElement | HTMLTextAreaElement | null) => {
-    if (el) fieldRefs.current.set(key, el)
-    else fieldRefs.current.delete(key)
-  }
-  function insertFormula(key: string, latex: string, current: string, apply: (v: string) => void) {
-    const wrapped = `$${latex}$`
-    const el = fieldRefs.current.get(key)
-    if (!el) {
-      apply(current ? `${current} ${wrapped}` : wrapped)
-      return
-    }
-    const start = el.selectionStart ?? current.length
-    const end = el.selectionEnd ?? current.length
-    apply(current.slice(0, start) + wrapped + current.slice(end))
-    requestAnimationFrame(() => {
-      const caret = start + wrapped.length
-      el.focus()
-      el.setSelectionRange(caret, caret)
-    })
-  }
   function addQuestion() {
     setQuestions((qs) => [...qs, emptyQuestion()])
     setActiveIdx(questions.length)
@@ -629,69 +525,11 @@ function ExerciceBuilder() {
                     </div>
                   </div>
 
-                  <div className="mt-3 space-y-3">
-                    <div className="space-y-1.5">
-                      <Label htmlFor={`prompt-${q.id}`}>Énoncé</Label>
-                      <Textarea ref={registerField(`prompt-${q.id}`)} id={`prompt-${q.id}`} value={q.prompt} onChange={(e) => patchQuestion(idx, { prompt: e.target.value })} placeholder="Rédige la question… (insère des formules avec le bouton ci-dessous)" rows={2} />
-                      <div className="flex flex-wrap items-center gap-2">
-                        <MathInsertButton onInsert={(latex) => insertFormula(`prompt-${q.id}`, latex, q.prompt, (v) => patchQuestion(idx, { prompt: v }))} />
-                        <ImagePicker value={q.imagePath} onChange={(p) => patchQuestion(idx, { imagePath: p })} label="Image d'énoncé" />
-                      </div>
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <Label>Formule mathématique (optionnel)</Label>
-                      <p className="text-xs text-muted-foreground">
-                        Écris directement (fraction, racine, exposant…) — utilise le clavier de symboles. Aucun code à retenir.
-                      </p>
-                      <MathField
-                        value={q.katex}
-                        onChange={(latex) => patchQuestion(idx, { katex: latex })}
-                        placeholder="Ex : (a+b)/2"
-                      />
-                      {q.katex && (
-                        <div className="rounded-xl bg-secondary/60 py-3 text-center text-lg">
-                          <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Aperçu élève</p>
-                          <Maths expr={q.katex} display />
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label>Options · coche la bonne réponse</Label>
-                      {q.options.map((opt, oi) => {
-                        const letter = String.fromCharCode(65 + oi)
-                        const isAnswer = opt.id === q.correctId
-                        return (
-                          <div key={opt.id} className="space-y-1.5 rounded-xl border border-border/60 p-2">
-                            <div className="flex items-center gap-2">
-                              <button
-                                type="button"
-                                title="Désigner comme bonne réponse"
-                                onClick={(e) => { e.stopPropagation(); patchQuestion(idx, { correctId: opt.id }) }}
-                                className={cn(
-                                  'grid size-7 shrink-0 place-items-center rounded-full border-2 transition',
-                                  isAnswer ? 'border-success bg-success text-white' : 'border-border text-transparent hover:border-success/50',
-                                )}
-                              >
-                                <Check className="size-4" />
-                              </button>
-                              <span className="w-5 text-center text-sm font-bold text-muted-foreground">{letter}</span>
-                              <Input ref={registerField(`opt-${opt.id}`)} value={opt.label} onChange={(e) => patchOption(idx, oi, e.target.value)} placeholder={`Option ${letter} (texte ou image)`} />
-                              <MathInsertButton compact onInsert={(latex) => insertFormula(`opt-${opt.id}`, latex, opt.label, (v) => patchOption(idx, oi, v))} />
-                            </div>
-                            <div className="pl-9">
-                              <ImagePicker value={opt.imagePath} onChange={(p) => patchOptionImage(idx, oi, p)} label="Image (option)" />
-                            </div>
-                          </div>
-                        )
-                      })}
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <Label htmlFor={`expl-${q.id}`}>Explication</Label>
-                      <Input id={`expl-${q.id}`} value={q.explanation} onChange={(e) => patchQuestion(idx, { explanation: e.target.value })} placeholder="Justification affichée à la correction." />
-                    </div>
+                  <div className="mt-3">
+                    <QuestionEditor
+                      value={q}
+                      onChange={(next) => setQuestions((qs) => qs.map((x, i) => (i === idx ? next : x)))}
+                    />
                   </div>
                 </div>
               )

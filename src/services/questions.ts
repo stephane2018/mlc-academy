@@ -7,6 +7,7 @@ export type QuestionDifficulty = 'facile' | 'moyen' | 'difficile'
 export type QuestionOption = {
   id: string
   label: string
+  imagePath: string | null
   isCorrect: boolean
   position: number
 }
@@ -17,6 +18,7 @@ export type Question = {
   type: string
   prompt: string
   katex: string | null
+  imagePath: string | null
   subjectId: string
   themeId: string | null
   classId: string | null

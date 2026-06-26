@@ -3,6 +3,7 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { X, Zap, Check, Trophy, RotateCcw, ArrowRight } from '@/components/icons'
 import { Math as Maths } from '@/components/math'
 import { MathText } from '@/components/math-text'
+import { SignedImage } from '@/components/signed-image'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { useSubjects } from '@/hooks/use-catalog'
@@ -159,6 +160,9 @@ function QuizSession({
               <Maths expr={q.katex} display />
             </div>
           )}
+          {q.imagePath && (
+            <SignedImage path={q.imagePath} className="mt-4 max-h-64 w-auto rounded-xl border border-border object-contain" />
+          )}
         </div>
 
         <div className="mt-4 space-y-3">
@@ -193,7 +197,12 @@ function QuizSession({
                 )}>
                   {showCorrect ? <Check className="size-4" /> : showWrong ? <X className="size-4" /> : letter}
                 </span>
-                <span className="text-lg font-semibold"><MathText value={opt.label} /></span>
+                <span className="min-w-0 flex-1 space-y-2">
+                  {opt.label && <span className="block text-lg font-semibold"><MathText value={opt.label} /></span>}
+                  {opt.imagePath && (
+                    <SignedImage path={opt.imagePath} className="max-h-32 w-auto rounded-lg border border-border object-contain" />
+                  )}
+                </span>
               </button>
             )
           })}

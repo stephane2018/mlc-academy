@@ -1,14 +1,11 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
-import { Plus, Trash2, Check, Loader } from '@/components/icons'
+import { Plus, Trash2, Loader } from '@/components/icons'
 import { toast } from 'sonner'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import { cn } from '@/lib/utils'
+import { QuestionEditor, type QuestionDraft } from '@/components/question-editor'
 import { ExamFields, emptyExamForm, type ExamForm } from '@/components/admin/exam-fields'
 import { useAdminExam, useUpdateExam, useSetExamQuestions } from '@/hooks/use-admin-exams'
 import type { ComposedExamQuestion, ExamStatus } from '@/services/admin-exams'
@@ -17,15 +14,8 @@ export const Route = createFileRoute('/admin/examens/$examId')({
   component: ComposeExamPage,
 })
 
-/** Brouillon de question QCM dans le builder. */
-type QDraft = {
-  id: string
-  prompt: string
-  katex: string
-  explanation: string
-  options: { id: string; label: string }[]
-  correctId: string
-}
+/** Brouillon de question QCM dans le builder (modèle commun avec les exercices). */
+type QDraft = QuestionDraft
 
 let qCounter = 0
 function emptyQuestion(): QDraft {
@@ -35,12 +25,13 @@ function emptyQuestion(): QDraft {
     id,
     prompt: '',
     katex: '',
+    imagePath: null,
     explanation: '',
     options: [
-      { id: `${id}-a`, label: '' },
-      { id: `${id}-b`, label: '' },
-      { id: `${id}-c`, label: '' },
-      { id: `${id}-d`, label: '' },
+      { id: `${id}-a`, label: '', imagePath: null },
+      { id: `${id}-b`, label: '', imagePath: null },
+      { id: `${id}-c`, label: '', imagePath: null },
+      { id: `${id}-d`, label: '', imagePath: null },
     ],
     correctId: `${id}-a`,
   }
@@ -74,24 +65,15 @@ function ComposeExamPage() {
         id: q.id,
         prompt: q.prompt,
         katex: q.katex ?? '',
+        imagePath: q.imagePath ?? null,
         explanation: q.explanation ?? '',
-        options: q.options.map((o) => ({ id: o.id, label: o.label })),
+        options: q.options.map((o) => ({ id: o.id, label: o.label, imagePath: o.imagePath ?? null })),
         correctId: q.correctOptionId ?? q.options[0]?.id ?? '',
       })),
     )
     setHydrated(true)
   }, [exam, hydrated])
 
-  function patchQuestion(idx: number, patch: Partial<QDraft>) {
-    setQuestionsState((qs) => qs.map((q, i) => (i === idx ? { ...q, ...patch } : q)))
-  }
-  function patchOption(idx: number, optIdx: number, label: string) {
-    setQuestionsState((qs) =>
-      qs.map((q, i) =>
-        i === idx ? { ...q, options: q.options.map((o, oi) => (oi === optIdx ? { ...o, label } : o)) } : q,
-      ),
-    )
-  }
   const addQuestion = () => setQuestionsState((qs) => [...qs, emptyQuestion()])
   const removeQuestion = (idx: number) => setQuestionsState((qs) => qs.filter((_, i) => i !== idx))
 
@@ -99,20 +81,21 @@ function ComposeExamPage() {
   function buildPayload(): ComposedExamQuestion[] | string {
     const payload: ComposedExamQuestion[] = []
     for (const q of questions) {
-      const labels = q.options.filter((o) => o.label.trim())
-      const isEmpty = !q.prompt.trim() && labels.length === 0
+      const filled = q.options.filter((o) => o.label.trim() || o.imagePath)
+      const isEmpty = !q.prompt.trim() && !q.imagePath && filled.length === 0
       if (isEmpty) continue // carte non remplie → ignorée (utile en brouillon)
-      if (!q.prompt.trim()) return 'Chaque question doit avoir un énoncé.'
-      if (labels.length < 2) return 'Chaque question doit avoir au moins 2 options.'
-      if (labels.length > 8) return 'Maximum 8 options par question.'
-      if (!labels.some((o) => o.id === q.correctId))
+      if (!q.prompt.trim() && !q.imagePath) return 'Chaque question doit avoir un énoncé ou une image.'
+      if (filled.length < 2) return 'Chaque question doit avoir au moins 2 options (texte ou image).'
+      if (filled.length > 8) return 'Maximum 8 options par question.'
+      if (!filled.some((o) => o.id === q.correctId))
         return 'Désigne une bonne réponse parmi les options remplies.'
       payload.push({
         prompt: q.prompt.trim(),
         katex: q.katex.trim() || null,
+        imagePath: q.imagePath,
         themeId: form.themeId || null,
         explanation: q.explanation.trim() || null,
-        options: labels.map((o) => ({ label: o.label.trim(), isCorrect: o.id === q.correctId })),
+        options: filled.map((o) => ({ label: o.label.trim(), isCorrect: o.id === q.correctId, imagePath: o.imagePath })),
       })
     }
     return payload
@@ -227,69 +210,11 @@ function ComposeExamPage() {
                 </button>
               </div>
 
-              <div className="mt-3 space-y-3">
-                <div className="space-y-1.5">
-                  <Label htmlFor={`prompt-${q.id}`}>Énoncé</Label>
-                  <Textarea
-                    id={`prompt-${q.id}`}
-                    value={q.prompt}
-                    onChange={(e) => patchQuestion(idx, { prompt: e.target.value })}
-                    placeholder="Rédige la question…"
-                    rows={2}
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <Label htmlFor={`katex-${q.id}`}>Formule KaTeX (optionnel)</Label>
-                  <Input
-                    id={`katex-${q.id}`}
-                    value={q.katex}
-                    onChange={(e) => patchQuestion(idx, { katex: e.target.value })}
-                    placeholder="Ex : \frac{3}{4} + \frac{1}{2}"
-                    className="font-mono"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Options · coche la bonne réponse</Label>
-                  {q.options.map((opt, oi) => {
-                    const letter = String.fromCharCode(65 + oi)
-                    const isAnswer = opt.id === q.correctId
-                    return (
-                      <div key={opt.id} className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          title="Désigner comme bonne réponse"
-                          onClick={() => patchQuestion(idx, { correctId: opt.id })}
-                          className={cn(
-                            'grid size-7 shrink-0 place-items-center rounded-full border-2 transition',
-                            isAnswer
-                              ? 'border-success bg-success text-white'
-                              : 'border-border text-transparent hover:border-success/50',
-                          )}
-                        >
-                          <Check className="size-4" />
-                        </button>
-                        <span className="w-5 text-center text-sm font-bold text-muted-foreground">{letter}</span>
-                        <Input
-                          value={opt.label}
-                          onChange={(e) => patchOption(idx, oi, e.target.value)}
-                          placeholder={`Option ${letter}`}
-                        />
-                      </div>
-                    )
-                  })}
-                </div>
-
-                <div className="space-y-1.5">
-                  <Label htmlFor={`expl-${q.id}`}>Explication (optionnel)</Label>
-                  <Input
-                    id={`expl-${q.id}`}
-                    value={q.explanation}
-                    onChange={(e) => patchQuestion(idx, { explanation: e.target.value })}
-                    placeholder="Justification affichée à la correction."
-                  />
-                </div>
+              <div className="mt-3">
+                <QuestionEditor
+                  value={q}
+                  onChange={(next) => setQuestionsState((qs) => qs.map((x, i) => (i === idx ? next : x)))}
+                />
               </div>
             </div>
           ))}

@@ -113,7 +113,40 @@ function StudentBlock({ s }: { s: NonNullable<AdminUserDetail['student']> }) {
           ))}
         </div>
       )}
+
+      {s.recentSubmissions.length > 0 && (
+        <ActivityList
+          title="Dernières copies"
+          items={s.recentSubmissions.map((r) => ({
+            label: r.title,
+            value: r.score !== null ? `${r.score}%` : 'à corriger',
+          }))}
+        />
+      )}
+      {s.recentExams.length > 0 && (
+        <ActivityList
+          title="Examens"
+          items={s.recentExams.map((r) => ({ label: r.title, value: r.score !== null ? `${r.score}%` : '—' }))}
+        />
+      )}
     </Card>
+  )
+}
+
+/** Petite liste libellé → valeur, réutilisée par les sections d'activité. */
+function ActivityList({ title, items }: { title: string; items: { label: string; value: string }[] }) {
+  return (
+    <div className="space-y-1.5">
+      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{title}</p>
+      <ul className="space-y-1.5">
+        {items.map((it, i) => (
+          <li key={i} className="flex items-center justify-between gap-2 rounded-lg border border-border px-3 py-1.5 text-sm">
+            <span className="truncate">{it.label}</span>
+            <span className="shrink-0 font-semibold tabular-nums">{it.value}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
   )
 }
 
@@ -134,6 +167,12 @@ function TeacherBlock({ t }: { t: NonNullable<AdminUserDetail['teacher']> }) {
           ))}
         </div>
       )}
+      {t.recentAssignments.length > 0 && (
+        <ActivityList
+          title="Devoirs récents"
+          items={t.recentAssignments.map((a) => ({ label: a.title, value: a.status }))}
+        />
+      )}
     </Card>
   )
 }
@@ -153,6 +192,22 @@ function ParentBlock({ p }: { p: NonNullable<AdminUserDetail['parent']> }) {
             </li>
           ))}
         </ul>
+      )}
+
+      {p.subscription && (
+        <div className="rounded-xl border border-border px-3 py-2 text-sm">
+          <span className="font-semibold">Abonnement :</span> {p.subscription.status}
+          {p.subscription.planId ? ` · ${p.subscription.planId}` : ''}
+        </div>
+      )}
+      {p.invoices.length > 0 && (
+        <ActivityList
+          title="Factures"
+          items={p.invoices.map((inv) => ({
+            label: `${(inv.amountCents / 100).toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })} · ${inv.status}`,
+            value: inv.issuedAt ? new Date(inv.issuedAt).toLocaleDateString('fr-FR') : '—',
+          }))}
+        />
       )}
     </Card>
   )
