@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { createFileRoute, Link, useParams } from '@tanstack/react-router'
 import { toast } from 'sonner'
-import { ArrowLeft, User, Mail, Crown, CheckCircle2, X, CalendarDays } from '@/components/icons'
+import { ArrowLeft, User, Mail, Crown, CheckCircle2, X, CalendarDays, Boxes, Users, Flame, Zap, Link2 } from '@/components/icons'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
+import { Meter } from '@/components/student/parts'
+import type { AdminUserDetail } from '@/services/admin-users'
 import {
   Select,
   SelectContent,
@@ -49,6 +51,127 @@ function BackLink() {
     >
       <ArrowLeft className="size-4" /> Comptes
     </Link>
+  )
+}
+
+function StatChip({ icon: Icon, label, value }: { icon: typeof Boxes; label: string; value: string | number }) {
+  return (
+    <div className="flex items-center gap-2 rounded-xl border border-border bg-secondary/40 px-3 py-2">
+      <Icon className="size-4 text-brand" />
+      <div className="leading-tight">
+        <p className="text-sm font-bold tabular-nums">{value}</p>
+        <p className="text-[11px] text-muted-foreground">{label}</p>
+      </div>
+    </div>
+  )
+}
+
+function StudentBlock({ s }: { s: NonNullable<AdminUserDetail['student']> }) {
+  return (
+    <Card className="gap-4 rounded-2xl p-5 shadow-soft">
+      <h2 className="font-heading text-base font-bold">Profil élève</h2>
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <StatChip icon={Zap} label="Niveau" value={s.level} />
+        <StatChip icon={Crown} label="XP" value={s.nextLevelXp ? `${s.xp}/${s.nextLevelXp}` : s.xp} />
+        <StatChip icon={Flame} label="Série" value={s.streak} />
+        <StatChip icon={Boxes} label="Classe" value={s.classCode ?? '—'} />
+      </div>
+
+      <div className="flex flex-wrap gap-1.5">
+        <span className="text-xs font-semibold text-muted-foreground">Groupes :</span>
+        {s.groups.length === 0 ? (
+          <span className="text-xs text-muted-foreground">aucun</span>
+        ) : (
+          s.groups.map((g) => (
+            <Badge key={g} variant="secondary" className="bg-brand-soft text-brand">
+              <Users className="size-3" /> {g}
+            </Badge>
+          ))
+        )}
+      </div>
+
+      {s.parents.length > 0 && (
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="text-xs font-semibold text-muted-foreground">Parent(s) :</span>
+          {s.parents.map((p) => (
+            <Badge key={p} variant="secondary" className="bg-secondary text-muted-foreground">
+              <Link2 className="size-3" /> {p}
+            </Badge>
+          ))}
+        </div>
+      )}
+
+      {s.skills.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Compétences</p>
+          {s.skills.map((sk) => (
+            <div key={sk.subjectId} className="flex items-center gap-3">
+              <span className="w-32 shrink-0 truncate text-sm font-medium">{sk.subjectName}</span>
+              <Meter value={sk.mastery} color="auto" className="flex-1" />
+              <span className="w-10 text-right text-xs font-bold tabular-nums">{Math.round(sk.mastery)}%</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </Card>
+  )
+}
+
+function TeacherBlock({ t }: { t: NonNullable<AdminUserDetail['teacher']> }) {
+  return (
+    <Card className="gap-4 rounded-2xl p-5 shadow-soft">
+      <h2 className="font-heading text-base font-bold">Profil enseignant</h2>
+      <div className="grid grid-cols-2 gap-2">
+        <StatChip icon={Boxes} label="Groupes" value={t.groups.length} />
+        <StatChip icon={Users} label="Élèves suivis" value={t.studentCount} />
+      </div>
+      {t.groups.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {t.groups.map((g) => (
+            <Badge key={g.name} variant="secondary" className="bg-brand-soft text-brand">
+              {g.name} · {g.memberCount}
+            </Badge>
+          ))}
+        </div>
+      )}
+    </Card>
+  )
+}
+
+function ParentBlock({ p }: { p: NonNullable<AdminUserDetail['parent']> }) {
+  return (
+    <Card className="gap-3 rounded-2xl p-5 shadow-soft">
+      <h2 className="font-heading text-base font-bold">Enfants rattachés</h2>
+      {p.children.length === 0 ? (
+        <p className="text-sm text-muted-foreground">Aucun enfant rattaché.</p>
+      ) : (
+        <ul className="space-y-2">
+          {p.children.map((c) => (
+            <li key={c.pseudo} className="flex items-center justify-between rounded-xl border border-border px-3 py-2">
+              <span className="text-sm font-medium">{c.pseudo}</span>
+              <Badge variant="secondary" className="bg-secondary text-muted-foreground">{c.classCode ?? '—'}</Badge>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Card>
+  )
+}
+
+function CapsBlock({ caps }: { caps: string[] }) {
+  return (
+    <Card className="gap-3 rounded-2xl p-5 shadow-soft">
+      <h2 className="font-heading text-base font-bold">Accès back-office</h2>
+      {caps.length === 0 ? (
+        <p className="text-sm text-muted-foreground">Aucun accès attribué.</p>
+      ) : (
+        <div className="flex flex-wrap gap-1.5">
+          {caps.map((c) => (
+            <Badge key={c} variant="secondary" className="bg-violet-soft text-violet">{c}</Badge>
+          ))}
+        </div>
+      )}
+    </Card>
   )
 }
 
@@ -132,6 +255,12 @@ function UserDetail() {
           <CalendarDays className="size-3.5" /> Inscrit le {formatDate(user.createdAt)}
         </p>
       </Card>
+
+      {/* Détail selon le rôle */}
+      {user.student && <StudentBlock s={user.student} />}
+      {user.teacher && <TeacherBlock t={user.teacher} />}
+      {user.parent && <ParentBlock p={user.parent} />}
+      {user.caps && <CapsBlock caps={user.caps} />}
 
       {/* Rôle */}
       <Card className="gap-3 rounded-2xl p-5 shadow-soft">
