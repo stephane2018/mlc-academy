@@ -47,13 +47,11 @@ import { Route as EleveBadgesRouteImport } from './routes/eleve/badges'
 import { Route as EleveAbonnementRouteImport } from './routes/eleve/abonnement'
 import { Route as AdminSupportRouteImport } from './routes/admin/support'
 import { Route as AdminRessourcesRouteImport } from './routes/admin/ressources'
-import { Route as AdminQuestionsRouteImport } from './routes/admin/questions'
 import { Route as AdminPermissionsRouteImport } from './routes/admin/permissions'
 import { Route as AdminParametresRouteImport } from './routes/admin/parametres'
 import { Route as AdminNotificationsRouteImport } from './routes/admin/notifications'
 import { Route as AdminMatieresRouteImport } from './routes/admin/matieres'
 import { Route as AdminMarketplaceRouteImport } from './routes/admin/marketplace'
-import { Route as AdminExamensRouteImport } from './routes/admin/examens'
 import { Route as AdminClassesRouteImport } from './routes/admin/classes'
 import { Route as AdminAbonnementsRouteImport } from './routes/admin/abonnements'
 import { Route as ProfRessourcesIndexRouteImport } from './routes/prof/ressources/index'
@@ -65,7 +63,9 @@ import { Route as EleveExamensIndexRouteImport } from './routes/eleve/examens/in
 import { Route as EleveDevoirsIndexRouteImport } from './routes/eleve/devoirs/index'
 import { Route as EleveBibliothequeIndexRouteImport } from './routes/eleve/bibliotheque/index'
 import { Route as AdminUtilisateursIndexRouteImport } from './routes/admin/utilisateurs/index'
+import { Route as AdminQuestionsIndexRouteImport } from './routes/admin/questions/index'
 import { Route as AdminGestionnairesIndexRouteImport } from './routes/admin/gestionnaires/index'
+import { Route as AdminExamensIndexRouteImport } from './routes/admin/examens/index'
 import { Route as ProfRessourcesIdRouteImport } from './routes/prof/ressources/$id'
 import { Route as ProfProduitsIdRouteImport } from './routes/prof/produits/$id'
 import { Route as ProfGroupesIdRouteImport } from './routes/prof/groupes/$id'
@@ -77,10 +77,12 @@ import { Route as EleveExamensIdRouteImport } from './routes/eleve/examens/$id'
 import { Route as EleveDevoirsIdRouteImport } from './routes/eleve/devoirs/$id'
 import { Route as EleveBibliothequeIdRouteImport } from './routes/eleve/bibliotheque/$id'
 import { Route as AdminUtilisateursIdRouteImport } from './routes/admin/utilisateurs/$id'
-import { Route as AdminQuestionsNouveauRouteImport } from './routes/admin/questions.nouveau'
-import { Route as AdminQuestionsQuestionIdRouteImport } from './routes/admin/questions.$questionId'
+import { Route as AdminQuestionsNouveauRouteImport } from './routes/admin/questions/nouveau'
+import { Route as AdminQuestionsQuestionIdRouteImport } from './routes/admin/questions/$questionId'
+import { Route as AdminGroupesIdRouteImport } from './routes/admin/groupes/$id'
 import { Route as AdminGestionnairesIdRouteImport } from './routes/admin/gestionnaires/$id'
-import { Route as AdminExamensExamIdRouteImport } from './routes/admin/examens.$examId'
+import { Route as AdminExamensExamIdRouteImport } from './routes/admin/examens/$examId'
+import { Route as AdminDevoirsIdRouteImport } from './routes/admin/devoirs/$id'
 
 const ProfRoute = ProfRouteImport.update({
   id: '/prof',
@@ -272,11 +274,6 @@ const AdminRessourcesRoute = AdminRessourcesRouteImport.update({
   path: '/ressources',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminQuestionsRoute = AdminQuestionsRouteImport.update({
-  id: '/questions',
-  path: '/questions',
-  getParentRoute: () => AdminRoute,
-} as any)
 const AdminPermissionsRoute = AdminPermissionsRouteImport.update({
   id: '/permissions',
   path: '/permissions',
@@ -300,11 +297,6 @@ const AdminMatieresRoute = AdminMatieresRouteImport.update({
 const AdminMarketplaceRoute = AdminMarketplaceRouteImport.update({
   id: '/marketplace',
   path: '/marketplace',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminExamensRoute = AdminExamensRouteImport.update({
-  id: '/examens',
-  path: '/examens',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminClassesRoute = AdminClassesRouteImport.update({
@@ -362,9 +354,19 @@ const AdminUtilisateursIndexRoute = AdminUtilisateursIndexRouteImport.update({
   path: '/utilisateurs/',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminQuestionsIndexRoute = AdminQuestionsIndexRouteImport.update({
+  id: '/questions/',
+  path: '/questions/',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminGestionnairesIndexRoute = AdminGestionnairesIndexRouteImport.update({
   id: '/gestionnaires/',
   path: '/gestionnaires/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminExamensIndexRoute = AdminExamensIndexRouteImport.update({
+  id: '/examens/',
+  path: '/examens/',
   getParentRoute: () => AdminRoute,
 } as any)
 const ProfRessourcesIdRoute = ProfRessourcesIdRouteImport.update({
@@ -423,25 +425,35 @@ const AdminUtilisateursIdRoute = AdminUtilisateursIdRouteImport.update({
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminQuestionsNouveauRoute = AdminQuestionsNouveauRouteImport.update({
-  id: '/nouveau',
-  path: '/nouveau',
-  getParentRoute: () => AdminQuestionsRoute,
+  id: '/questions/nouveau',
+  path: '/questions/nouveau',
+  getParentRoute: () => AdminRoute,
 } as any)
 const AdminQuestionsQuestionIdRoute =
   AdminQuestionsQuestionIdRouteImport.update({
-    id: '/$questionId',
-    path: '/$questionId',
-    getParentRoute: () => AdminQuestionsRoute,
+    id: '/questions/$questionId',
+    path: '/questions/$questionId',
+    getParentRoute: () => AdminRoute,
   } as any)
+const AdminGroupesIdRoute = AdminGroupesIdRouteImport.update({
+  id: '/groupes/$id',
+  path: '/groupes/$id',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminGestionnairesIdRoute = AdminGestionnairesIdRouteImport.update({
   id: '/gestionnaires/$id',
   path: '/gestionnaires/$id',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminExamensExamIdRoute = AdminExamensExamIdRouteImport.update({
-  id: '/$examId',
-  path: '/$examId',
-  getParentRoute: () => AdminExamensRoute,
+  id: '/examens/$examId',
+  path: '/examens/$examId',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminDevoirsIdRoute = AdminDevoirsIdRouteImport.update({
+  id: '/devoirs/$id',
+  path: '/devoirs/$id',
+  getParentRoute: () => AdminRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -456,13 +468,11 @@ export interface FileRoutesByFullPath {
   '/prof': typeof ProfRouteWithChildren
   '/admin/abonnements': typeof AdminAbonnementsRoute
   '/admin/classes': typeof AdminClassesRoute
-  '/admin/examens': typeof AdminExamensRouteWithChildren
   '/admin/marketplace': typeof AdminMarketplaceRoute
   '/admin/matieres': typeof AdminMatieresRoute
   '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/parametres': typeof AdminParametresRoute
   '/admin/permissions': typeof AdminPermissionsRoute
-  '/admin/questions': typeof AdminQuestionsRouteWithChildren
   '/admin/ressources': typeof AdminRessourcesRoute
   '/admin/support': typeof AdminSupportRoute
   '/eleve/abonnement': typeof EleveAbonnementRoute
@@ -492,8 +502,10 @@ export interface FileRoutesByFullPath {
   '/eleve/': typeof EleveIndexRoute
   '/parent/': typeof ParentIndexRoute
   '/prof/': typeof ProfIndexRoute
+  '/admin/devoirs/$id': typeof AdminDevoirsIdRoute
   '/admin/examens/$examId': typeof AdminExamensExamIdRoute
   '/admin/gestionnaires/$id': typeof AdminGestionnairesIdRoute
+  '/admin/groupes/$id': typeof AdminGroupesIdRoute
   '/admin/questions/$questionId': typeof AdminQuestionsQuestionIdRoute
   '/admin/questions/nouveau': typeof AdminQuestionsNouveauRoute
   '/admin/utilisateurs/$id': typeof AdminUtilisateursIdRoute
@@ -507,7 +519,9 @@ export interface FileRoutesByFullPath {
   '/prof/groupes/$id': typeof ProfGroupesIdRoute
   '/prof/produits/$id': typeof ProfProduitsIdRoute
   '/prof/ressources/$id': typeof ProfRessourcesIdRoute
+  '/admin/examens/': typeof AdminExamensIndexRoute
   '/admin/gestionnaires/': typeof AdminGestionnairesIndexRoute
+  '/admin/questions/': typeof AdminQuestionsIndexRoute
   '/admin/utilisateurs/': typeof AdminUtilisateursIndexRoute
   '/eleve/bibliotheque/': typeof EleveBibliothequeIndexRoute
   '/eleve/devoirs/': typeof EleveDevoirsIndexRoute
@@ -526,13 +540,11 @@ export interface FileRoutesByTo {
   '/onboarding': typeof OnboardingRoute
   '/admin/abonnements': typeof AdminAbonnementsRoute
   '/admin/classes': typeof AdminClassesRoute
-  '/admin/examens': typeof AdminExamensRouteWithChildren
   '/admin/marketplace': typeof AdminMarketplaceRoute
   '/admin/matieres': typeof AdminMatieresRoute
   '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/parametres': typeof AdminParametresRoute
   '/admin/permissions': typeof AdminPermissionsRoute
-  '/admin/questions': typeof AdminQuestionsRouteWithChildren
   '/admin/ressources': typeof AdminRessourcesRoute
   '/admin/support': typeof AdminSupportRoute
   '/eleve/abonnement': typeof EleveAbonnementRoute
@@ -562,8 +574,10 @@ export interface FileRoutesByTo {
   '/eleve': typeof EleveIndexRoute
   '/parent': typeof ParentIndexRoute
   '/prof': typeof ProfIndexRoute
+  '/admin/devoirs/$id': typeof AdminDevoirsIdRoute
   '/admin/examens/$examId': typeof AdminExamensExamIdRoute
   '/admin/gestionnaires/$id': typeof AdminGestionnairesIdRoute
+  '/admin/groupes/$id': typeof AdminGroupesIdRoute
   '/admin/questions/$questionId': typeof AdminQuestionsQuestionIdRoute
   '/admin/questions/nouveau': typeof AdminQuestionsNouveauRoute
   '/admin/utilisateurs/$id': typeof AdminUtilisateursIdRoute
@@ -577,7 +591,9 @@ export interface FileRoutesByTo {
   '/prof/groupes/$id': typeof ProfGroupesIdRoute
   '/prof/produits/$id': typeof ProfProduitsIdRoute
   '/prof/ressources/$id': typeof ProfRessourcesIdRoute
+  '/admin/examens': typeof AdminExamensIndexRoute
   '/admin/gestionnaires': typeof AdminGestionnairesIndexRoute
+  '/admin/questions': typeof AdminQuestionsIndexRoute
   '/admin/utilisateurs': typeof AdminUtilisateursIndexRoute
   '/eleve/bibliotheque': typeof EleveBibliothequeIndexRoute
   '/eleve/devoirs': typeof EleveDevoirsIndexRoute
@@ -601,13 +617,11 @@ export interface FileRoutesById {
   '/prof': typeof ProfRouteWithChildren
   '/admin/abonnements': typeof AdminAbonnementsRoute
   '/admin/classes': typeof AdminClassesRoute
-  '/admin/examens': typeof AdminExamensRouteWithChildren
   '/admin/marketplace': typeof AdminMarketplaceRoute
   '/admin/matieres': typeof AdminMatieresRoute
   '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/parametres': typeof AdminParametresRoute
   '/admin/permissions': typeof AdminPermissionsRoute
-  '/admin/questions': typeof AdminQuestionsRouteWithChildren
   '/admin/ressources': typeof AdminRessourcesRoute
   '/admin/support': typeof AdminSupportRoute
   '/eleve/abonnement': typeof EleveAbonnementRoute
@@ -637,8 +651,10 @@ export interface FileRoutesById {
   '/eleve/': typeof EleveIndexRoute
   '/parent/': typeof ParentIndexRoute
   '/prof/': typeof ProfIndexRoute
+  '/admin/devoirs/$id': typeof AdminDevoirsIdRoute
   '/admin/examens/$examId': typeof AdminExamensExamIdRoute
   '/admin/gestionnaires/$id': typeof AdminGestionnairesIdRoute
+  '/admin/groupes/$id': typeof AdminGroupesIdRoute
   '/admin/questions/$questionId': typeof AdminQuestionsQuestionIdRoute
   '/admin/questions/nouveau': typeof AdminQuestionsNouveauRoute
   '/admin/utilisateurs/$id': typeof AdminUtilisateursIdRoute
@@ -652,7 +668,9 @@ export interface FileRoutesById {
   '/prof/groupes/$id': typeof ProfGroupesIdRoute
   '/prof/produits/$id': typeof ProfProduitsIdRoute
   '/prof/ressources/$id': typeof ProfRessourcesIdRoute
+  '/admin/examens/': typeof AdminExamensIndexRoute
   '/admin/gestionnaires/': typeof AdminGestionnairesIndexRoute
+  '/admin/questions/': typeof AdminQuestionsIndexRoute
   '/admin/utilisateurs/': typeof AdminUtilisateursIndexRoute
   '/eleve/bibliotheque/': typeof EleveBibliothequeIndexRoute
   '/eleve/devoirs/': typeof EleveDevoirsIndexRoute
@@ -677,13 +695,11 @@ export interface FileRouteTypes {
     | '/prof'
     | '/admin/abonnements'
     | '/admin/classes'
-    | '/admin/examens'
     | '/admin/marketplace'
     | '/admin/matieres'
     | '/admin/notifications'
     | '/admin/parametres'
     | '/admin/permissions'
-    | '/admin/questions'
     | '/admin/ressources'
     | '/admin/support'
     | '/eleve/abonnement'
@@ -713,8 +729,10 @@ export interface FileRouteTypes {
     | '/eleve/'
     | '/parent/'
     | '/prof/'
+    | '/admin/devoirs/$id'
     | '/admin/examens/$examId'
     | '/admin/gestionnaires/$id'
+    | '/admin/groupes/$id'
     | '/admin/questions/$questionId'
     | '/admin/questions/nouveau'
     | '/admin/utilisateurs/$id'
@@ -728,7 +746,9 @@ export interface FileRouteTypes {
     | '/prof/groupes/$id'
     | '/prof/produits/$id'
     | '/prof/ressources/$id'
+    | '/admin/examens/'
     | '/admin/gestionnaires/'
+    | '/admin/questions/'
     | '/admin/utilisateurs/'
     | '/eleve/bibliotheque/'
     | '/eleve/devoirs/'
@@ -747,13 +767,11 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/admin/abonnements'
     | '/admin/classes'
-    | '/admin/examens'
     | '/admin/marketplace'
     | '/admin/matieres'
     | '/admin/notifications'
     | '/admin/parametres'
     | '/admin/permissions'
-    | '/admin/questions'
     | '/admin/ressources'
     | '/admin/support'
     | '/eleve/abonnement'
@@ -783,8 +801,10 @@ export interface FileRouteTypes {
     | '/eleve'
     | '/parent'
     | '/prof'
+    | '/admin/devoirs/$id'
     | '/admin/examens/$examId'
     | '/admin/gestionnaires/$id'
+    | '/admin/groupes/$id'
     | '/admin/questions/$questionId'
     | '/admin/questions/nouveau'
     | '/admin/utilisateurs/$id'
@@ -798,7 +818,9 @@ export interface FileRouteTypes {
     | '/prof/groupes/$id'
     | '/prof/produits/$id'
     | '/prof/ressources/$id'
+    | '/admin/examens'
     | '/admin/gestionnaires'
+    | '/admin/questions'
     | '/admin/utilisateurs'
     | '/eleve/bibliotheque'
     | '/eleve/devoirs'
@@ -821,13 +843,11 @@ export interface FileRouteTypes {
     | '/prof'
     | '/admin/abonnements'
     | '/admin/classes'
-    | '/admin/examens'
     | '/admin/marketplace'
     | '/admin/matieres'
     | '/admin/notifications'
     | '/admin/parametres'
     | '/admin/permissions'
-    | '/admin/questions'
     | '/admin/ressources'
     | '/admin/support'
     | '/eleve/abonnement'
@@ -857,8 +877,10 @@ export interface FileRouteTypes {
     | '/eleve/'
     | '/parent/'
     | '/prof/'
+    | '/admin/devoirs/$id'
     | '/admin/examens/$examId'
     | '/admin/gestionnaires/$id'
+    | '/admin/groupes/$id'
     | '/admin/questions/$questionId'
     | '/admin/questions/nouveau'
     | '/admin/utilisateurs/$id'
@@ -872,7 +894,9 @@ export interface FileRouteTypes {
     | '/prof/groupes/$id'
     | '/prof/produits/$id'
     | '/prof/ressources/$id'
+    | '/admin/examens/'
     | '/admin/gestionnaires/'
+    | '/admin/questions/'
     | '/admin/utilisateurs/'
     | '/eleve/bibliotheque/'
     | '/eleve/devoirs/'
@@ -1164,13 +1188,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminRessourcesRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/admin/questions': {
-      id: '/admin/questions'
-      path: '/questions'
-      fullPath: '/admin/questions'
-      preLoaderRoute: typeof AdminQuestionsRouteImport
-      parentRoute: typeof AdminRoute
-    }
     '/admin/permissions': {
       id: '/admin/permissions'
       path: '/permissions'
@@ -1204,13 +1221,6 @@ declare module '@tanstack/react-router' {
       path: '/marketplace'
       fullPath: '/admin/marketplace'
       preLoaderRoute: typeof AdminMarketplaceRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/examens': {
-      id: '/admin/examens'
-      path: '/examens'
-      fullPath: '/admin/examens'
-      preLoaderRoute: typeof AdminExamensRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/classes': {
@@ -1290,11 +1300,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminUtilisateursIndexRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/questions/': {
+      id: '/admin/questions/'
+      path: '/questions'
+      fullPath: '/admin/questions/'
+      preLoaderRoute: typeof AdminQuestionsIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/gestionnaires/': {
       id: '/admin/gestionnaires/'
       path: '/gestionnaires'
       fullPath: '/admin/gestionnaires/'
       preLoaderRoute: typeof AdminGestionnairesIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/examens/': {
+      id: '/admin/examens/'
+      path: '/examens'
+      fullPath: '/admin/examens/'
+      preLoaderRoute: typeof AdminExamensIndexRouteImport
       parentRoute: typeof AdminRoute
     }
     '/prof/ressources/$id': {
@@ -1376,17 +1400,24 @@ declare module '@tanstack/react-router' {
     }
     '/admin/questions/nouveau': {
       id: '/admin/questions/nouveau'
-      path: '/nouveau'
+      path: '/questions/nouveau'
       fullPath: '/admin/questions/nouveau'
       preLoaderRoute: typeof AdminQuestionsNouveauRouteImport
-      parentRoute: typeof AdminQuestionsRoute
+      parentRoute: typeof AdminRoute
     }
     '/admin/questions/$questionId': {
       id: '/admin/questions/$questionId'
-      path: '/$questionId'
+      path: '/questions/$questionId'
       fullPath: '/admin/questions/$questionId'
       preLoaderRoute: typeof AdminQuestionsQuestionIdRouteImport
-      parentRoute: typeof AdminQuestionsRoute
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/groupes/$id': {
+      id: '/admin/groupes/$id'
+      path: '/groupes/$id'
+      fullPath: '/admin/groupes/$id'
+      preLoaderRoute: typeof AdminGroupesIdRouteImport
+      parentRoute: typeof AdminRoute
     }
     '/admin/gestionnaires/$id': {
       id: '/admin/gestionnaires/$id'
@@ -1397,75 +1428,66 @@ declare module '@tanstack/react-router' {
     }
     '/admin/examens/$examId': {
       id: '/admin/examens/$examId'
-      path: '/$examId'
+      path: '/examens/$examId'
       fullPath: '/admin/examens/$examId'
       preLoaderRoute: typeof AdminExamensExamIdRouteImport
-      parentRoute: typeof AdminExamensRoute
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/devoirs/$id': {
+      id: '/admin/devoirs/$id'
+      path: '/devoirs/$id'
+      fullPath: '/admin/devoirs/$id'
+      preLoaderRoute: typeof AdminDevoirsIdRouteImport
+      parentRoute: typeof AdminRoute
     }
   }
 }
 
-interface AdminExamensRouteChildren {
-  AdminExamensExamIdRoute: typeof AdminExamensExamIdRoute
-}
-
-const AdminExamensRouteChildren: AdminExamensRouteChildren = {
-  AdminExamensExamIdRoute: AdminExamensExamIdRoute,
-}
-
-const AdminExamensRouteWithChildren = AdminExamensRoute._addFileChildren(
-  AdminExamensRouteChildren,
-)
-
-interface AdminQuestionsRouteChildren {
-  AdminQuestionsQuestionIdRoute: typeof AdminQuestionsQuestionIdRoute
-  AdminQuestionsNouveauRoute: typeof AdminQuestionsNouveauRoute
-}
-
-const AdminQuestionsRouteChildren: AdminQuestionsRouteChildren = {
-  AdminQuestionsQuestionIdRoute: AdminQuestionsQuestionIdRoute,
-  AdminQuestionsNouveauRoute: AdminQuestionsNouveauRoute,
-}
-
-const AdminQuestionsRouteWithChildren = AdminQuestionsRoute._addFileChildren(
-  AdminQuestionsRouteChildren,
-)
-
 interface AdminRouteChildren {
   AdminAbonnementsRoute: typeof AdminAbonnementsRoute
   AdminClassesRoute: typeof AdminClassesRoute
-  AdminExamensRoute: typeof AdminExamensRouteWithChildren
   AdminMarketplaceRoute: typeof AdminMarketplaceRoute
   AdminMatieresRoute: typeof AdminMatieresRoute
   AdminNotificationsRoute: typeof AdminNotificationsRoute
   AdminParametresRoute: typeof AdminParametresRoute
   AdminPermissionsRoute: typeof AdminPermissionsRoute
-  AdminQuestionsRoute: typeof AdminQuestionsRouteWithChildren
   AdminRessourcesRoute: typeof AdminRessourcesRoute
   AdminSupportRoute: typeof AdminSupportRoute
   AdminIndexRoute: typeof AdminIndexRoute
+  AdminDevoirsIdRoute: typeof AdminDevoirsIdRoute
+  AdminExamensExamIdRoute: typeof AdminExamensExamIdRoute
   AdminGestionnairesIdRoute: typeof AdminGestionnairesIdRoute
+  AdminGroupesIdRoute: typeof AdminGroupesIdRoute
+  AdminQuestionsQuestionIdRoute: typeof AdminQuestionsQuestionIdRoute
+  AdminQuestionsNouveauRoute: typeof AdminQuestionsNouveauRoute
   AdminUtilisateursIdRoute: typeof AdminUtilisateursIdRoute
+  AdminExamensIndexRoute: typeof AdminExamensIndexRoute
   AdminGestionnairesIndexRoute: typeof AdminGestionnairesIndexRoute
+  AdminQuestionsIndexRoute: typeof AdminQuestionsIndexRoute
   AdminUtilisateursIndexRoute: typeof AdminUtilisateursIndexRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminAbonnementsRoute: AdminAbonnementsRoute,
   AdminClassesRoute: AdminClassesRoute,
-  AdminExamensRoute: AdminExamensRouteWithChildren,
   AdminMarketplaceRoute: AdminMarketplaceRoute,
   AdminMatieresRoute: AdminMatieresRoute,
   AdminNotificationsRoute: AdminNotificationsRoute,
   AdminParametresRoute: AdminParametresRoute,
   AdminPermissionsRoute: AdminPermissionsRoute,
-  AdminQuestionsRoute: AdminQuestionsRouteWithChildren,
   AdminRessourcesRoute: AdminRessourcesRoute,
   AdminSupportRoute: AdminSupportRoute,
   AdminIndexRoute: AdminIndexRoute,
+  AdminDevoirsIdRoute: AdminDevoirsIdRoute,
+  AdminExamensExamIdRoute: AdminExamensExamIdRoute,
   AdminGestionnairesIdRoute: AdminGestionnairesIdRoute,
+  AdminGroupesIdRoute: AdminGroupesIdRoute,
+  AdminQuestionsQuestionIdRoute: AdminQuestionsQuestionIdRoute,
+  AdminQuestionsNouveauRoute: AdminQuestionsNouveauRoute,
   AdminUtilisateursIdRoute: AdminUtilisateursIdRoute,
+  AdminExamensIndexRoute: AdminExamensIndexRoute,
   AdminGestionnairesIndexRoute: AdminGestionnairesIndexRoute,
+  AdminQuestionsIndexRoute: AdminQuestionsIndexRoute,
   AdminUtilisateursIndexRoute: AdminUtilisateursIndexRoute,
 }
 

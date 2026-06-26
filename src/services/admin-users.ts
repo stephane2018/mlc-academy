@@ -31,16 +31,16 @@ export type AdminUserDetail = AdminUser & {
     nextLevelXp: number | null
     lastActive: string | null
     classCode: string | null
-    groups: string[]
+    groups: { id: string; name: string }[]
     parents: { id: string; email: string }[]
     skills: SubjectSkill[]
     recentSubmissions: { title: string; type: string; score: number | null; status: string; submittedAt: string | null }[]
     recentExams: { title: string; score: number | null; submittedAt: string | null }[]
   } | null
   teacher: {
-    groups: { name: string; memberCount: number }[]
+    groups: { id: string; name: string; memberCount: number }[]
     studentCount: number
-    recentAssignments: { title: string; type: string; status: string; createdAt: string }[]
+    recentAssignments: { id: string; title: string; type: string; status: string; createdAt: string }[]
   } | null
   parent: {
     children: { id: string; pseudo: string; classCode: string | null }[]

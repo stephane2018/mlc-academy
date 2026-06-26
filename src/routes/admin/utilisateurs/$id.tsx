@@ -83,9 +83,11 @@ function StudentBlock({ s }: { s: NonNullable<AdminUserDetail['student']> }) {
           <span className="text-xs text-muted-foreground">aucun</span>
         ) : (
           s.groups.map((g) => (
-            <Badge key={g} variant="secondary" className="bg-brand-soft text-brand">
-              <Users className="size-3" /> {g}
-            </Badge>
+            <Link key={g.id} to="/admin/groupes/$id" params={{ id: g.id }}>
+              <Badge variant="secondary" className="bg-brand-soft text-brand transition-colors hover:opacity-80">
+                <Users className="size-3" /> {g.name}
+              </Badge>
+            </Link>
           ))
         )}
       </div>
@@ -163,17 +165,32 @@ function TeacherBlock({ t }: { t: NonNullable<AdminUserDetail['teacher']> }) {
       {t.groups.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
           {t.groups.map((g) => (
-            <Badge key={g.name} variant="secondary" className="bg-brand-soft text-brand">
-              {g.name} · {g.memberCount}
-            </Badge>
+            <Link key={g.id} to="/admin/groupes/$id" params={{ id: g.id }}>
+              <Badge variant="secondary" className="bg-brand-soft text-brand transition-colors hover:opacity-80">
+                {g.name} · {g.memberCount}
+              </Badge>
+            </Link>
           ))}
         </div>
       )}
       {t.recentAssignments.length > 0 && (
-        <ActivityList
-          title="Devoirs récents"
-          items={t.recentAssignments.map((a) => ({ label: a.title, value: a.status }))}
-        />
+        <div className="space-y-1.5">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Devoirs récents</p>
+          <ul className="space-y-1.5">
+            {t.recentAssignments.map((a) => (
+              <li key={a.id}>
+                <Link
+                  to="/admin/devoirs/$id"
+                  params={{ id: a.id }}
+                  className="flex items-center justify-between gap-2 rounded-lg border border-border px-3 py-1.5 text-sm transition-colors hover:border-brand/40 hover:bg-secondary/40"
+                >
+                  <span className="truncate">{a.title}</span>
+                  <Badge variant="secondary" className="shrink-0 bg-secondary text-muted-foreground">{a.status}</Badge>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
     </Card>
   )

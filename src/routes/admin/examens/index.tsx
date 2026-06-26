@@ -37,7 +37,7 @@ import { ExamFields, emptyExamForm, type ExamForm } from '@/components/admin/exa
 import type { AdminExamListItem } from '@/services/admin-exams'
 import { ApiError } from '@/lib/api-client'
 
-export const Route = createFileRoute('/admin/examens')({
+export const Route = createFileRoute('/admin/examens/')({
   component: AdminExamens,
 })
 

@@ -10,6 +10,12 @@ export function useManagers() {
 export function useManagerCapabilities() {
   return useQuery({ queryKey: ['admin', 'capabilities'], queryFn: () => adminService.capabilities() })
 }
+export function useAdminGroup(id: string) {
+  return useQuery({ queryKey: ['admin', 'group', id], queryFn: () => adminService.group(id) })
+}
+export function useAdminAssignment(id: string) {
+  return useQuery({ queryKey: ['admin', 'assignment', id], queryFn: () => adminService.assignment(id) })
+}
 export function useSetManagerPermissions() {
   const qc = useQueryClient()
   return useMutation({
