@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useMemo, useState } from 'react'
 import {
   CircleHelp,
@@ -8,37 +8,16 @@ import {
   MoreHorizontal,
   Pencil,
   Trash2,
-  Loader,
 } from '@/components/icons'
 import { toast } from 'sonner'
 import { useSubjects } from '@/hooks/use-catalog'
-import type { CatalogSubject } from '@/services/catalog'
-import {
-  useQuestions,
-  useCreateQuestion,
-  useUpdateQuestion,
-  useDeleteQuestion,
-} from '@/hooks/use-questions'
-import type {
-  Question,
-  QuestionDifficulty,
-  QuestionOptionInput,
-} from '@/services/questions'
+import { useQuestions, useDeleteQuestion } from '@/hooks/use-questions'
+import type { Question, QuestionDifficulty } from '@/services/questions'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
 import { Skeleton } from '@/components/ui/skeleton'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
 import {
   Select,
   SelectContent,
@@ -65,307 +44,16 @@ const difficultyMeta: Record<QuestionDifficulty, { label: string; className: str
   difficile: { label: 'Difficile', className: 'bg-destructive/10 text-destructive' },
 }
 
-const difficultyOrder: QuestionDifficulty[] = ['facile', 'moyen', 'difficile']
-
 function DifficultyBadge({ difficulty }: { difficulty: QuestionDifficulty }) {
   const meta = difficultyMeta[difficulty]
   return <Badge className={meta.className}>{meta.label}</Badge>
 }
 
-// Étiquettes par défaut des options (A, B, C, D…).
-const optionLetters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
-
-/** Valeurs du formulaire de question (création + édition). */
-type QuestionFormState = {
-  prompt: string
-  subjectId: string
-  themeId: string
-  difficulty: QuestionDifficulty
-  explanation: string
-  options: string[]
-  correctIndex: number
-}
-
-function emptyForm(): QuestionFormState {
-  return {
-    prompt: '',
-    subjectId: '',
-    themeId: '',
-    difficulty: 'moyen',
-    explanation: '',
-    options: ['', '', '', ''],
-    correctIndex: 0,
-  }
-}
-
-function formFromQuestion(q: Question): QuestionFormState {
-  const sorted = [...q.options].sort((a, b) => a.position - b.position)
-  const correctIndex = Math.max(
-    sorted.findIndex((o) => o.isCorrect),
-    0,
-  )
-  // Toujours afficher au moins 4 champs d'option pour conserver la grille A–D.
-  const labels = sorted.map((o) => o.label)
-  while (labels.length < 4) labels.push('')
-  return {
-    prompt: q.prompt,
-    subjectId: q.subjectId,
-    themeId: q.themeId ?? '',
-    difficulty: q.difficulty,
-    explanation: q.explanation ?? '',
-    options: labels,
-    correctIndex,
-  }
-}
-
-/**
- * Dialog de création/édition d'une question.
- * - `question` absent → création ; présent → édition (PATCH remplace les options).
- */
-function QuestionDialog({
-  open,
-  onOpenChange,
-  subjects,
-  question,
-}: {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  subjects: CatalogSubject[]
-  question: Question | null
-}) {
-  const isEdit = Boolean(question)
-  const [form, setForm] = useState<QuestionFormState>(emptyForm)
-  // Identifiant de la question en cours d'édition, pour réinitialiser le form.
-  const [hydratedFor, setHydratedFor] = useState<string | null>(null)
-
-  // (Ré)hydrate le formulaire à l'ouverture / au changement de cible.
-  const targetKey = question?.id ?? 'create'
-  if (open && hydratedFor !== targetKey) {
-    setForm(question ? formFromQuestion(question) : emptyForm())
-    setHydratedFor(targetKey)
-  }
-  if (!open && hydratedFor !== null) setHydratedFor(null)
-
-  const createMutation = useCreateQuestion()
-  const updateMutation = useUpdateQuestion()
-  const pending = createMutation.isPending || updateMutation.isPending
-
-  const themes = useMemo(
-    () => subjects.find((s) => s.id === form.subjectId)?.themes ?? [],
-    [subjects, form.subjectId],
-  )
-
-  function setField<K extends keyof QuestionFormState>(key: K, value: QuestionFormState[K]) {
-    setForm((prev) => ({ ...prev, [key]: value }))
-  }
-
-  function setOption(index: number, value: string) {
-    setForm((prev) => {
-      const options = [...prev.options]
-      options[index] = value
-      return { ...prev, options }
-    })
-  }
-
-  async function submit() {
-    const prompt = form.prompt.trim()
-    if (!prompt) {
-      toast.error('Renseigne un énoncé.')
-      return
-    }
-    if (!form.subjectId) {
-      toast.error('Choisis une matière.')
-      return
-    }
-    // On ne conserve que les options renseignées (le backend exige 2 à 8 options).
-    const filled = form.options
-      .map((label, index) => ({ label: label.trim(), index }))
-      .filter((o) => o.label !== '')
-    if (filled.length < 2) {
-      toast.error('Ajoute au moins 2 options.')
-      return
-    }
-    const correctIsFilled = filled.some((o) => o.index === form.correctIndex)
-    if (!correctIsFilled) {
-      toast.error('La bonne réponse doit être une option renseignée.')
-      return
-    }
-
-    const options: QuestionOptionInput[] = filled.map((o, position) => ({
-      label: o.label,
-      isCorrect: o.index === form.correctIndex,
-      position,
-    }))
-
-    const themeId = form.themeId || null
-    const explanation = form.explanation.trim() || null
-
-    try {
-      if (question) {
-        await updateMutation.mutateAsync({
-          id: question.id,
-          input: {
-            prompt,
-            subjectId: form.subjectId,
-            themeId,
-            difficulty: form.difficulty,
-            explanation,
-            options,
-          },
-        })
-        toast.success('Question mise à jour.')
-      } else {
-        await createMutation.mutateAsync({
-          prompt,
-          subjectId: form.subjectId,
-          themeId,
-          difficulty: form.difficulty,
-          explanation,
-          options,
-        })
-        toast.success('Question créée.')
-      }
-      onOpenChange(false)
-    } catch {
-      toast.error("Échec de l'enregistrement.")
-    }
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{isEdit ? 'Modifier la question' : 'Créer une question'}</DialogTitle>
-          <DialogDescription>
-            Associez la question à une matière, un thème et une difficulté, puis indiquez la bonne réponse.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="space-y-4 py-2">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Matière</Label>
-              <Select
-                value={form.subjectId}
-                onValueChange={(v) => setForm((prev) => ({ ...prev, subjectId: v, themeId: '' }))}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Choisir" />
-                </SelectTrigger>
-                <SelectContent>
-                  {subjects.map((s) => (
-                    <SelectItem key={s.id} value={s.id}>
-                      {s.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Thème</Label>
-              <Select
-                value={form.themeId}
-                onValueChange={(v) => setField('themeId', v)}
-                disabled={themes.length === 0}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Choisir" />
-                </SelectTrigger>
-                <SelectContent>
-                  {themes.map((t) => (
-                    <SelectItem key={t.id} value={t.id}>
-                      {t.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="q-prompt">Énoncé</Label>
-            <Textarea
-              id="q-prompt"
-              rows={3}
-              placeholder="Ex. : Résous 2x + 5 = 17"
-              value={form.prompt}
-              onChange={(e) => setField('prompt', e.target.value)}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>Difficulté</Label>
-            <Select
-              value={form.difficulty}
-              onValueChange={(v) => setField('difficulty', v as QuestionDifficulty)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Choisir" />
-              </SelectTrigger>
-              <SelectContent>
-                {difficultyOrder.map((d) => (
-                  <SelectItem key={d} value={d}>
-                    {difficultyMeta[d].label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label>Options (cochez la bonne réponse)</Label>
-            <div className="space-y-2">
-              {form.options.map((value, index) => (
-                <div key={index} className="flex items-center gap-2">
-                  <input
-                    type="radio"
-                    name="q-correct"
-                    aria-label={`Bonne réponse : option ${optionLetters[index]}`}
-                    checked={form.correctIndex === index}
-                    onChange={() => setField('correctIndex', index)}
-                    className="size-4 accent-foreground"
-                  />
-                  <span className="w-5 text-sm font-medium text-muted-foreground">
-                    {optionLetters[index]}
-                  </span>
-                  <Input
-                    placeholder={`Option ${optionLetters[index]}`}
-                    value={value}
-                    onChange={(e) => setOption(index, e.target.value)}
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="q-explanation">Explication (facultatif)</Label>
-            <Textarea
-              id="q-explanation"
-              rows={2}
-              placeholder="Justification de la bonne réponse…"
-              value={form.explanation}
-              onChange={(e) => setField('explanation', e.target.value)}
-            />
-          </div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={pending}>
-            Annuler
-          </Button>
-          <Button onClick={submit} disabled={pending}>
-            {pending && <Loader className="size-4 animate-spin" />}
-            {isEdit ? 'Enregistrer' : 'Créer la question'}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  )
-}
-
 function AdminQuestions() {
+  const navigate = useNavigate()
   const [subjectId, setSubjectId] = useState<'all' | string>('all')
   const [themeId, setThemeId] = useState<'all' | string>('all')
   const [search, setSearch] = useState('')
-
-  // État du dialog création/édition.
-  const [dialogOpen, setDialogOpen] = useState(false)
-  const [editing, setEditing] = useState<Question | null>(null)
 
   const subjectsQuery = useSubjects()
   const subjects = subjectsQuery.data ?? []
@@ -379,10 +67,7 @@ function AdminQuestions() {
   const deleteMutation = useDeleteQuestion()
 
   // Résolution rapide des libellés matière/thème depuis le catalogue.
-  const subjectById = useMemo(
-    () => new Map(subjects.map((s) => [s.id, s])),
-    [subjects],
-  )
+  const subjectById = useMemo(() => new Map(subjects.map((s) => [s.id, s])), [subjects])
   const themeById = useMemo(() => {
     const map = new Map<string, string>()
     for (const s of subjects) for (const t of s.themes) map.set(t.id, t.name)
@@ -401,16 +86,6 @@ function AdminQuestions() {
     if (term === '') return questions
     return questions.filter((q) => q.prompt.toLowerCase().includes(term))
   }, [questions, search])
-
-  function openCreate() {
-    setEditing(null)
-    setDialogOpen(true)
-  }
-
-  function openEdit(question: Question) {
-    setEditing(question)
-    setDialogOpen(true)
-  }
 
   async function remove(question: Question) {
     try {
@@ -476,12 +151,12 @@ function AdminQuestions() {
               className="pl-9"
             />
           </div>
-          <div className="shrink-0">
-            <Button onClick={openCreate}>
+          <Button asChild className="shrink-0">
+            <Link to="/admin/questions/nouveau">
               <Plus className="size-4" />
               Créer une question
-            </Button>
-          </div>
+            </Link>
+          </Button>
         </div>
       </div>
 
@@ -510,12 +185,14 @@ function AdminQuestions() {
 
               {!loading &&
                 filtered.map((q) => (
-                  <tr key={q.id} className="transition-colors hover:bg-secondary/40">
-                    <td className="px-5 py-3 font-medium">{q.prompt}</td>
+                  <tr
+                    key={q.id}
+                    className="cursor-pointer transition-colors hover:bg-secondary/40"
+                    onClick={() => navigate({ to: '/admin/questions/$questionId', params: { questionId: q.id } })}
+                  >
+                    <td className="px-5 py-3 font-medium">{q.prompt || <span className="text-muted-foreground">(image)</span>}</td>
                     <td className="px-5 py-3">
-                      <Badge variant="outline">
-                        {subjectById.get(q.subjectId)?.name ?? '—'}
-                      </Badge>
+                      <Badge variant="outline">{subjectById.get(q.subjectId)?.name ?? '—'}</Badge>
                     </td>
                     <td className="px-5 py-3 text-muted-foreground">
                       {q.themeId ? themeById.get(q.themeId) ?? '—' : '—'}
@@ -523,10 +200,8 @@ function AdminQuestions() {
                     <td className="px-5 py-3">
                       <DifficultyBadge difficulty={q.difficulty} />
                     </td>
-                    <td className="px-5 py-3 text-right font-semibold tabular-nums">
-                      {q.optionsCount}
-                    </td>
-                    <td className="px-5 py-3 text-right">
+                    <td className="px-5 py-3 text-right font-semibold tabular-nums">{q.optionsCount}</td>
+                    <td className="px-5 py-3 text-right" onClick={(e) => e.stopPropagation()}>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" size="icon" aria-label="Actions">
@@ -534,15 +209,14 @@ function AdminQuestions() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => openEdit(q)}>
-                            <Pencil className="size-4" />
-                            Modifier
+                          <DropdownMenuItem asChild>
+                            <Link to="/admin/questions/$questionId" params={{ questionId: q.id }}>
+                              <Pencil className="size-4" />
+                              Modifier
+                            </Link>
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            variant="destructive"
-                            onClick={() => remove(q)}
-                          >
+                          <DropdownMenuItem variant="destructive" onClick={() => remove(q)}>
                             <Trash2 className="size-4" />
                             Supprimer
                           </DropdownMenuItem>
@@ -566,13 +240,6 @@ function AdminQuestions() {
           </table>
         </div>
       </Card>
-
-      <QuestionDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        subjects={subjects}
-        question={editing}
-      />
     </div>
   )
 }

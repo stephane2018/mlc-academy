@@ -42,6 +42,7 @@ export type QuestionOptionInput = {
   label: string
   isCorrect: boolean
   position?: number
+  imagePath?: string | null
 }
 
 /** Corps de création d'une question. */
@@ -52,6 +53,7 @@ export type CreateQuestionInput = {
   type?: string
   prompt: string
   katex?: string | null
+  imagePath?: string | null
   difficulty?: QuestionDifficulty
   explanation?: string | null
   explanationKatex?: string | null

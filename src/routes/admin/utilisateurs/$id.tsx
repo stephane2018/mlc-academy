@@ -94,9 +94,11 @@ function StudentBlock({ s }: { s: NonNullable<AdminUserDetail['student']> }) {
         <div className="flex flex-wrap items-center gap-1.5">
           <span className="text-xs font-semibold text-muted-foreground">Parent(s) :</span>
           {s.parents.map((p) => (
-            <Badge key={p} variant="secondary" className="bg-secondary text-muted-foreground">
-              <Link2 className="size-3" /> {p}
-            </Badge>
+            <Link key={p.id} to="/admin/utilisateurs/$id" params={{ id: p.id }}>
+              <Badge variant="secondary" className="bg-secondary text-muted-foreground transition-colors hover:bg-brand-soft hover:text-brand">
+                <Link2 className="size-3" /> {p.email}
+              </Badge>
+            </Link>
           ))}
         </div>
       )}
@@ -186,9 +188,15 @@ function ParentBlock({ p }: { p: NonNullable<AdminUserDetail['parent']> }) {
       ) : (
         <ul className="space-y-2">
           {p.children.map((c) => (
-            <li key={c.pseudo} className="flex items-center justify-between rounded-xl border border-border px-3 py-2">
-              <span className="text-sm font-medium">{c.pseudo}</span>
-              <Badge variant="secondary" className="bg-secondary text-muted-foreground">{c.classCode ?? '—'}</Badge>
+            <li key={c.id}>
+              <Link
+                to="/admin/utilisateurs/$id"
+                params={{ id: c.id }}
+                className="flex items-center justify-between rounded-xl border border-border px-3 py-2 transition-colors hover:border-brand/40 hover:bg-secondary/40"
+              >
+                <span className="text-sm font-medium">{c.pseudo}</span>
+                <Badge variant="secondary" className="bg-secondary text-muted-foreground">{c.classCode ?? '—'}</Badge>
+              </Link>
             </li>
           ))}
         </ul>
@@ -201,13 +209,32 @@ function ParentBlock({ p }: { p: NonNullable<AdminUserDetail['parent']> }) {
         </div>
       )}
       {p.invoices.length > 0 && (
-        <ActivityList
-          title="Factures"
-          items={p.invoices.map((inv) => ({
-            label: `${(inv.amountCents / 100).toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })} · ${inv.status}`,
-            value: inv.issuedAt ? new Date(inv.issuedAt).toLocaleDateString('fr-FR') : '—',
-          }))}
-        />
+        <div className="space-y-1.5">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Factures</p>
+          <ul className="space-y-1.5">
+            {p.invoices.map((inv, i) => (
+              <li key={i} className="flex items-center justify-between gap-2 rounded-lg border border-border px-3 py-1.5 text-sm">
+                <span className="truncate">
+                  {(inv.amountCents / 100).toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })} · {inv.status}
+                </span>
+                {inv.pdfUrl ? (
+                  <a
+                    href={inv.pdfUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="shrink-0 font-semibold text-brand hover:underline"
+                  >
+                    PDF
+                  </a>
+                ) : (
+                  <span className="shrink-0 text-xs text-muted-foreground">
+                    {inv.issuedAt ? new Date(inv.issuedAt).toLocaleDateString('fr-FR') : '—'}
+                  </span>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
     </Card>
   )

@@ -32,7 +32,7 @@ export type AdminUserDetail = AdminUser & {
     lastActive: string | null
     classCode: string | null
     groups: string[]
-    parents: string[]
+    parents: { id: string; email: string }[]
     skills: SubjectSkill[]
     recentSubmissions: { title: string; type: string; score: number | null; status: string; submittedAt: string | null }[]
     recentExams: { title: string; score: number | null; submittedAt: string | null }[]
@@ -43,7 +43,7 @@ export type AdminUserDetail = AdminUser & {
     recentAssignments: { title: string; type: string; status: string; createdAt: string }[]
   } | null
   parent: {
-    children: { pseudo: string; classCode: string | null }[]
+    children: { id: string; pseudo: string; classCode: string | null }[]
     subscription: { status: string; planId: string | null; currentPeriodEnd: string | null } | null
     invoices: { amountCents: number; status: string; issuedAt: string | null; pdfUrl: string | null }[]
   } | null

@@ -77,6 +77,8 @@ import { Route as EleveExamensIdRouteImport } from './routes/eleve/examens/$id'
 import { Route as EleveDevoirsIdRouteImport } from './routes/eleve/devoirs/$id'
 import { Route as EleveBibliothequeIdRouteImport } from './routes/eleve/bibliotheque/$id'
 import { Route as AdminUtilisateursIdRouteImport } from './routes/admin/utilisateurs/$id'
+import { Route as AdminQuestionsNouveauRouteImport } from './routes/admin/questions.nouveau'
+import { Route as AdminQuestionsQuestionIdRouteImport } from './routes/admin/questions.$questionId'
 import { Route as AdminGestionnairesIdRouteImport } from './routes/admin/gestionnaires/$id'
 import { Route as AdminExamensExamIdRouteImport } from './routes/admin/examens.$examId'
 
@@ -420,6 +422,17 @@ const AdminUtilisateursIdRoute = AdminUtilisateursIdRouteImport.update({
   path: '/utilisateurs/$id',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminQuestionsNouveauRoute = AdminQuestionsNouveauRouteImport.update({
+  id: '/nouveau',
+  path: '/nouveau',
+  getParentRoute: () => AdminQuestionsRoute,
+} as any)
+const AdminQuestionsQuestionIdRoute =
+  AdminQuestionsQuestionIdRouteImport.update({
+    id: '/$questionId',
+    path: '/$questionId',
+    getParentRoute: () => AdminQuestionsRoute,
+  } as any)
 const AdminGestionnairesIdRoute = AdminGestionnairesIdRouteImport.update({
   id: '/gestionnaires/$id',
   path: '/gestionnaires/$id',
@@ -449,7 +462,7 @@ export interface FileRoutesByFullPath {
   '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/parametres': typeof AdminParametresRoute
   '/admin/permissions': typeof AdminPermissionsRoute
-  '/admin/questions': typeof AdminQuestionsRoute
+  '/admin/questions': typeof AdminQuestionsRouteWithChildren
   '/admin/ressources': typeof AdminRessourcesRoute
   '/admin/support': typeof AdminSupportRoute
   '/eleve/abonnement': typeof EleveAbonnementRoute
@@ -481,6 +494,8 @@ export interface FileRoutesByFullPath {
   '/prof/': typeof ProfIndexRoute
   '/admin/examens/$examId': typeof AdminExamensExamIdRoute
   '/admin/gestionnaires/$id': typeof AdminGestionnairesIdRoute
+  '/admin/questions/$questionId': typeof AdminQuestionsQuestionIdRoute
+  '/admin/questions/nouveau': typeof AdminQuestionsNouveauRoute
   '/admin/utilisateurs/$id': typeof AdminUtilisateursIdRoute
   '/eleve/bibliotheque/$id': typeof EleveBibliothequeIdRoute
   '/eleve/devoirs/$id': typeof EleveDevoirsIdRoute
@@ -517,7 +532,7 @@ export interface FileRoutesByTo {
   '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/parametres': typeof AdminParametresRoute
   '/admin/permissions': typeof AdminPermissionsRoute
-  '/admin/questions': typeof AdminQuestionsRoute
+  '/admin/questions': typeof AdminQuestionsRouteWithChildren
   '/admin/ressources': typeof AdminRessourcesRoute
   '/admin/support': typeof AdminSupportRoute
   '/eleve/abonnement': typeof EleveAbonnementRoute
@@ -549,6 +564,8 @@ export interface FileRoutesByTo {
   '/prof': typeof ProfIndexRoute
   '/admin/examens/$examId': typeof AdminExamensExamIdRoute
   '/admin/gestionnaires/$id': typeof AdminGestionnairesIdRoute
+  '/admin/questions/$questionId': typeof AdminQuestionsQuestionIdRoute
+  '/admin/questions/nouveau': typeof AdminQuestionsNouveauRoute
   '/admin/utilisateurs/$id': typeof AdminUtilisateursIdRoute
   '/eleve/bibliotheque/$id': typeof EleveBibliothequeIdRoute
   '/eleve/devoirs/$id': typeof EleveDevoirsIdRoute
@@ -590,7 +607,7 @@ export interface FileRoutesById {
   '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/parametres': typeof AdminParametresRoute
   '/admin/permissions': typeof AdminPermissionsRoute
-  '/admin/questions': typeof AdminQuestionsRoute
+  '/admin/questions': typeof AdminQuestionsRouteWithChildren
   '/admin/ressources': typeof AdminRessourcesRoute
   '/admin/support': typeof AdminSupportRoute
   '/eleve/abonnement': typeof EleveAbonnementRoute
@@ -622,6 +639,8 @@ export interface FileRoutesById {
   '/prof/': typeof ProfIndexRoute
   '/admin/examens/$examId': typeof AdminExamensExamIdRoute
   '/admin/gestionnaires/$id': typeof AdminGestionnairesIdRoute
+  '/admin/questions/$questionId': typeof AdminQuestionsQuestionIdRoute
+  '/admin/questions/nouveau': typeof AdminQuestionsNouveauRoute
   '/admin/utilisateurs/$id': typeof AdminUtilisateursIdRoute
   '/eleve/bibliotheque/$id': typeof EleveBibliothequeIdRoute
   '/eleve/devoirs/$id': typeof EleveDevoirsIdRoute
@@ -696,6 +715,8 @@ export interface FileRouteTypes {
     | '/prof/'
     | '/admin/examens/$examId'
     | '/admin/gestionnaires/$id'
+    | '/admin/questions/$questionId'
+    | '/admin/questions/nouveau'
     | '/admin/utilisateurs/$id'
     | '/eleve/bibliotheque/$id'
     | '/eleve/devoirs/$id'
@@ -764,6 +785,8 @@ export interface FileRouteTypes {
     | '/prof'
     | '/admin/examens/$examId'
     | '/admin/gestionnaires/$id'
+    | '/admin/questions/$questionId'
+    | '/admin/questions/nouveau'
     | '/admin/utilisateurs/$id'
     | '/eleve/bibliotheque/$id'
     | '/eleve/devoirs/$id'
@@ -836,6 +859,8 @@ export interface FileRouteTypes {
     | '/prof/'
     | '/admin/examens/$examId'
     | '/admin/gestionnaires/$id'
+    | '/admin/questions/$questionId'
+    | '/admin/questions/nouveau'
     | '/admin/utilisateurs/$id'
     | '/eleve/bibliotheque/$id'
     | '/eleve/devoirs/$id'
@@ -1349,6 +1374,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminUtilisateursIdRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/questions/nouveau': {
+      id: '/admin/questions/nouveau'
+      path: '/nouveau'
+      fullPath: '/admin/questions/nouveau'
+      preLoaderRoute: typeof AdminQuestionsNouveauRouteImport
+      parentRoute: typeof AdminQuestionsRoute
+    }
+    '/admin/questions/$questionId': {
+      id: '/admin/questions/$questionId'
+      path: '/$questionId'
+      fullPath: '/admin/questions/$questionId'
+      preLoaderRoute: typeof AdminQuestionsQuestionIdRouteImport
+      parentRoute: typeof AdminQuestionsRoute
+    }
     '/admin/gestionnaires/$id': {
       id: '/admin/gestionnaires/$id'
       path: '/gestionnaires/$id'
@@ -1378,6 +1417,20 @@ const AdminExamensRouteWithChildren = AdminExamensRoute._addFileChildren(
   AdminExamensRouteChildren,
 )
 
+interface AdminQuestionsRouteChildren {
+  AdminQuestionsQuestionIdRoute: typeof AdminQuestionsQuestionIdRoute
+  AdminQuestionsNouveauRoute: typeof AdminQuestionsNouveauRoute
+}
+
+const AdminQuestionsRouteChildren: AdminQuestionsRouteChildren = {
+  AdminQuestionsQuestionIdRoute: AdminQuestionsQuestionIdRoute,
+  AdminQuestionsNouveauRoute: AdminQuestionsNouveauRoute,
+}
+
+const AdminQuestionsRouteWithChildren = AdminQuestionsRoute._addFileChildren(
+  AdminQuestionsRouteChildren,
+)
+
 interface AdminRouteChildren {
   AdminAbonnementsRoute: typeof AdminAbonnementsRoute
   AdminClassesRoute: typeof AdminClassesRoute
@@ -1387,7 +1440,7 @@ interface AdminRouteChildren {
   AdminNotificationsRoute: typeof AdminNotificationsRoute
   AdminParametresRoute: typeof AdminParametresRoute
   AdminPermissionsRoute: typeof AdminPermissionsRoute
-  AdminQuestionsRoute: typeof AdminQuestionsRoute
+  AdminQuestionsRoute: typeof AdminQuestionsRouteWithChildren
   AdminRessourcesRoute: typeof AdminRessourcesRoute
   AdminSupportRoute: typeof AdminSupportRoute
   AdminIndexRoute: typeof AdminIndexRoute
@@ -1406,7 +1459,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminNotificationsRoute: AdminNotificationsRoute,
   AdminParametresRoute: AdminParametresRoute,
   AdminPermissionsRoute: AdminPermissionsRoute,
-  AdminQuestionsRoute: AdminQuestionsRoute,
+  AdminQuestionsRoute: AdminQuestionsRouteWithChildren,
   AdminRessourcesRoute: AdminRessourcesRoute,
   AdminSupportRoute: AdminSupportRoute,
   AdminIndexRoute: AdminIndexRoute,
