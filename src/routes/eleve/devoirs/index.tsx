@@ -8,6 +8,7 @@ import {
   ArrowRight,
   CheckCircle2,
   CalendarDays,
+  FileText,
 } from '@/components/icons'
 import { Meter, SoftIcon } from '@/components/student/parts'
 import { PageHero } from '@/components/blocks'
@@ -235,12 +236,25 @@ function DoneCard({
 
           <h3 className="mt-2 font-heading text-base font-bold leading-snug">{a.title}</h3>
 
-          <div className="mt-3 flex items-center gap-3">
-            <Meter value={score} color="auto" className="flex-1" />
-            <span className="w-12 text-right font-heading text-sm font-bold tabular-nums">
-              {score}%
-            </span>
-          </div>
+          {s.hasFile && s.score === null ? (
+            <p className="mt-3 inline-flex items-center gap-2 rounded-lg bg-amber-soft px-3 py-1.5 text-xs font-semibold text-amber-foreground">
+              <FileText className="size-4" /> Copie remise — en attente de correction
+            </p>
+          ) : (
+            <div className="mt-3 flex items-center gap-3">
+              <Meter value={score} color="auto" className="flex-1" />
+              <span className="w-12 text-right font-heading text-sm font-bold tabular-nums">
+                {score}%
+              </span>
+            </div>
+          )}
+
+          {s.feedback && (
+            <div className="mt-3 rounded-xl bg-secondary/60 p-3">
+              <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Récap du prof</p>
+              <p className="mt-1 whitespace-pre-line text-sm text-foreground">{s.feedback}</p>
+            </div>
+          )}
 
           <div className="mt-3 flex justify-end">
             <Button asChild size="sm" variant="outline" className="rounded-xl">

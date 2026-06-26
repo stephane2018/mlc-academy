@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { toast } from 'sonner'
-import { ShoppingBag, Check, CreditCard, Crown } from '@/components/icons'
+import { ShoppingBag, Check, CreditCard, Crown, Download } from '@/components/icons'
 import { PageHero } from '@/components/blocks'
 import { spreadAvatar } from '@/lib/avatar'
 import { Card } from '@/components/ui/card'
@@ -29,7 +29,7 @@ import { usePlans, useSubscribe, useCheckout } from '@/hooks/use-billing'
 import { useProducts } from '@/hooks/use-marketplace'
 import { useChildren } from '@/hooks/use-parent'
 import { useSubjects } from '@/hooks/use-catalog'
-import type { Product } from '@/services/marketplace'
+import { marketplaceService, type Product } from '@/services/marketplace'
 
 export const Route = createFileRoute('/parent/boutique')({
   component: ParentBoutique,
@@ -173,9 +173,32 @@ function ProductCard({
         )}
         <Badge variant="secondary" className="bg-secondary text-muted-foreground">{productKindLabels[p.kind as ProductKind] ?? p.kind}</Badge>
       </div>
-      <Button className="mt-4 w-full" onClick={() => setOpen(true)}>
-        <ShoppingBag className="size-4" /> {p.priceCents > 0 ? 'Acheter' : 'Obtenir'}
-      </Button>
+      {p.purchased ? (
+        p.hasContent ? (
+          <Button
+            variant="outline"
+            className="mt-4 w-full"
+            onClick={async () => {
+              try {
+                const { url } = await marketplaceService.contentUrl(p.id)
+                window.open(url, '_blank', 'noopener')
+              } catch {
+                toast.error('Téléchargement indisponible.')
+              }
+            }}
+          >
+            <Download className="size-4" /> Télécharger
+          </Button>
+        ) : (
+          <Button variant="outline" className="mt-4 w-full" disabled>
+            <Check className="size-4" /> Acheté
+          </Button>
+        )
+      ) : (
+        <Button className="mt-4 w-full" onClick={() => setOpen(true)}>
+          <ShoppingBag className="size-4" /> {p.priceCents > 0 ? 'Acheter' : 'Obtenir'}
+        </Button>
+      )}
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>

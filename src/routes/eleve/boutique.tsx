@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { toast } from 'sonner'
-import { ShoppingBag, Check, Sparkles } from '@/components/icons'
+import { ShoppingBag, Check, Sparkles, Download } from '@/components/icons'
 import { PageHero } from '@/components/blocks'
 import { SubjectFilter, type SubjectFilterValue } from '@/components/student/subject-filter'
 import { Card } from '@/components/ui/card'
@@ -24,6 +24,7 @@ import {
   type ProductKind,
 } from '@/lib/mock'
 import { useProducts } from '@/hooks/use-marketplace'
+import { marketplaceService } from '@/services/marketplace'
 import { useCheckout } from '@/hooks/use-billing'
 import { useSubjects, useClasses } from '@/hooks/use-catalog'
 
@@ -42,6 +43,8 @@ type BoutiqueView = {
   classCode: string | null
   priceCents: number
   emoji: string
+  purchased: boolean
+  hasContent: boolean
 }
 
 const KIND_EMOJI: Record<string, string> = { ebook: '📘', fiche: '📄', pack: '📦', video: '🎬', autre: '🧩' }
@@ -67,6 +70,8 @@ function BoutiquePage() {
     classCode: p.classId ? (classById.get(p.classId)?.code ?? null) : null,
     priceCents: p.priceCents,
     emoji: KIND_EMOJI[p.kind] ?? '🧩',
+    purchased: p.purchased,
+    hasContent: p.hasContent,
   }))
 
   const visible = catalogue.filter((p) => subject === 'all' || p.subject === subject)
@@ -162,10 +167,33 @@ function BoutiqueCard({
         </Badge>
       </div>
 
-      <Button className="mt-4 w-full" onClick={onBuy}>
-        <ShoppingBag className="size-4" />
-        {p.priceCents > 0 ? 'Acheter' : 'Obtenir'}
-      </Button>
+      {p.purchased ? (
+        p.hasContent ? (
+          <Button
+            variant="outline"
+            className="mt-4 w-full"
+            onClick={async () => {
+              try {
+                const { url } = await marketplaceService.contentUrl(p.id)
+                window.open(url, '_blank', 'noopener')
+              } catch {
+                toast.error('Téléchargement indisponible.')
+              }
+            }}
+          >
+            <Download className="size-4" /> Télécharger
+          </Button>
+        ) : (
+          <Button variant="outline" className="mt-4 w-full" disabled>
+            <Check className="size-4" /> Acheté
+          </Button>
+        )
+      ) : (
+        <Button className="mt-4 w-full" onClick={onBuy}>
+          <ShoppingBag className="size-4" />
+          {p.priceCents > 0 ? 'Acheter' : 'Obtenir'}
+        </Button>
+      )}
     </Card>
   )
 }

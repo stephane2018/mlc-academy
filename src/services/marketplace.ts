@@ -16,6 +16,7 @@ export type Product = {
   createdAt: string | null
   coverPath: string | null
   hasContent: boolean
+  purchased: boolean
 }
 
 export type PublishProductInput = {

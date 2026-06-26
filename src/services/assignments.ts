@@ -11,6 +11,8 @@ export type AssignmentSubmission = {
   status: string
   score: number | null
   submittedAt: string | null
+  feedback: string | null
+  hasFile: boolean
 }
 
 export type AssignmentListItem = {
